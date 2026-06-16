@@ -23,17 +23,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!user) return { title: 'Profile Not Found' }
 
   return {
-    title: `${user.display_name}'s Maimoir`,
+    title: `${user.display_name}'s LiAIson`,
     description: user.short_bio ?? `Talk to ${user.display_name}'s AI representative`,
     openGraph: {
-      title: `${user.display_name}'s Maimoir`,
+      title: `${user.display_name}'s LiAIson`,
       description: user.short_bio ?? `Talk to ${user.display_name}'s AI representative`,
       images: user.avatar_url ? [user.avatar_url] : [],
       type: 'profile',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${user.display_name}'s Maimoir`,
+      title: `${user.display_name}'s LiAIson`,
       description: user.short_bio ?? `Talk to ${user.display_name}'s AI representative`,
       images: user.avatar_url ? [user.avatar_url] : [],
     },
@@ -77,7 +77,7 @@ export default async function ProfilePage({ params }: Props) {
       {/* Header */}
       <nav className="border-b border-border bg-surface shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-accent">Maimoir</Link>
+          <Link href="/" className="font-bold text-xl text-accent">LiAIson</Link>
           <Link
             href="/signup"
             className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft hover:shadow-card"

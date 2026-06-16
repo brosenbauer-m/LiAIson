@@ -5,7 +5,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-3xl mx-auto">
         <Link href="/" className="font-bold text-xl text-accent-light block mb-10">
-          ← Maimoir
+          ← LiAIson
         </Link>
 
         <h1 className="text-4xl font-bold text-text-primary mb-2">Privacy Policy</h1>
@@ -13,8 +13,8 @@ export default function PrivacyPage() {
 
         <div className="space-y-8 text-text-secondary leading-relaxed">
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">What is Maimoir?</h2>
-            <p>Maimoir is a personal AI agent platform that lets you create an AI representative — your Maimoir — which speaks on your behalf to anyone who visits your public profile. This policy explains how we handle your data, in plain English.</p>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">What is LiAIson?</h2>
+            <p>LiAIson is a personal AI agent platform that lets you create an AI representative — your LiAIson — which speaks on your behalf to anyone who visits your public profile. This policy explains how we handle your data, in plain English.</p>
           </section>
 
           <section>
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">How we use your data</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>To power your Maimoir — vault content is fed into your AI agent&apos;s system prompt</li>
+              <li>To power your LiAIson — vault content is fed into your AI agent&apos;s system prompt</li>
               <li>To surface useful notifications about your profile (gaps, visitor queries, stale content)</li>
               <li>To match you with relevant connections when both parties express interest</li>
               <li>To send you a weekly email digest when you have new notifications</li>
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor interactions</h2>
-            <p>When someone chats with your Maimoir, their messages are sent to Anthropic&apos;s API to generate responses. We do not store raw visitor messages — only anonymised topic clusters (e.g. &quot;career goals&quot;). Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
+            <p>When someone chats with your LiAIson, their messages are sent to Anthropic&apos;s API to generate responses. We do not store raw visitor messages — only anonymised topic clusters (e.g. &quot;career goals&quot;). Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
           </section>
 
           <section>
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Contact</h2>
-            <p>Questions? Email us at privacy@maimoir.app</p>
+            <p>Questions? Email us at privacy@my-liaison.app</p>
           </section>
         </div>
       </div>

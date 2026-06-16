@@ -36,7 +36,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-2xl text-accent-light">Maimoir</Link>
+          <Link href="/" className="font-bold text-2xl text-accent-light">LiAIson</Link>
           <h1 className="text-2xl font-bold text-text-primary mt-4">Welcome back</h1>
           <p className="text-text-secondary mt-2">Sign in to your account</p>
         </div>

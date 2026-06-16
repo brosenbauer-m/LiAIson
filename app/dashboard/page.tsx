@@ -43,14 +43,14 @@ export default async function DashboardPage() {
       .limit(6),
   ])
 
-  const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://maimoir.app'}/${profile?.username ?? ''}`
+  const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://my-liaison.app'}/${profile?.username ?? ''}`
 
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
       <nav className="border-b border-border bg-surface shadow-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-accent">Maimoir</Link>
+          <Link href="/" className="font-bold text-xl text-accent">LiAIson</Link>
           <div className="flex items-center gap-6">
             <Link href="/vault" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Vault</Link>
             <Link href="/profile" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Profile</Link>
@@ -66,12 +66,12 @@ export default async function DashboardPage() {
           <h1 className="text-4xl font-bold text-text-primary">
             Welcome back, {profile?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
-          <p className="text-text-secondary text-lg mt-2">Here&apos;s what&apos;s been happening with your Maimoir</p>
+          <p className="text-text-secondary text-lg mt-2">Here&apos;s what&apos;s been happening with your LiAIson</p>
         </div>
 
         {/* Share URL */}
         <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
-          <p className="text-base font-semibold text-text-primary mb-4">Your Maimoir profile</p>
+          <p className="text-base font-semibold text-text-primary mb-4">Your LiAIson profile</p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex-1 bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-secondary font-mono truncate">
               {profileUrl}
