@@ -118,8 +118,8 @@ export async function generateNotifications(userId: string): Promise<void> {
         await resend.emails.send({
           from: 'LiAIson <noreply@my-liaison.app>',
           to: userEmail,
-          subject: 'Your Maimoir has some questions for you 👋',
-          html: `<h2>Hi ${userData.display_name}!</h2><p>Your Maimoir has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
+          subject: 'Your LiAIson has some questions for you 👋',
+          html: `<h2>Hi ${userData.display_name}!</h2><p>Your LiAIson has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
         })
       } catch (e) {
         console.error('Email send failed:', e)
