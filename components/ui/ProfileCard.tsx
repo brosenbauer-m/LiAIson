@@ -41,7 +41,7 @@ export default function ProfileCard({ user, tags = [] }: ProfileCardProps) {
         href={`/${user.username}`}
         className="mt-1 w-full text-center py-2 rounded-lg bg-accent hover:bg-accent/90 text-white text-sm font-medium transition-colors"
       >
-        View Maimoir
+        View LiAIson
       </Link>
     </div>
   )

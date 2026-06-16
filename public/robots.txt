@@ -6,4 +6,4 @@ Disallow: /settings
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://maimoir.app/sitemap.xml
+Sitemap: https://my-liaison.app/sitemap.xml

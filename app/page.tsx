@@ -10,7 +10,7 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-surface/95 backdrop-blur-sm shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="font-bold text-xl text-accent">Maimoir</span>
+          <span className="font-bold text-xl text-accent">LiAIson</span>
           <div className="flex items-center gap-6">
             <Link href="/discover" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">
               Discover
@@ -61,7 +61,7 @@ export default function LandingPage() {
             transition={{ delay: 0.2 }}
             className="text-xl sm:text-2xl text-text-secondary max-w-2xl mx-auto mb-12 leading-relaxed"
           >
-            Create your Maimoir — an AI agent that knows you deeply and speaks on your behalf to anyone who visits your profile.
+            Create your LiAIson — an AI agent that knows you deeply and speaks on your behalf to anyone who visits your profile.
           </motion.p>
 
           <motion.div
@@ -75,7 +75,7 @@ export default function LandingPage() {
               href="/signup"
               className="px-8 py-4 bg-accent hover:bg-accent-light text-white font-semibold rounded-xl transition-all shadow-card hover:shadow-lg text-lg"
             >
-              Create Your Maimoir
+              Create Your LiAIson
             </Link>
             <Link
               href="/discover"
@@ -98,17 +98,17 @@ export default function LandingPage() {
               {
                 icon: '📖',
                 title: 'Share Your Story',
-                desc: 'Feed your Maimoir everything that makes you unique — your work, passions, values, and goals. It speaks for you with precision.',
+                desc: 'Feed your LiAIson everything that makes you unique — your work, passions, values, and goals. It speaks for you with precision.',
               },
               {
                 icon: '🔍',
                 title: 'Be Discovered',
-                desc: 'Let the right people find you. Set your discoverability preferences and let your Maimoir surface you to relevant connections.',
+                desc: 'Let the right people find you. Set your discoverability preferences and let your LiAIson surface you to relevant connections.',
               },
               {
                 icon: '🤝',
                 title: 'Connect Meaningfully',
-                desc: "When mutual interest sparks, Maimoir generates a compatibility summary so both of you know exactly why you'd connect well.",
+                desc: "When mutual interest sparks, LiAIson generates a compatibility summary so both of you know exactly why you'd connect well.",
               },
             ].map((f, i) => (
               <motion.div
@@ -136,7 +136,7 @@ export default function LandingPage() {
             See it in action
           </h2>
           <p className="text-center text-text-secondary text-lg mb-12">
-            This is what it looks like to talk to someone&apos;s Maimoir
+            This is what it looks like to talk to someone&apos;s LiAIson
           </p>
           <div className="bg-card border border-border rounded-xl overflow-hidden shadow-card">
             <div className="border-b border-border px-6 py-5 bg-surface/50 flex items-center gap-3">
@@ -144,7 +144,7 @@ export default function LandingPage() {
                 A
               </div>
               <div>
-                <p className="font-semibold text-text-primary">Alex&apos;s Maimoir</p>
+                <p className="font-semibold text-text-primary">Alex&apos;s LiAIson</p>
                 <p className="text-xs text-text-secondary">Ask me anything about Alex</p>
               </div>
             </div>
@@ -196,14 +196,14 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-border-light bg-border-light/30 py-12 px-4">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <span className="font-bold text-xl text-accent">Maimoir</span>
+          <span className="font-bold text-xl text-accent">LiAIson</span>
           <div className="flex flex-wrap gap-8 text-sm text-text-secondary">
             <Link href="/discover" className="hover:text-accent transition-colors font-medium">Discover</Link>
             <Link href="/privacy" className="hover:text-accent transition-colors font-medium">Privacy</Link>
             <Link href="/login" className="hover:text-accent transition-colors font-medium">Login</Link>
             <Link href="/signup" className="hover:text-accent transition-colors font-medium">Sign Up</Link>
           </div>
-          <p className="text-xs text-text-muted">© 2025 Maimoir. All rights reserved.</p>
+          <p className="text-xs text-text-muted">© 2025 LiAIson. All rights reserved.</p>
         </div>
       </footer>
     </div>

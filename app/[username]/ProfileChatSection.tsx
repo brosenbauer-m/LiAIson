@@ -174,7 +174,7 @@ export default function ProfileChatSection({ username, displayName }: Props) {
             {displayName[0]?.toUpperCase() ?? 'M'}
           </div>
           <div>
-            <p className="font-semibold text-text-primary">{displayName}&apos;s Maimoir</p>
+            <p className="font-semibold text-text-primary">{displayName}&apos;s LiAIson</p>
             <p className="text-xs text-text-secondary">Ask me anything about {displayName}</p>
           </div>
         </div>

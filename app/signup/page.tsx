@@ -121,8 +121,8 @@ export default function SignupPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-2xl text-accent-light">Maimoir</Link>
-          <h1 className="text-2xl font-bold text-text-primary mt-4">Create your Maimoir</h1>
+          <Link href="/" className="font-bold text-2xl text-accent-light">LiAIson</Link>
+          <h1 className="text-2xl font-bold text-text-primary mt-4">Create your LiAIson</h1>
           <p className="text-text-secondary mt-2">Set up your personal AI representative</p>
         </div>
 
@@ -152,7 +152,7 @@ export default function SignupPage() {
               />
               <div className="text-xs mt-1">{usernameIndicator()}</div>
               {username && usernameStatus === 'available' && (
-                <p className="text-xs text-text-secondary mt-1">Your profile: maimoir.app/{username}</p>
+                <p className="text-xs text-text-secondary mt-1">Your profile: my-liaison.app/{username}</p>
               )}
             </div>
 
@@ -218,7 +218,7 @@ export default function SignupPage() {
               disabled={loading || usernameStatus !== 'available'}
               className="w-full py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? 'Creating your Maimoir...' : 'Create Account'}
+              {loading ? 'Creating your LiAIson...' : 'Create Account'}
             </button>
           </form>
 

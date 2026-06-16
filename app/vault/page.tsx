@@ -117,7 +117,7 @@ export default function VaultPage() {
             <div className="text-5xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">Welcome to your Vault!</h2>
             <p className="text-text-secondary text-base mb-6 leading-relaxed">
-              This is where you feed your Maimoir. The more you add, the better it can represent you. Start with a few sections and build from there.
+              This is where you feed your LiAIson. The more you add, the better it can represent you. Start with a few sections and build from there.
             </p>
             <button
               onClick={() => setShowWelcome(false)}
@@ -132,7 +132,7 @@ export default function VaultPage() {
       {/* Nav */}
       <nav className="border-b border-border bg-surface shadow-sm sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="font-bold text-xl text-accent">Maimoir</Link>
+          <Link href="/dashboard" className="font-bold text-xl text-accent">LiAIson</Link>
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Dashboard</Link>
             <button
@@ -150,10 +150,10 @@ export default function VaultPage() {
         <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 px-4">
           <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-card">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-text-primary text-lg">Your Maimoir&apos;s knowledge preview</h3>
+              <h3 className="font-semibold text-text-primary text-lg">Your LiAIson&apos;s knowledge preview</h3>
               <button onClick={() => setShowPreview(false)} className="text-text-secondary hover:text-error text-xl">✕</button>
             </div>
-            <p className="text-sm text-text-secondary mb-4">This is the information visible to your Maimoir (public + discoverable sections)</p>
+            <p className="text-sm text-text-secondary mb-4">This is the information visible to your LiAIson (public + discoverable sections)</p>
             <pre className="flex-1 overflow-y-auto text-sm text-text-primary font-mono whitespace-pre-wrap bg-background rounded-lg p-4 border border-border">
               {previewContent}
             </pre>
@@ -165,7 +165,7 @@ export default function VaultPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold text-text-primary">My Vault</h1>
-            <p className="text-text-secondary text-lg mt-2">Your Maimoir only knows what you put here</p>
+            <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
           </div>
           <button
             onClick={loadPreview}
