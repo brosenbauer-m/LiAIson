@@ -120,8 +120,8 @@ export async function generateNotifications(userId: string): Promise<void> {
         await postmark.sendEmail({
           From: 'Maimoir <noreply@my-liaison.app>',
           To: userEmail,
-          Subject: 'Your LiAIson has some questions for you 👋',
-          HtmlBody: `<h2>Hi ${userData.display_name}!</h2><p>Your LiAIson has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
+          Subject: 'Your Maimoir has some questions for you 👋',
+          HtmlBody: `<h2>Hi ${userData.display_name}!</h2><p>Your Maimoir has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
         })
       } catch (e) {
         console.error('Email send failed:', e)
