@@ -15,7 +15,7 @@ Supabase is the database (Postgres + Auth + Storage).
 Vercel deploys the frontend from GitHub.
 Anthropic Claude API powers all Maimoir AI agents (chat, notifications, discovery, compatibility).
 Upstash Redis handles rate limiting on public Maimoir chat endpoints.
-Resend handles all outbound email (weekly notification digests).
+Postmark handles all outbound email (weekly notification digests).
 
 **Core rule: Repo → Supabase (auto via GitHub Action) → Generated Types (auto committed by bot).**
 

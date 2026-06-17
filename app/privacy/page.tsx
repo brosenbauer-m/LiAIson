@@ -57,7 +57,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Third-party services</h2>
-            <p>We use: Supabase (database and authentication), Anthropic (AI responses), Upstash Redis (rate limiting), Resend (email notifications), and Vercel (hosting). Each service has its own privacy policy.</p>
+            <p>We use: Supabase (database and authentication), Anthropic (AI responses), Upstash Redis (rate limiting), Postmark (email notifications), and Vercel (hosting). Each service has its own privacy policy.</p>
           </section>
 
           <section>
