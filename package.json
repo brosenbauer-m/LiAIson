@@ -18,9 +18,9 @@
     "framer-motion": "^12.35.2",
     "mammoth": "^1.11.0",
     "next": "14.2.35",
+    "postmark": "^4.0.7",
     "react": "^18",
     "react-dom": "^18",
-    "resend": "^6.9.3",
     "unpdf": "^1.4.0"
   },
   "devDependencies": {
