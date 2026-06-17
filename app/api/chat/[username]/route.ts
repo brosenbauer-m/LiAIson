@@ -115,6 +115,7 @@ export async function POST(
 
         controller.close()
       } catch (err) {
+        console.error('CHAT_STREAM_ERROR', err)
         controller.error(err)
       }
 
