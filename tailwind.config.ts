@@ -9,37 +9,31 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Light warm background palette
-        background: "#FAFAF8",
+        background: "#FAFAFA",
         surface: "#FFFFFF",
         card: "#FFFFFF",
-        // Warm accent colors
-        accent: "#D97706", // warm amber
-        "accent-light": "#F59E0B",
-        "accent-subtle": "#FEF3C7",
-        "accent-tint": "#FFFBEB",
-        // Typography colors for light theme
-        "text-primary": "#1F2937",
-        "text-secondary": "#6B7280",
-        "text-muted": "#9CA3AF",
-        // Borders and dividers
-        border: "#E8E5E0",
-        "border-light": "#F0EDE8",
-        // Status colors
-        success: "#10b981",
-        warning: "#f59e0b",
-        error: "#ef4444",
-        // Privacy badge colors
-        "badge-public": "#10b981",
-        "badge-discoverable": "#3b82f6",
-        "badge-private": "#6b7280",
+        accent: "#111111",
+        "accent-light": "#333333",
+        "accent-subtle": "#F2F2F2",
+        "accent-tint": "#F7F7F7",
+        "text-primary": "#111111",
+        "text-secondary": "#555555",
+        "text-muted": "#999999",
+        border: "#E5E5E5",
+        "border-light": "#F0F0F0",
+        success: "#111111",
+        warning: "#111111",
+        error: "#111111",
+        "badge-public": "#111111",
+        "badge-discoverable": "#555555",
+        "badge-private": "#999999",
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
-        'card': '0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.08)',
+        'soft': '0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04)',
+        'card': '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04)',
       },
     },
   },

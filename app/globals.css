@@ -3,37 +3,40 @@
 @tailwind utilities;
 
 :root {
-  /* Light warm background palette */
-  --background: #FAFAF8;
-  --foreground: #1F2937;
+  --background: #FAFAFA;
+  --foreground: #111111;
   --surface: #FFFFFF;
   --card: #FFFFFF;
 
-  /* Warm accent colors */
-  --accent: #D97706;
-  --accent-light: #F59E0B;
-  --accent-subtle: #FEF3C7;
-  --accent-tint: #FFFBEB;
+  --accent: #111111;
+  --accent-light: #333333;
+  --accent-subtle: #F2F2F2;
+  --accent-tint: #F7F7F7;
 
-  /* Typography colors for light theme */
-  --text-primary: #1F2937;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-muted: #999999;
 
-  /* Borders and dividers */
-  --border: #E8E5E0;
-  --border-light: #F0EDE8;
+  --border: #E5E5E5;
+  --border-light: #F0F0F0;
 
-  /* Status colors */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
+  --success: #111111;
+  --warning: #111111;
+  --error: #111111;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    font-feature-settings: "kern" 1;
+  }
 }
 
 @layer utilities {
