@@ -114,7 +114,7 @@ export async function generateNotifications(userId: string): Promise<void> {
         const userEmail = authUser?.user?.email
         if (!userEmail) throw new Error('No email found for user')
 
-        const postmark = new ServerClient(process.env.POSTMARK_SERVER_TOKEN)
+        const postmark = new ServerClient(process.env.POSTMARK_SERVER_TOKEN!)
         await postmark.sendEmail({
           From: 'LiAIson <noreply@my-liaison.app>',
           To: userEmail,
