@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { VaultSection, VisitorQueryLog, Notification } from '@/types'
+import { ServerClient } from 'postmark'
 
 const SENSITIVE_PATTERNS = [
   /address/i, /phone/i, /financ/i, /explicit/i, /password/i, /ssn/i, /credit.?card/i
@@ -100,26 +101,27 @@ export async function generateNotifications(userId: string): Promise<void> {
   if (notifications.length > 0) {
     await supabase.from('notifications').insert(notifications)
 
-    // Send email digest via Resend
+    // Send email digest via Postmark
     const { data: userData } = await supabase
       .from('users')
       .select('display_name')
       .eq('id', userId)
       .single()
 
-    if (userData && process.env.RESEND_API_KEY) {
+    const postmarkToken = process.env.POSTMARK_SERVER_TOKEN
+
+    if (userData && postmarkToken) {
       try {
         const { data: authUser } = await supabase.auth.admin.getUserById(userId)
         const userEmail = authUser?.user?.email
         if (!userEmail) throw new Error('No email found for user')
 
-        const { Resend } = await import('resend')
-        const resend = new Resend(process.env.RESEND_API_KEY)
-        await resend.emails.send({
-          from: 'LiAIson <noreply@my-liaison.app>',
-          to: userEmail,
-          subject: 'Your LiAIson has some questions for you 👋',
-          html: `<h2>Hi ${userData.display_name}!</h2><p>Your LiAIson has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
+        const postmark = new ServerClient(postmarkToken)
+        await postmark.sendEmail({
+          From: 'LiAIson <noreply@my-liaison.app>',
+          To: userEmail,
+          Subject: 'Your LiAIson has some questions for you 👋',
+          HtmlBody: `<h2>Hi ${userData.display_name}!</h2><p>Your LiAIson has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
         })
       } catch (e) {
         console.error('Email send failed:', e)
