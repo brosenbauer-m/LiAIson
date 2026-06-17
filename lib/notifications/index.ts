@@ -108,13 +108,15 @@ export async function generateNotifications(userId: string): Promise<void> {
       .eq('id', userId)
       .single()
 
-    if (userData && process.env.POSTMARK_SERVER_TOKEN) {
+    const postmarkToken = process.env.POSTMARK_SERVER_TOKEN
+
+    if (userData && postmarkToken) {
       try {
         const { data: authUser } = await supabase.auth.admin.getUserById(userId)
         const userEmail = authUser?.user?.email
         if (!userEmail) throw new Error('No email found for user')
 
-        const postmark = new ServerClient(process.env.POSTMARK_SERVER_TOKEN!)
+        const postmark = new ServerClient(postmarkToken)
         await postmark.sendEmail({
           From: 'LiAIson <noreply@my-liaison.app>',
           To: userEmail,
