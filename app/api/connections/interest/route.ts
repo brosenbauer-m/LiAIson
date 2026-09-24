@@ -1,17 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { anthropic, FAST_MODEL } from '@/lib/anthropic/client'
+import { mistral, FAST_MODEL } from '@/lib/mistral/client'
 import type { VaultSection } from '@/types'
+
+function extractTextContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+
+  return content
+    .filter(
+      (chunk): chunk is { type: 'text'; text: string } =>
+        typeof chunk === 'object' &&
+        chunk !== null &&
+        'type' in chunk &&
+        chunk.type === 'text' &&
+        'text' in chunk &&
+        typeof chunk.text === 'string'
+    )
+    .map(chunk => chunk.text)
+    .join('')
+}
 
 async function generateCompatibilitySummary(
   vaultA: string,
   vaultB: string
 ): Promise<string> {
   try {
-    const response = await anthropic.messages.create({
+    const response = await mistral.chat.complete({
       model: FAST_MODEL,
-      max_tokens: 200,
+      maxTokens: 200,
       messages: [
         {
           role: 'user',
@@ -19,8 +37,7 @@ async function generateCompatibilitySummary(
         },
       ],
     })
-    const content = response.content[0]
-    return content.type === 'text' ? content.text.trim() : ''
+    return extractTextContent(response.choices[0]?.message?.content).trim()
   } catch {
     return ''
   }
