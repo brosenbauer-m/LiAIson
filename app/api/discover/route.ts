@@ -1,15 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { anthropic, FAST_MODEL } from '@/lib/anthropic/client'
+import { mistral, FAST_MODEL } from '@/lib/mistral/client'
 import type { User, VaultSection } from '@/types'
 
 type DiscoverMode = 'professional' | 'personal' | 'all'
 
+function extractTextContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+
+  return content
+    .filter(
+      (chunk): chunk is { type: 'text'; text: string } =>
+        typeof chunk === 'object' &&
+        chunk !== null &&
+        'type' in chunk &&
+        chunk.type === 'text' &&
+        'text' in chunk &&
+        typeof chunk.text === 'string'
+    )
+    .map(chunk => chunk.text)
+    .join('')
+}
+
 async function extractKeywords(query: string): Promise<string[]> {
   try {
-    const response = await anthropic.messages.create({
+    const response = await mistral.chat.complete({
       model: FAST_MODEL,
-      max_tokens: 100,
+      maxTokens: 100,
       messages: [
         {
           role: 'user',
@@ -17,13 +35,11 @@ async function extractKeywords(query: string): Promise<string[]> {
         },
       ],
     })
-    const content = response.content[0]
-    if (content.type === 'text') {
-      const match = content.text.match(/\[[\s\S]*\]/)
-      if (match) {
-        const keywords = JSON.parse(match[0])
-        return Array.isArray(keywords) ? keywords : []
-      }
+    const content = extractTextContent(response.choices[0]?.message?.content)
+    const match = content.match(/\[[\s\S]*\]/)
+    if (match) {
+      const keywords = JSON.parse(match[0])
+      return Array.isArray(keywords) ? keywords : []
     }
     return query.split(' ').filter(w => w.length > 3).slice(0, 5)
   } catch {

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { buildSystemPrompt } from '@/lib/prompts/buildSystemPrompt'
 import { checkRateLimit } from '@/lib/ratelimit'
-import { anthropic, CHAT_MODEL, FAST_MODEL } from '@/lib/anthropic/client'
+import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -24,11 +24,29 @@ function sanitizeResponse(text: string): string {
   return sanitized.trim()
 }
 
+function extractTextContent(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+
+  return content
+    .filter(
+      (chunk): chunk is { type: 'text'; text: string } =>
+        typeof chunk === 'object' &&
+        chunk !== null &&
+        'type' in chunk &&
+        chunk.type === 'text' &&
+        'text' in chunk &&
+        typeof chunk.text === 'string'
+    )
+    .map(chunk => chunk.text)
+    .join('')
+}
+
 async function extractTopicCluster(message: string): Promise<string> {
   try {
-    const response = await anthropic.messages.create({
+    const response = await mistral.chat.complete({
       model: FAST_MODEL,
-      max_tokens: 50,
+      maxTokens: 50,
       messages: [
         {
           role: 'user',
@@ -36,8 +54,8 @@ async function extractTopicCluster(message: string): Promise<string> {
         },
       ],
     })
-    const content = response.content[0]
-    return content.type === 'text' ? content.text.trim() : 'general inquiry'
+    const content = extractTextContent(response.choices[0]?.message?.content)
+    return content.trim() || 'general inquiry'
   } catch {
     return 'general inquiry'
   }
@@ -90,25 +108,25 @@ export async function POST(
   // Build system prompt
   const systemPrompt = await buildSystemPrompt(user.id)
 
-  // Stream response from Anthropic
+  // Stream response from Mistral
   const encoder = new TextEncoder()
 
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const anthropicStream = anthropic.messages.stream({
+        const mistralStream = await mistral.chat.stream({
           model: CHAT_MODEL,
-          max_tokens: 1024,
-          system: systemPrompt,
-          messages: messages.map(m => ({ role: m.role, content: m.content })),
+          maxTokens: 1024,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages.map(m => ({ role: m.role, content: m.content })),
+          ],
         })
 
-        for await (const event of anthropicStream) {
-          if (
-            event.type === 'content_block_delta' &&
-            event.delta.type === 'text_delta'
-          ) {
-            const sanitized = sanitizeResponse(event.delta.text)
+        for await (const event of mistralStream) {
+          const text = extractTextContent(event.data?.choices[0]?.delta.content)
+          if (text) {
+            const sanitized = sanitizeResponse(text)
             controller.enqueue(encoder.encode(sanitized))
           }
         }
