@@ -21,7 +21,7 @@ function sanitizeResponse(text: string): string {
   for (const pattern of leakPatterns) {
     sanitized = sanitized.replace(pattern, '')
   }
-  return sanitized.trim()
+  return sanitized
 }
 
 function extractTextContent(content: unknown): string {
