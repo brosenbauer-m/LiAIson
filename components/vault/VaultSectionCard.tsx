@@ -31,18 +31,14 @@ export default function VaultSectionCard({ section, onUpdate, hint }: VaultSecti
   const [content, setContent] = useState(section.content)
   const [visibility, setVisibility] = useState<VaultVisibility>(section.visibility)
   const [saving, setSaving] = useState(false)
-  const [confirming, setConfirming] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   const handleSave = async () => {
     setSaving(true)
     await onUpdate(section.id, { content, visibility })
     setSaving(false)
-  }
-
-  const handleConfirm = async () => {
-    setConfirming(true)
-    await onUpdate(section.id, { last_confirmed_at: new Date().toISOString() })
-    setConfirming(false)
+    setSaved(true)
+    window.setTimeout(() => setSaved(false), 1500)
   }
 
   const handleVisibilityChange = async (v: VaultVisibility) => {
@@ -77,21 +73,19 @@ export default function VaultSectionCard({ section, onUpdate, hint }: VaultSecti
       )}
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-xs text-text-muted">Last confirmed: {lastConfirmed}</p>
+        <p className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium border border-border bg-background text-text-secondary">
+          Last confirmed: {lastConfirmed}
+        </p>
         <div className="flex gap-2">
-          <button
-            onClick={handleConfirm}
-            disabled={confirming}
-            className="px-4 py-2 text-sm text-text-secondary border-2 border-border rounded-lg hover:border-success hover:text-success transition-all disabled:opacity-50"
-          >
-            {confirming ? 'Confirming...' : 'Still accurate ✓'}
-          </button>
           <button
             onClick={handleSave}
             disabled={saving || (content === section.content && visibility === section.visibility)}
-            className="px-5 py-2 text-sm bg-accent hover:bg-accent-light text-white font-medium rounded-lg transition-all shadow-soft disabled:opacity-50"
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50 ${saved
+              ? 'border border-success/30 bg-success/10 text-success'
+              : 'bg-accent hover:bg-accent-light text-white'
+            }`}
           >
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
           </button>
         </div>
       </div>
