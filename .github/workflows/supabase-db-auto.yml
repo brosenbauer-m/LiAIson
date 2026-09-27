@@ -6,6 +6,7 @@ on:
     paths:
       - "supabase/**"
       - ".github/workflows/supabase-db-auto.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -28,12 +29,11 @@ jobs:
           fi
 
       - name: Apply migrations
-        run: npx supabase@latest db push --db-url "${SUPABASE_DB_URL}" --yes
+        run: npx supabase@2.118.0 db push --db-url "${SUPABASE_DB_URL}" --yes
 
       - name: Generate TypeScript types
         run: |
-          mkdir -p lib
-          npx supabase@latest gen types typescript \
+          npx supabase@2.118.0 gen types typescript \
             --db-url "${SUPABASE_DB_URL}" \
             -s public -s auth -s storage > types/database.types.ts
 
@@ -44,4 +44,5 @@ jobs:
           git add types/database.types.ts
           git diff --cached --quiet && { echo "No changes"; exit 0; }
           git commit -m "chore(types): regenerate DB types [skip ci]"
+          git pull --rebase origin main
           git push origin main
