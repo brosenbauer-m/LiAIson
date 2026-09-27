@@ -38,6 +38,8 @@ export default function ProfileChatSection({ username, displayName, shareToken }
   const [connectMessage, setConnectMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const userMessageCount = messages.filter(m => m.role === 'user').length
+  const anonLimitReached = !isLoggedIn && userMessageCount >= 3
 
   useEffect(() => {
     // Fetch suggested prompts
@@ -58,7 +60,7 @@ export default function ProfileChatSection({ username, displayName, shareToken }
   }, [messages, streamingContent])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || loading || rateLimited) return
+    if (!text.trim() || loading || rateLimited || anonLimitReached) return
 
     const userMsg: ChatMessage = { role: 'user', content: text }
     const newMessages = [...messages, userMsg]
@@ -118,7 +120,7 @@ export default function ProfileChatSection({ username, displayName, shareToken }
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, username, displayName, shareToken])
+  }, [messages, loading, rateLimited, anonLimitReached, username, displayName, shareToken])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -242,7 +244,7 @@ export default function ProfileChatSection({ username, displayName, shareToken }
 
       {/* Input */}
       <div className="border-t border-border p-5 bg-surface/30">
-        {rateLimited ? (
+        {rateLimited || anonLimitReached ? (
           <div className="text-center py-3">
             <p className="text-sm text-text-secondary mb-2">
               You&apos;ve had a great conversation!{' '}
