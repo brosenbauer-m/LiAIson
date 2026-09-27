@@ -13,7 +13,7 @@ The user uses Copilot Agents inside GitHub. Think carefully before responding. A
 GitHub is the source of truth for code and migrations.
 Supabase is the database (Postgres + Auth + Storage).
 Vercel deploys the frontend from GitHub.
-Anthropic Claude API powers all LiAIson AI agents (chat, notifications, discovery, compatibility).
+Mistral AI (French company, EU-hosted) powers all LiAIson AI agents (chat, notifications, discovery, compatibility) via lib/mistral/client.ts, using MISTRAL_API_KEY. Models: mistral-medium-latest (chat), mistral-small-latest (fast tasks).
 Upstash Redis handles rate limiting on public LiAIson chat endpoints.
 Postmark handles all outbound email (weekly notification digests), sending from contact@my-liaison.app using POSTMARK_SERVER_TOKEN.
 Titan hosts the mailbox that receives mail at contact@my-liaison.app.
@@ -29,6 +29,15 @@ Supabase migrations are automatically applied on push to main via \`supabase-db-
 Therefore:
 - The user does NOT need to manually run \`supabase db push\` after a PR merge.
 - The user DOES need to run \`git sync\` after every PR merge to receive the bot's regenerated types commit.
+
+## DATA RESIDENCY & GDPR
+
+- Supabase (database, auth, storage): EU West, Ireland.
+- Vercel serverless functions: Frankfurt, Germany (fra1).
+- Mistral AI: EU-hosted.
+- Upstash Redis (rate limiting): Frankfurt, Germany (eu-central-1).
+- Postmark (email): US-based provider.
+- Rule: Prefer EU-hosted providers and EU regions for any new service. Never add a new third-party service that receives user data without updating app/privacy/page.tsx.
 
 ---
 
@@ -199,7 +208,7 @@ app/
   login/ signup/
 
 lib/
-  anthropic/client.ts       ← Claude API wrapper
+  mistral/client.ts         ← Mistral API wrapper
   prompts/buildSystemPrompt.ts ← AI boundary (HIGH RISK)
   ratelimit/index.ts        ← Upstash Redis rate limiter
   notifications/index.ts    ← notification generators
