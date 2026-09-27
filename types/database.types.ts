@@ -571,25 +571,6 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"share_links": {
-                  Row: {
-                    "created_at": string | null,"id": string,"revoked_at": string | null,"scope": string,"token": string,"user_id": string
-                  }
-                  Insert: {
-                    "created_at"?: string | null,"id"?: string,"revoked_at"?: string | null,"scope": string,"token": string,"user_id": string
-                  }
-                  Update: {
-                    "created_at"?: string | null,"id"?: string,"revoked_at"?: string | null,"scope"?: string,"token"?: string,"user_id"?: string
-                  }
-                  Relationships: [
-                    {
-      foreignKeyName: "share_links_user_id_fkey"
-      columns: ["user_id"]
-isOneToOne: false
-      referencedRelation: "users"
-      referencedColumns: ["id"]
-    }
-                  ]
                 },"uploaded_files": {
                   Row: {
                     "created_at": string | null,"extracted_text": string | null,"extraction_confirmed": boolean | null,"file_name": string,"file_url": string,"id": string,"user_id": string
