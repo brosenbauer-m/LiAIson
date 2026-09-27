@@ -3,6 +3,7 @@ export type VaultSource = 'manual' | 'file_extracted' | 'chat_extracted'
 export type DiscoverMode = 'all' | 'professional' | 'personal' | 'unlisted'
 export type ConnectionStatus = 'pending' | 'owner_opened' | 'matched' | 'declined'
 export type NotificationType = 'gap_detection' | 'query_surfacing' | 'temporal_refresh' | 'connection_match' | 'connection_interest'
+export type ChatAccessScope = 'none' | 'professional' | 'personal' | 'both'
 
 export interface ContactLink {
   platform: string
@@ -17,6 +18,7 @@ export interface User {
   short_bio: string | null
   is_discoverable: boolean
   discover_mode: DiscoverMode
+  public_scope: ChatAccessScope
   contact_links: ContactLink[]
   created_at: string
 }
@@ -59,6 +61,7 @@ export interface ConnectionInterest {
   from_user_id: string
   to_user_id: string
   status: ConnectionStatus
+  allowed_scope: ChatAccessScope
   compatibility_summary: string | null
   created_at: string
 }

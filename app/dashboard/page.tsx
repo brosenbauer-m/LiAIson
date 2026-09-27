@@ -55,6 +55,7 @@ export default async function DashboardPage() {
             <Link href="/vault" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Vault</Link>
             <Link href="/profile" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Profile</Link>
             <Link href="/discover" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Discover</Link>
+            <Link href="/connections" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Connections</Link>
             <Link href="/settings" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Settings</Link>
           </div>
         </div>
