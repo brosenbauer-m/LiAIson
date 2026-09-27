@@ -31,6 +31,8 @@ function PrivacyBadge({ visibility }: { visibility: VaultVisibility }) {
 export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [visibility, setVisibility] = useState<VaultVisibility>(section.visibility)
+  const [isProfessional, setIsProfessional] = useState(section.is_professional)
+  const [isPersonal, setIsPersonal] = useState(section.is_personal)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -40,7 +42,16 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(section.id, { content, visibility })
+      const updates: Partial<VaultSection> = {
+        content,
+        visibility,
+        is_professional: isProfessional,
+        is_personal: isPersonal,
+      }
+      if (isProfessional !== isPersonal) {
+        updates.domain = isProfessional ? 'professional' : 'personal'
+      }
+      await onUpdate(section.id, updates)
       setSaved(true)
       window.setTimeout(() => setSaved(false), 1500)
     } catch {
@@ -102,6 +113,30 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
         className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all"
       />
 
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
+          <input
+            type="checkbox"
+            checked={isProfessional}
+            onChange={event => setIsProfessional(event.target.checked)}
+            className="h-4 w-4 accent-accent"
+          />
+          Show in Professional chat
+        </label>
+        <label className="flex items-center gap-2 text-sm text-text-secondary">
+          <input
+            type="checkbox"
+            checked={isPersonal}
+            onChange={event => setIsPersonal(event.target.checked)}
+            className="h-4 w-4 accent-accent"
+          />
+          Show in Personal chat
+        </label>
+        {!isProfessional && !isPersonal && (
+          <p className="text-xs text-text-muted">Private draft — not shown to any visitor yet</p>
+        )}
+      </div>
+
       {hint && (
         <p className="text-sm text-text-secondary italic border-l-2 border-accent pl-4">{hint}</p>
       )}
@@ -113,7 +148,12 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
         <div className="flex gap-2">
           <button
             onClick={handleSave}
-            disabled={saving || (content === section.content && visibility === section.visibility)}
+            disabled={saving || (
+              content === section.content &&
+              visibility === section.visibility &&
+              isProfessional === section.is_professional &&
+              isPersonal === section.is_personal
+            )}
             className={`px-5 py-2 text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50 ${saved
               ? 'border border-success/30 bg-success/10 text-success'
               : 'bg-accent hover:bg-accent-light text-white'

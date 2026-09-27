@@ -17,7 +17,7 @@ const SECTION_HINTS: Record<string, string> = {
   hobbies: "Don't just list activities — share what excites you about them.",
 }
 
-type Tab = 'professional' | 'personal'
+type Tab = 'professional' | 'personal' | 'draft'
 
 export default function VaultPage() {
   const searchParams = useSearchParams()
@@ -101,7 +101,13 @@ export default function VaultPage() {
       .from('vault_sections')
       .insert({
         user_id: userId,
-        domain: activeTab,
+        domain: activeTab === 'professional'
+          ? 'professional'
+          : activeTab === 'personal'
+            ? 'personal'
+            : 'custom',
+        is_professional: activeTab === 'professional',
+        is_personal: activeTab === 'personal',
         section_type: 'custom',
         label,
         content: '',
@@ -124,7 +130,11 @@ export default function VaultPage() {
     setShowPreview(true)
   }
 
-  const filtered = sections.filter(s => s.domain === activeTab)
+  const filtered = sections.filter(section => {
+    if (activeTab === 'professional') return section.is_professional
+    if (activeTab === 'personal') return section.is_personal
+    return !section.is_professional && !section.is_personal
+  })
 
   if (loading) {
     return (
@@ -209,7 +219,7 @@ export default function VaultPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">
-          {(['professional', 'personal'] as Tab[]).map(tab => (
+          {(['professional', 'personal', 'draft'] as Tab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
