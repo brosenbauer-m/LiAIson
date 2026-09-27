@@ -26,6 +26,8 @@ export interface VaultSection {
   id: string
   user_id: string
   domain: VaultDomain
+  is_professional: boolean
+  is_personal: boolean
   section_type: string
   label: string
   content: string
