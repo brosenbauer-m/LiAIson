@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
     .from('vault_sections')
     .select('user_id, content, section_type, domain')
     .or(keywordConditions)
-    .eq('visibility', 'public')
+    .or('is_professional.eq.true,is_personal.eq.true')
 
   if (mode !== 'all') {
     sectionsQuery = sectionsQuery.eq('domain', mode)
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         .from('vault_sections')
         .select('content')
         .eq('user_id', user.id)
-        .eq('visibility', 'public')
+        .or('is_professional.eq.true,is_personal.eq.true')
         .in('section_type', ['skills', 'hobbies', 'interests'])
         .limit(3)
 

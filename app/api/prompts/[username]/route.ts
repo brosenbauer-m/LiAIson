@@ -23,7 +23,7 @@ export async function GET(
     .from('vault_sections')
     .select('section_type, content')
     .eq('user_id', user.id)
-    .eq('visibility', 'public')
+    .or('is_professional.eq.true,is_personal.eq.true')
 
   const populated = new Set<string>(
     (sections as Pick<VaultSection, 'section_type' | 'content'>[] | null ?? [])

@@ -111,7 +111,6 @@ export default function VaultPage() {
         section_type: 'custom',
         label,
         content: '',
-        visibility: 'public',
         source: 'manual',
       })
       .select()
@@ -128,7 +127,7 @@ export default function VaultPage() {
   const loadPreview = async () => {
     if (!userId) return
     const publicSections = sections
-      .filter(s => s.visibility !== 'private' && s.content?.trim().length > 0)
+      .filter(s => (s.is_professional || s.is_personal) && s.content?.trim().length > 0)
       .map(s => `${s.label.toUpperCase()}:\n${s.content}`)
       .join('\n\n')
     setPreviewContent(publicSections || 'No public content yet.')

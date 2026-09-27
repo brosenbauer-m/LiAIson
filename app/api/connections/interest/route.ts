@@ -49,7 +49,7 @@ async function getVaultSummary(userId: string): Promise<string> {
     .from('vault_sections')
     .select('label, content')
     .eq('user_id', userId)
-    .eq('visibility', 'public')
+    .or('is_professional.eq.true,is_personal.eq.true')
 
   return (sections as Pick<VaultSection, 'label' | 'content'>[] | null ?? [])
     .filter(s => s.content && s.content.trim().length > 0)

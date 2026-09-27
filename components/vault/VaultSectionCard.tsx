@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import VisibilityToggle from '@/components/ui/VisibilityToggle'
-import type { VaultSection, VaultVisibility } from '@/types'
+import type { VaultSection } from '@/types'
 
 interface VaultSectionCardProps {
   section: VaultSection
@@ -11,26 +10,8 @@ interface VaultSectionCardProps {
   hint?: string
 }
 
-// Privacy badge component
-function PrivacyBadge({ visibility }: { visibility: VaultVisibility }) {
-  const config = {
-    public: { color: 'bg-badge-public/10 text-badge-public border-badge-public/30', label: 'Public' },
-    discoverable_only: { color: 'bg-badge-discoverable/10 text-badge-discoverable border-badge-discoverable/30', label: 'Discoverable' },
-    private: { color: 'bg-badge-private/10 text-badge-private border-badge-private/30', label: 'Private' },
-  }
-
-  const { color, label } = config[visibility]
-
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${color}`}>
-      {label}
-    </span>
-  )
-}
-
 export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
-  const [visibility, setVisibility] = useState<VaultVisibility>(section.visibility)
   const [isProfessional, setIsProfessional] = useState(section.is_professional)
   const [isPersonal, setIsPersonal] = useState(section.is_personal)
   const [saving, setSaving] = useState(false)
@@ -44,7 +25,6 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
     try {
       const updates: Partial<VaultSection> = {
         content,
-        visibility,
         is_professional: isProfessional,
         is_personal: isPersonal,
       }
@@ -86,11 +66,6 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [confirmingDelete])
 
-  const handleVisibilityChange = async (v: VaultVisibility) => {
-    setVisibility(v)
-    await onUpdate(section.id, { visibility: v })
-  }
-
   const lastConfirmed = section.last_confirmed_at
     ? new Date(section.last_confirmed_at).toLocaleDateString()
     : 'Never confirmed'
@@ -100,9 +75,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>
-          <PrivacyBadge visibility={visibility} />
         </div>
-        <VisibilityToggle value={visibility} onChange={handleVisibilityChange} />
       </div>
 
       <textarea
@@ -150,7 +123,6 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
             onClick={handleSave}
             disabled={saving || (
               content === section.content &&
-              visibility === section.visibility &&
               isProfessional === section.is_professional &&
               isPersonal === section.is_personal
             )}

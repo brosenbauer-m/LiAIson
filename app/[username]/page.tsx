@@ -55,7 +55,7 @@ export default async function ProfilePage({ params }: Props) {
     .from('vault_sections')
     .select('*')
     .eq('user_id', user.id)
-    .eq('visibility', 'public')
+    .or('is_professional.eq.true,is_personal.eq.true')
     .order('domain', { ascending: true })
 
   const publicSections = (sections as VaultSection[] | null) ?? []

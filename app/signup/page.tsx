@@ -100,7 +100,6 @@ export default function SignupPage() {
           ...s,
           user_id: data.user!.id,
           content: '',
-          visibility: 'public',
           source: 'manual',
         }))
       )

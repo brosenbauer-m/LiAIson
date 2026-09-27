@@ -1,5 +1,4 @@
 export type VaultDomain = 'professional' | 'personal' | 'custom'
-export type VaultVisibility = 'public' | 'discoverable_only' | 'private'
 export type VaultSource = 'manual' | 'file_extracted' | 'chat_extracted'
 export type DiscoverMode = 'all' | 'professional' | 'personal' | 'unlisted'
 export type ConnectionStatus = 'pending' | 'owner_opened' | 'matched' | 'declined'
@@ -31,7 +30,6 @@ export interface VaultSection {
   section_type: string
   label: string
   content: string
-  visibility: VaultVisibility
   last_confirmed_at: string | null
   source: VaultSource
   updated_at: string
