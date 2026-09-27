@@ -97,7 +97,7 @@ export default function VaultPage() {
     const label = prompt('Section name:')
     if (!label) return
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('vault_sections')
       .insert({
         user_id: userId,
@@ -116,6 +116,11 @@ export default function VaultPage() {
       })
       .select()
       .single()
+
+    if (error) {
+      setErrorMessage("Couldn't add this section — please try again")
+      return
+    }
 
     if (data) setSections(prev => [...prev, data as VaultSection])
   }
