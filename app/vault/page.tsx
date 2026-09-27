@@ -5,7 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
-import type { VaultSection } from '@/types'
+import FolderManager from '@/components/vault/FolderManager'
+import type { VaultSection, VaultFolder } from '@/types'
 
 const SECTION_HINTS: Record<string, string> = {
   skills: "Try describing not just what tools you know, but what problems you're best at solving.",
@@ -32,6 +33,7 @@ export default function VaultPage() {
   const [showPreview, setShowPreview] = useState(false)
   const [previewContent, setPreviewContent] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
+  const [folders, setFolders] = useState<VaultFolder[]>([])
 
   const supabase = createClient()
 
@@ -53,6 +55,14 @@ export default function VaultPage() {
         return
       }
       setSections(data as VaultSection[] ?? [])
+
+      const { data: folderData } = await supabase
+        .from('vault_folders')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+      setFolders(folderData as VaultFolder[] ?? [])
+
       setLoading(false)
     }
     load()
@@ -90,6 +100,38 @@ export default function VaultPage() {
     }
 
     setSections(prev => prev.filter(section => section.id !== id))
+  }, [supabase])
+
+  const createFolder = useCallback(async (name: string, color: string) => {
+    if (!userId) return
+    const { data, error } = await supabase
+      .from('vault_folders')
+      .insert({ user_id: userId, name, color })
+      .select()
+      .single()
+    if (error) { setErrorMessage("Couldn't create folder — please try again"); return }
+    if (data) setFolders(prev => [...prev, data as VaultFolder])
+  }, [supabase, userId])
+
+  const updateFolder = useCallback(async (id: string, updates: { name?: string; color?: string }) => {
+    const { data, error } = await supabase
+      .from('vault_folders')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) { setErrorMessage("Couldn't update folder — please try again"); return }
+    if (data) setFolders(prev => prev.map(f => f.id === id ? { ...f, ...data } : f))
+  }, [supabase])
+
+  const deleteFolder = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from('vault_folders')
+      .delete()
+      .eq('id', id)
+    if (error) { setErrorMessage("Couldn't delete folder — please try again"); return }
+    setFolders(prev => prev.filter(f => f.id !== id))
+    setSections(prev => prev.map(s => s.folder_id === id ? { ...s, folder_id: null } : s))
   }, [supabase])
 
   const addCustomSection = async () => {
@@ -220,6 +262,8 @@ export default function VaultPage() {
             {errorMessage}
           </p>
         )}
+
+        <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
 
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">

@@ -23,6 +23,14 @@ export interface User {
   created_at: string
 }
 
+export interface VaultFolder {
+  id: string
+  user_id: string
+  name: string
+  color: string
+  created_at: string
+}
+
 export interface VaultSection {
   id: string
   user_id: string
@@ -32,6 +40,7 @@ export interface VaultSection {
   section_type: string
   label: string
   content: string
+  folder_id: string | null
   last_confirmed_at: string | null
   source: VaultSource
   updated_at: string
