@@ -6,6 +6,7 @@ interface NotificationItemProps {
   notification: Notification
   onDismiss: (id: string) => void
   onAction?: (notification: Notification) => void
+  actionLabel?: string
 }
 
 const typeIcons: Record<string, string> = {
@@ -16,7 +17,7 @@ const typeIcons: Record<string, string> = {
   connection_interest: '✨',
 }
 
-export default function NotificationItem({ notification, onDismiss, onAction }: NotificationItemProps) {
+export default function NotificationItem({ notification, onDismiss, onAction, actionLabel = 'Take action →' }: NotificationItemProps) {
   return (
     <div className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border">
       <span className="text-xl flex-shrink-0">{typeIcons[notification.type] || '📢'}</span>
@@ -30,7 +31,7 @@ export default function NotificationItem({ notification, onDismiss, onAction }: 
             onClick={() => onAction(notification)}
             className="mt-2 text-xs text-accent-light hover:text-accent transition-colors"
           >
-            Take action →
+            {actionLabel}
           </button>
         )}
       </div>

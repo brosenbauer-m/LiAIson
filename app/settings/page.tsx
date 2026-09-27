@@ -8,10 +8,10 @@ import { createClient } from '@/lib/supabase/client'
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 
 const SCOPE_OPTIONS: { value: PublicScope; label: string; description: string }[] = [
-  { value: 'none', label: 'Closed', description: 'No one can chat with your LiAIson.' },
-  { value: 'professional', label: 'Professional only', description: 'Anyone can chat, but only your professional vault is used.' },
-  { value: 'personal', label: 'Personal only', description: 'Anyone can chat, but only your personal vault is used.' },
-  { value: 'both', label: 'Open', description: 'Anyone can chat and use your full vault.' },
+  { value: 'none', label: 'Closed', description: 'Only your connections can chat with your LiAIson.' },
+  { value: 'professional', label: 'Professional only', description: 'Anyone can chat using your professional vault.' },
+  { value: 'personal', label: 'Personal only', description: 'Anyone can chat using your personal vault.' },
+  { value: 'both', label: 'Open', description: 'Anyone can chat using your full vault.' },
 ]
 
 export default function SettingsPage() {
@@ -104,6 +104,9 @@ export default function SettingsPage() {
                   <div className="text-sm text-text-secondary">{opt.description}</div>
                 </button>
               ))}
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Your connections always get at least this level, plus any extra access you give them on the Connections page.
+              </p>
             </div>
           )}
           {success && (

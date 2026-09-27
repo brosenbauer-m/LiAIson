@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import NotificationItem from '@/components/ui/NotificationItem'
 import { createClient } from '@/lib/supabase/client'
 import type { Notification } from '@/types'
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function NotificationsPanel({ initialNotifications }: Props) {
+  const router = useRouter()
   const [notifications, setNotifications] = useState(initialNotifications)
   const supabase = createClient()
 
@@ -38,6 +40,8 @@ export default function NotificationsPanel({ initialNotifications }: Props) {
           key={n.id}
           notification={n}
           onDismiss={handleDismiss}
+          onAction={n.type === 'connection_interest' ? () => router.push('/connections') : undefined}
+          actionLabel={n.type === 'connection_interest' ? 'Review →' : undefined}
         />
       ))}
     </div>
