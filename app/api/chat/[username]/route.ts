@@ -2,7 +2,9 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { buildSystemPrompt, type ChatScope } from '@/lib/prompts/buildSystemPrompt'
+import { createClient } from '@/lib/supabase/server'
+import { buildSystemPrompt } from '@/lib/prompts/buildSystemPrompt'
+import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import type { ChatMessage, User } from '@/types'
@@ -74,18 +76,18 @@ export async function POST(
     '127.0.0.1'
 
   const body = await request.json()
-  const { messages, scope: requestedScope } = body as {
+  const { messages, token } = body as {
     messages: ChatMessage[]
     visitorId: string
-    scope?: unknown
+    token?: string
   }
-  const scope: ChatScope = requestedScope === 'professional' || requestedScope === 'personal' || requestedScope === 'both'
-    ? requestedScope
-    : 'both'
 
   if (!messages || !Array.isArray(messages)) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
+
+  const visitorSupabase = await createClient()
+  const { data: { user: visitor } } = await visitorSupabase.auth.getUser()
 
   const supabase = createServiceClient()
 
@@ -110,6 +112,11 @@ export async function POST(
       },
       { status: 429 }
     )
+  }
+
+  const scope = await resolveScope(user.id, { token, visitorUserId: visitor?.id })
+  if (scope === null) {
+    return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }
 
   // Build system prompt
