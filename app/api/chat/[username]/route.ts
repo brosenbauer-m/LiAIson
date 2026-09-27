@@ -76,10 +76,9 @@ export async function POST(
     '127.0.0.1'
 
   const body = await request.json()
-  const { messages, token } = body as {
+  const { messages } = body as {
     messages: ChatMessage[]
     visitorId: string
-    token?: string
   }
 
   if (!messages || !Array.isArray(messages)) {
@@ -114,7 +113,7 @@ export async function POST(
     )
   }
 
-  const scope = await resolveScope(user.id, { token, visitorUserId: visitor?.id })
+  const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
   if (scope === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }

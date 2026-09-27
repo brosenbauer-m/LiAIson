@@ -3,22 +3,9 @@ import type { ChatScope } from '@/lib/prompts/buildSystemPrompt'
 
 export async function resolveScope(
   ownerId: string,
-  options: { token?: string; visitorUserId?: string }
+  options: { visitorUserId?: string }
 ): Promise<ChatScope | null> {
   const supabase = createServiceClient()
-
-  if (options.token) {
-    const { data: link } = await supabase
-      .from('share_links')
-      .select('scope, user_id, revoked_at')
-      .eq('token', options.token)
-      .is('revoked_at', null)
-      .single()
-
-    if (link && link.user_id === ownerId) {
-      return link.scope as ChatScope
-    }
-  }
 
   if (options.visitorUserId) {
     const { data: connection } = await supabase

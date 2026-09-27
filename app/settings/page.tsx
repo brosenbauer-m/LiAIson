@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import ShareLinksPanel from './ShareLinksPanel'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 
 const SCOPE_OPTIONS: { value: PublicScope; label: string; description: string }[] = [
-  { value: 'none', label: 'Closed', description: 'No one can chat with your LiAIson without a share link.' },
+  { value: 'none', label: 'Closed', description: 'No one can chat with your LiAIson.' },
   { value: 'professional', label: 'Professional only', description: 'Anyone can chat, but only your professional vault is used.' },
   { value: 'personal', label: 'Personal only', description: 'Anyone can chat, but only your personal vault is used.' },
   { value: 'both', label: 'Open', description: 'Anyone can chat and use your full vault.' },
@@ -19,7 +18,6 @@ export default function SettingsPage() {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
-  const [username, setUsername] = useState('')
   const [publicScope, setPublicScope] = useState<PublicScope>('none')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -33,11 +31,10 @@ export default function SettingsPage() {
       setUserId(user.id)
       const { data } = await supabase
         .from('users')
-        .select('public_scope, username')
+        .select('public_scope')
         .eq('id', user.id)
         .single()
       if (data) setPublicScope(data.public_scope as PublicScope)
-      if (data) setUsername(data.username)
       setLoading(false)
     }
     load()
@@ -86,7 +83,7 @@ export default function SettingsPage() {
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Chat Access</h2>
           <p className="text-sm text-text-secondary leading-relaxed">
-            Control what a visitor can chat about when they land on your profile with no share link.
+            Control what a visitor can chat about when they land on your profile.
           </p>
           {loading ? (
             <p className="text-sm text-text-secondary">Loading...</p>
@@ -115,8 +112,6 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
-
-        <ShareLinksPanel username={username} />
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>
