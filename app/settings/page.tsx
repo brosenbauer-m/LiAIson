@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ShareLinksPanel from './ShareLinksPanel'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const [username, setUsername] = useState('')
   const [publicScope, setPublicScope] = useState<PublicScope>('none')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -31,10 +33,11 @@ export default function SettingsPage() {
       setUserId(user.id)
       const { data } = await supabase
         .from('users')
-        .select('public_scope')
+        .select('public_scope, username')
         .eq('id', user.id)
         .single()
       if (data) setPublicScope(data.public_scope as PublicScope)
+      if (data) setUsername(data.username)
       setLoading(false)
     }
     load()
@@ -112,6 +115,8 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        <ShareLinksPanel username={username} />
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>

@@ -12,6 +12,7 @@ import type { ChatMessage } from '@/types'
 interface Props {
   username: string
   displayName: string
+  shareToken?: string
 }
 
 // Generate a simple visitor ID for session tracking
@@ -24,7 +25,7 @@ function getVisitorId(): string {
   return id
 }
 
-export default function ProfileChatSection({ username, displayName }: Props) {
+export default function ProfileChatSection({ username, displayName, shareToken }: Props) {
   const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -71,7 +72,7 @@ export default function ProfileChatSection({ username, displayName }: Props) {
       const res = await fetch(`/api/chat/${username}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages, visitorId }),
+        body: JSON.stringify({ messages: newMessages, visitorId, token: shareToken }),
       })
 
       if (res.status === 429) {
@@ -117,7 +118,7 @@ export default function ProfileChatSection({ username, displayName }: Props) {
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, username, displayName])
+  }, [messages, loading, rateLimited, username, displayName, shareToken])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

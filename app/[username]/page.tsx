@@ -10,6 +10,7 @@ import ProfileHeader from '@/components/profile/ProfileHeader'
 
 interface Props {
   params: { username: string }
+  searchParams?: { link?: string | string[] }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage({ params, searchParams }: Props) {
   const supabase = createServiceClient()
 
   const { data: user } = await supabase
@@ -147,6 +148,7 @@ export default async function ProfilePage({ params }: Props) {
             <ProfileChatSection
               username={params.username}
               displayName={user.display_name}
+              shareToken={Array.isArray(searchParams?.link) ? searchParams.link[0] : searchParams?.link}
             />
           </div>
         </div>
