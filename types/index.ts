@@ -1,7 +1,7 @@
 export type VaultDomain = 'professional' | 'personal' | 'custom'
 export type VaultSource = 'manual' | 'file_extracted' | 'chat_extracted'
 export type DiscoverMode = 'all' | 'professional' | 'personal' | 'unlisted'
-export type ConnectionStatus = 'pending' | 'owner_opened' | 'matched' | 'declined'
+export type ConnectionStatus = 'pending' | 'accepted' | 'declined'
 export type NotificationType = 'gap_detection' | 'query_surfacing' | 'temporal_refresh' | 'connection_match' | 'connection_interest'
 export type ChatAccessScope = 'none' | 'professional' | 'personal' | 'both'
 

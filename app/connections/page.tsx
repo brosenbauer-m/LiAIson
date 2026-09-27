@@ -15,9 +15,9 @@ export default async function ConnectionsPage() {
 
   const { data: connections } = await serviceSupabase
     .from('connection_interests')
-    .select('id, allowed_scope, compatibility_summary, to_user:users!connection_interests_to_user_id_fkey(id, username, display_name, avatar_url)')
-    .eq('from_user_id', user.id)
-    .eq('status', 'matched')
+    .select('id, allowed_scope, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url)')
+    .eq('to_user_id', user.id)
+    .eq('status', 'accepted')
     .order('created_at', { ascending: false })
 
   return (
@@ -32,7 +32,7 @@ export default async function ConnectionsPage() {
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <div>
           <h1 className="text-4xl font-bold text-text-primary">Connections</h1>
-          <p className="text-text-secondary text-lg mt-2">Choose what each matched connection can access.</p>
+          <p className="text-text-secondary text-lg mt-2">Choose what each connection can access.</p>
         </div>
 
         <ConnectionsList initialConnections={connections ?? []} />

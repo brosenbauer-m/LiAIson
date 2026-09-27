@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
+type AccessScope = 'professional' | 'personal' | 'both'
+
+const ACCEPTED_SCOPES: AccessScope[] = ['professional', 'personal', 'both']
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
-  const serviceSupabase = createServiceClient()
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -14,57 +16,66 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { connectionId, accept } = await request.json()
+  const { connectionId, accept, scope } = await request.json()
 
-  if (!connectionId) {
+  if (!connectionId || typeof accept !== 'boolean') {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
+  const serviceSupabase = createServiceClient()
   const { data: connection } = await serviceSupabase
     .from('connection_interests')
-    .select('*')
+    .select('id, to_user_id, status')
     .eq('id', connectionId)
-    .single()
+    .maybeSingle()
 
-  if (!connection || connection.to_user_id !== user.id) {
+  if (!connection || connection.to_user_id !== user.id || connection.status !== 'pending') {
     return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
   }
 
+  let update: { status: 'accepted' | 'declined'; allowed_scope?: 'none' | AccessScope }
+
   if (!accept) {
-    await serviceSupabase
-      .from('connection_interests')
-      .update({ status: 'declined' })
-      .eq('id', connectionId)
-    return NextResponse.json({ status: 'declined' })
+    update = { status: 'declined' }
+  } else {
+    const { data: owner, error: ownerError } = await serviceSupabase
+      .from('users')
+      .select('public_scope')
+      .eq('id', user.id)
+      .single()
+
+    if (ownerError || !owner) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 500 })
+    }
+
+    if (owner.public_scope === 'both') {
+      update = { status: 'accepted', allowed_scope: 'both' }
+    } else {
+      if (typeof scope !== 'string' || !ACCEPTED_SCOPES.includes(scope as AccessScope)) {
+        return NextResponse.json({ error: 'A valid access scope is required' }, { status: 400 })
+      }
+      update = { status: 'accepted', allowed_scope: scope as AccessScope }
+    }
   }
 
-  // Accept: mark as owner_opened, check for reverse interest
-  await serviceSupabase
+  const { error: updateError } = await serviceSupabase
     .from('connection_interests')
-    .update({ status: 'owner_opened' })
+    .update(update)
     .eq('id', connectionId)
 
-  // Check if from_user already indicated interest back
-  const { data: reverse } = await serviceSupabase
-    .from('connection_interests')
-    .select('id')
-    .eq('from_user_id', connection.to_user_id)
-    .eq('to_user_id', connection.from_user_id)
-    .single()
-
-  if (reverse) {
-    await Promise.all([
-      serviceSupabase
-        .from('connection_interests')
-        .update({ status: 'matched' })
-        .eq('id', connectionId),
-      serviceSupabase
-        .from('connection_interests')
-        .update({ status: 'matched' })
-        .eq('id', reverse.id),
-    ])
-    return NextResponse.json({ status: 'matched' })
+  if (updateError) {
+    return NextResponse.json({ error: 'Failed to respond to connection request' }, { status: 500 })
   }
 
-  return NextResponse.json({ status: 'owner_opened' })
+  const { error: notificationError } = await serviceSupabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', user.id)
+    .filter('metadata->>connection_id', 'eq', connectionId)
+
+  if (notificationError) {
+    return NextResponse.json({ error: 'Failed to update notification' }, { status: 500 })
+  }
+
+  return NextResponse.json({ status: update.status })
 }

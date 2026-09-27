@@ -33,7 +33,7 @@ export default function ProfileChatSection({ username, displayName }: Props) {
   const [rateLimited, setRateLimited] = useState(false)
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [connectStatus, setConnectStatus] = useState<'idle' | 'pending' | 'matched' | 'loading'>('idle')
+  const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
   const [connectMessage, setConnectMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -46,6 +46,11 @@ export default function ProfileChatSection({ username, displayName }: Props) {
       .then(r => r.json())
       .then(d => setSuggestedPrompts(d.prompts ?? []))
       .catch(() => {})
+
+    fetch(`/api/connections/status?username=${encodeURIComponent(username)}`)
+      .then(r => r.json())
+      .then(d => setConnectStatus(d.status ?? 'none'))
+      .catch(() => setConnectStatus('none'))
 
     // Check auth status
     const supabase = createClient()
@@ -145,25 +150,31 @@ export default function ProfileChatSection({ username, displayName }: Props) {
         .eq('username', username)
         .single()
 
-      if (!targetUser) { setConnectStatus('idle'); return }
+      if (!targetUser) { setConnectStatus('none'); return }
 
-      const res = await fetch('/api/connections/interest', {
+      const res = await fetch('/api/connections/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ toUserId: targetUser.id }),
       })
 
-      const data = await res.json()
+      if (!res.ok) {
+        setConnectStatus('none')
+        return
+      }
 
-      if (data.matched) {
-        setConnectStatus('matched')
-        setConnectMessage("You're connected! You'll hear from each other soon.")
+      const data = await res.json()
+      if (data.status === 'requested') {
+        setConnectStatus('requested')
+        setConnectMessage('Request sent.')
+      } else if (data.status === 'connected') {
+        setConnectStatus('connected')
+        setConnectMessage("You're connected.")
       } else {
-        setConnectStatus('pending')
-        setConnectMessage("Your interest has been noted — we'll let you know if it's mutual.")
+        setConnectStatus('none')
       }
     } catch {
-      setConnectStatus('idle')
+      setConnectStatus('none')
     }
   }
 
@@ -180,19 +191,19 @@ export default function ProfileChatSection({ username, displayName }: Props) {
             <p className="text-xs text-text-secondary">Ask me anything about {displayName}</p>
           </div>
         </div>
-        <button
+        {connectStatus !== 'self' && <button
           onClick={handleConnect}
-          disabled={connectStatus === 'loading' || connectStatus === 'pending' || connectStatus === 'matched'}
+          disabled={connectStatus === 'loading' || connectStatus === 'requested' || connectStatus === 'connected'}
           className={`px-5 py-2 text-sm rounded-lg font-medium transition-all shadow-soft ${
-            connectStatus === 'matched'
+            connectStatus === 'connected'
               ? 'bg-success/10 text-success border border-success/20'
-              : connectStatus === 'pending'
+              : connectStatus === 'requested'
               ? 'bg-accent-subtle text-accent border border-accent/30'
               : 'bg-accent hover:bg-accent-light text-white'
           }`}
         >
-          {connectStatus === 'matched' ? '✓ Connected' : connectStatus === 'pending' ? '⏳ Interest noted' : connectStatus === 'loading' ? '...' : 'Connect'}
-        </button>
+          {connectStatus === 'connected' ? '✓ Connected' : connectStatus === 'requested' ? 'Requested' : connectStatus === 'loading' ? '...' : 'Connect'}
+        </button>}
       </div>
 
       {connectMessage && (
