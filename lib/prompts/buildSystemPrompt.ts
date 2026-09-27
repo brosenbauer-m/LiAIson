@@ -1,13 +1,24 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { VaultSection, User } from '@/types'
 
-export async function buildSystemPrompt(userId: string): Promise<string> {
+export type ChatScope = 'professional' | 'personal' | 'both'
+
+export async function buildSystemPrompt(userId: string, scope: ChatScope = 'both'): Promise<string> {
   const supabase = createServiceClient()
+
+  let sectionsQuery = supabase.from('vault_sections').select('*').eq('user_id', userId)
+  if (scope === 'professional') {
+    sectionsQuery = sectionsQuery.eq('is_professional', true)
+  } else if (scope === 'personal') {
+    sectionsQuery = sectionsQuery.eq('is_personal', true)
+  } else {
+    sectionsQuery = sectionsQuery.or('is_professional.eq.true,is_personal.eq.true')
+  }
+  sectionsQuery = sectionsQuery.order('domain', { ascending: true })
+
   const [{ data: user }, { data: sections }] = await Promise.all([
     supabase.from('users').select('display_name').eq('id', userId).single<Pick<User, 'display_name'>>(),
-    supabase.from('vault_sections').select('*').eq('user_id', userId)
-      .or('is_professional.eq.true,is_personal.eq.true')
-      .order('domain', { ascending: true })
+    sectionsQuery,
   ])
   const displayName = user?.display_name ?? 'this person'
   const vaultData = (sections as VaultSection[] | null ?? [])

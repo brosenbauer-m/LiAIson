@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { buildSystemPrompt } from '@/lib/prompts/buildSystemPrompt'
+import { buildSystemPrompt, type ChatScope } from '@/lib/prompts/buildSystemPrompt'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import type { ChatMessage, User } from '@/types'
@@ -74,7 +74,14 @@ export async function POST(
     '127.0.0.1'
 
   const body = await request.json()
-  const { messages } = body as { messages: ChatMessage[]; visitorId: string }
+  const { messages, scope: requestedScope } = body as {
+    messages: ChatMessage[]
+    visitorId: string
+    scope?: unknown
+  }
+  const scope: ChatScope = requestedScope === 'professional' || requestedScope === 'personal' || requestedScope === 'both'
+    ? requestedScope
+    : 'both'
 
   if (!messages || !Array.isArray(messages)) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -106,7 +113,7 @@ export async function POST(
   }
 
   // Build system prompt
-  const systemPrompt = await buildSystemPrompt(user.id)
+  const systemPrompt = await buildSystemPrompt(user.id, scope)
 
   // Stream response from Mistral
   const encoder = new TextEncoder()
