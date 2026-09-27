@@ -121,7 +121,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
             onChange={event => setIsProfessional(event.target.checked)}
             className="h-4 w-4 accent-accent"
           />
-          Show in Professional chat
+          Add to Professional Liaison
         </label>
         <label className="flex items-center gap-2 text-sm text-text-secondary">
           <input
@@ -130,7 +130,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
             onChange={event => setIsPersonal(event.target.checked)}
             className="h-4 w-4 accent-accent"
           />
-          Show in Personal chat
+          Add to Personal Liaison
         </label>
         {!isProfessional && !isPersonal && (
           <p className="text-xs text-text-muted">Private draft — not shown to any visitor yet</p>
@@ -169,6 +169,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
           <div ref={deleteConfirmationRef} className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-text-secondary">Delete this section?</span>
             <button
+              type="button"
               onClick={() => setConfirmingDelete(false)}
               disabled={deleting}
               className="px-3 py-1.5 text-sm text-text-secondary border border-border rounded-lg hover:border-text-secondary transition-all disabled:opacity-50"
@@ -176,17 +177,19 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="px-3 py-1.5 text-sm text-error border border-error/30 rounded-lg hover:bg-error/10 transition-all disabled:opacity-50"
+              className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all disabled:opacity-50"
             >
               {deleting ? 'Deleting...' : 'Yes, delete'}
             </button>
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => setConfirmingDelete(true)}
-            className="px-3 py-1.5 text-sm text-text-muted hover:text-error transition-colors"
+            className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all"
           >
             Delete section
           </button>
