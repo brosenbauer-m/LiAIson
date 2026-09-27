@@ -1,14 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
+type PublicScope = 'none' | 'professional' | 'personal' | 'both'
+
+const SCOPE_OPTIONS: { value: PublicScope; label: string; description: string }[] = [
+  { value: 'none', label: 'Closed', description: 'No one can chat with your LiAIson without a share link.' },
+  { value: 'professional', label: 'Professional only', description: 'Anyone can chat, but only your professional vault is used.' },
+  { value: 'personal', label: 'Personal only', description: 'Anyone can chat, but only your personal vault is used.' },
+  { value: 'both', label: 'Open', description: 'Anyone can chat and use your full vault.' },
+]
+
 export default function SettingsPage() {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [publicScope, setPublicScope] = useState<PublicScope>('none')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [success, setSuccess] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      setUserId(user.id)
+      const { data } = await supabase
+        .from('users')
+        .select('public_scope')
+        .eq('id', user.id)
+        .single()
+      if (data) setPublicScope(data.public_scope as PublicScope)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const handleSaveScope = async (scope: PublicScope) => {
+    if (!userId) return
+    setSaving(true)
+    setPublicScope(scope)
+    const { error } = await supabase
+      .from('users')
+      .update({ public_scope: scope })
+      .eq('id', userId)
+    setSaving(false)
+    if (!error) {
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    }
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -19,7 +64,6 @@ export default function SettingsPage() {
   const handleDeleteAccount = async () => {
     if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return
     setDeleting(true)
-    // In production, call a server-side function that deletes all user data
     await supabase.auth.signOut()
     router.push('/')
   }
@@ -35,6 +79,39 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <h1 className="text-4xl font-bold text-text-primary">Settings</h1>
+
+        <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+          <h2 className="font-semibold text-text-primary text-lg">Chat Access</h2>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            Control what a visitor can chat about when they land on your profile with no share link.
+          </p>
+          {loading ? (
+            <p className="text-sm text-text-secondary">Loading...</p>
+          ) : (
+            <div className="space-y-3">
+              {SCOPE_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSaveScope(opt.value)}
+                  disabled={saving}
+                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    publicScope === opt.value
+                      ? 'border-accent bg-accent-tint'
+                      : 'border-border hover:border-accent/50'
+                  }`}
+                >
+                  <div className="font-medium text-text-primary">{opt.label}</div>
+                  <div className="text-sm text-text-secondary">{opt.description}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          {success && (
+            <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
+              Saved ✓
+            </div>
+          )}
+        </div>
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>
