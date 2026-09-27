@@ -26,6 +26,7 @@ export default function VaultPage() {
 
   const [sections, setSections] = useState<VaultSection[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('professional')
   const [showWelcome, setShowWelcome] = useState(welcome)
   const [showPreview, setShowPreview] = useState(false)
@@ -40,13 +41,17 @@ export default function VaultPage() {
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('vault_sections')
         .select('*')
         .eq('user_id', user.id)
         .order('domain', { ascending: true })
-        .order('created_at', { ascending: true })
 
+      if (error) {
+        setErrorMessage("Couldn't load your vault — please refresh")
+        setLoading(false)
+        return
+      }
       setSections(data as VaultSection[] ?? [])
       setLoading(false)
     }
@@ -54,16 +59,37 @@ export default function VaultPage() {
   }, [])
 
   const updateSection = useCallback(async (id: string, updates: Partial<VaultSection>) => {
-    const { data } = await supabase
+    setErrorMessage(null)
+    const { data, error } = await supabase
       .from('vault_sections')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single()
 
+    if (error) {
+      setErrorMessage("Couldn't save this section — please try again")
+      throw error
+    }
+
     if (data) {
       setSections(prev => prev.map(s => s.id === id ? { ...s, ...data } : s))
     }
+  }, [supabase])
+
+  const deleteSection = useCallback(async (id: string) => {
+    setErrorMessage(null)
+    const { error } = await supabase
+      .from('vault_sections')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      setErrorMessage("Couldn't delete this section — please try again")
+      throw error
+    }
+
+    setSections(prev => prev.filter(section => section.id !== id))
   }, [supabase])
 
   const addCustomSection = async () => {
@@ -175,6 +201,12 @@ export default function VaultPage() {
           </button>
         </div>
 
+        {errorMessage && (
+          <p role="alert" className="mb-5 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
+            {errorMessage}
+          </p>
+        )}
+
         {/* Tabs */}
         <div className="flex gap-1 mb-8 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">
           {(['professional', 'personal'] as Tab[]).map(tab => (
@@ -199,6 +231,7 @@ export default function VaultPage() {
               key={section.id}
               section={section}
               onUpdate={updateSection}
+              onDelete={deleteSection}
               hint={SECTION_HINTS[section.section_type]}
             />
           ))}

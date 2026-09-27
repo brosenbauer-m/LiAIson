@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import VisibilityToggle from '@/components/ui/VisibilityToggle'
 import type { VaultSection, VaultVisibility } from '@/types'
 
 interface VaultSectionCardProps {
   section: VaultSection
   onUpdate: (id: string, data: Partial<VaultSection>) => Promise<void>
+  onDelete: (id: string) => Promise<void>
   hint?: string
 }
 
@@ -27,19 +28,52 @@ function PrivacyBadge({ visibility }: { visibility: VaultVisibility }) {
   )
 }
 
-export default function VaultSectionCard({ section, onUpdate, hint }: VaultSectionCardProps) {
+export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [visibility, setVisibility] = useState<VaultVisibility>(section.visibility)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const deleteConfirmationRef = useRef<HTMLDivElement>(null)
 
   const handleSave = async () => {
     setSaving(true)
-    await onUpdate(section.id, { content, visibility })
-    setSaving(false)
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 1500)
+    try {
+      await onUpdate(section.id, { content, visibility })
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 1500)
+    } catch {
+      return
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await onDelete(section.id)
+      setConfirmingDelete(false)
+    } catch {
+      return
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!confirmingDelete) return
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !deleteConfirmationRef.current?.contains(event.target)) {
+        setConfirmingDelete(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [confirmingDelete])
 
   const handleVisibilityChange = async (v: VaultVisibility) => {
     setVisibility(v)
@@ -88,6 +122,35 @@ export default function VaultSectionCard({ section, onUpdate, hint }: VaultSecti
             {saving ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
           </button>
         </div>
+      </div>
+
+      <div className="flex justify-end border-t border-border pt-3">
+        {confirmingDelete ? (
+          <div ref={deleteConfirmationRef} className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-text-secondary">Delete this section?</span>
+            <button
+              onClick={() => setConfirmingDelete(false)}
+              disabled={deleting}
+              className="px-3 py-1.5 text-sm text-text-secondary border border-border rounded-lg hover:border-text-secondary transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-3 py-1.5 text-sm text-error border border-error/30 rounded-lg hover:bg-error/10 transition-all disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Yes, delete'}
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={() => setConfirmingDelete(true)}
+            className="px-3 py-1.5 text-sm text-text-muted hover:text-error transition-colors"
+          >
+            Delete section
+          </button>
+        )}
       </div>
     </div>
   )
