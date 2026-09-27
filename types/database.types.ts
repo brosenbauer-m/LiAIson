@@ -529,13 +529,13 @@ isOneToOne: false
           Tables: {
             "connection_interests": {
                   Row: {
-                    "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"status": string | null,"to_user_id": string
+                    "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"status": string,"to_user_id": string
                   }
                   Insert: {
-                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id": string,"id"?: string,"status"?: string | null,"to_user_id": string
+                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id": string,"id"?: string,"status"?: string,"to_user_id": string
                   }
                   Update: {
-                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id"?: string,"id"?: string,"status"?: string | null,"to_user_id"?: string
+                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id"?: string,"id"?: string,"status"?: string,"to_user_id"?: string
                   }
                   Relationships: [
                     {
