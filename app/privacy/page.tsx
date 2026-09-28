@@ -67,7 +67,7 @@ export default function PrivacyPage() {
               <li>Vercel – application hosting (servers in Frankfurt, Germany)</li>
               <li>Mistral AI – AI responses (EU)</li>
               <li>Upstash – rate limiting (Frankfurt, Germany)</li>
-              <li>Postmark – email notifications (US-based; see their privacy policy for how EU data transfers are safeguarded)</li>
+              <li>Scaleway – email notifications (EU-based, hosted in Paris, France)</li>
             </ul>
             <p>Each service has its own privacy policy.</p>
           </section>
