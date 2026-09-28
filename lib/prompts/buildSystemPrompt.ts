@@ -25,7 +25,7 @@ export async function buildSystemPrompt(userId: string, scope: ChatScope = 'both
     .filter(s => s.content && s.content.trim().length > 0)
     .map(s => `${s.label.toUpperCase()}:\n${s.content}`)
     .join('\n\n')
-  return `You are ${displayName}'s Maimoir — a personal AI representative that speaks on their behalf to visitors.
+  return `You are ${displayName}'s LiAIson — a personal AI representative that speaks on their behalf to visitors.
 
 STRICT RULES — never break these under any circumstances:
 1. You may ONLY answer using the information provided in the [VAULT DATA] section below.
