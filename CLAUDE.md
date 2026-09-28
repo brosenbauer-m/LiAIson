@@ -15,7 +15,7 @@ Supabase is the database (Postgres + Auth + Storage).
 Vercel deploys the frontend from GitHub.
 Mistral AI (French company, EU-hosted) powers all LiAIson AI agents (chat, notifications, discovery, compatibility) via lib/mistral/client.ts, using MISTRAL_API_KEY. Models: mistral-medium-latest (chat), mistral-small-latest (fast tasks).
 Upstash Redis handles rate limiting on public LiAIson chat endpoints.
-Postmark handles all outbound email (weekly notification digests), sending from contact@my-liaison.app using POSTMARK_SERVER_TOKEN.
+Scaleway Transactional Email (French company, Paris region fr-par) handles all outbound email (weekly notification digests) via lib/email/scaleway.ts, sending from noreply@my-liaison.app using SCW_SECRET_KEY and SCW_PROJECT_ID.
 Titan hosts the mailbox that receives mail at contact@my-liaison.app.
 
 The live domain is www.my-liaison.app (primary). The apex my-liaison.app redirects to www.
@@ -36,7 +36,7 @@ Therefore:
 - Vercel serverless functions: Frankfurt, Germany (fra1).
 - Mistral AI: EU-hosted.
 - Upstash Redis (rate limiting): Frankfurt, Germany (eu-central-1).
-- Postmark (email): US-based provider.
+- Scaleway Transactional Email: EU-hosted, Paris, France (fr-par).
 - Rule: Prefer EU-hosted providers and EU regions for any new service. Never add a new third-party service that receives user data without updating app/privacy/page.tsx.
 
 ---
@@ -79,7 +79,7 @@ The LiAIson system prompt is the security boundary of the product. Any change to
 RLS policies on \`vault_sections\` are critical. The rule is absolute: a user can never read another user's \`private\` or \`discoverable_only\` vault sections via any API route. Any change touching vault visibility logic is **high risk**.
 
 ### Notification System
-The cron job at \`/api/cron/notifications\` is protected by \`CRON_SECRET\`. Never remove this check. Changes to notification logic should not touch the security header validation. Email is sent via Postmark using \`POSTMARK_SERVER_TOKEN\`, from contact@my-liaison.app.
+The cron job at \`/api/cron/notifications\` is protected by \`CRON_SECRET\`. Never remove this check. Changes to notification logic should not touch the security header validation. Email is sent via Scaleway Transactional Email (\`lib/email/scaleway.ts\`) using \`SCW_SECRET_KEY\` and \`SCW_PROJECT_ID\`, from noreply@my-liaison.app.
 
 ### File Upload Pipeline
 The upload route extracts text from PDFs and Word docs server-side. Raw files are stored in Supabase Storage (\`uploads\` bucket). Extracted text goes into \`vault_sections\` with \`source = 'file_extracted'\`. Never store raw file content directly in vault_sections content field — always confirm extraction first.
@@ -212,6 +212,7 @@ lib/
   prompts/buildSystemPrompt.ts ← AI boundary (HIGH RISK)
   ratelimit/index.ts        ← Upstash Redis rate limiter
   notifications/index.ts    ← notification generators
+  email/scaleway.ts         ← Scaleway Transactional Email sender
   supabase/                 ← client / server / service clients
 
 supabase/
