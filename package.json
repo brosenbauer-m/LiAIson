@@ -1,5 +1,5 @@
 {
-  "name": "maimoir-app",
+  "name": "liaison-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -18,7 +18,6 @@
     "framer-motion": "^12.35.2",
     "mammoth": "^1.11.0",
     "next": "14.2.35",
-    "postmark": "^4.0.7",
     "react": "^18",
     "react-dom": "^18",
     "unpdf": "^1.4.0"
