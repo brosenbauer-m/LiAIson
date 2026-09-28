@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { VaultSection, VisitorQueryLog, Notification } from '@/types'
-import { ServerClient } from 'postmark'
+import { sendEmail, isEmailConfigured, escapeHtml } from '@/lib/email/scaleway'
 
 const SENSITIVE_PATTERNS = [
   /address/i, /phone/i, /financ/i, /explicit/i, /password/i, /ssn/i, /credit.?card/i
@@ -101,27 +101,29 @@ export async function generateNotifications(userId: string): Promise<void> {
   if (notifications.length > 0) {
     await supabase.from('notifications').insert(notifications)
 
-    // Send email digest via Postmark
+    // Send email digest via Scaleway Transactional Email
     const { data: userData } = await supabase
       .from('users')
       .select('display_name')
       .eq('id', userId)
       .single()
 
-    const postmarkToken = process.env.POSTMARK_SERVER_TOKEN
-
-    if (userData && postmarkToken) {
+    if (userData && isEmailConfigured()) {
       try {
         const { data: authUser } = await supabase.auth.admin.getUserById(userId)
         const userEmail = authUser?.user?.email
         if (!userEmail) throw new Error('No email found for user')
 
-        const postmark = new ServerClient(postmarkToken)
-        await postmark.sendEmail({
-          From: 'Maimoir <noreply@my-liaison.app>',
-          To: userEmail,
-          Subject: 'Your Maimoir has some questions for you 👋',
-          HtmlBody: `<h2>Hi ${userData.display_name}!</h2><p>Your Maimoir has ${notifications.length} update${notifications.length > 1 ? 's' : ''} for you.</p><ul>${notifications.map(n => `<li>${n.message}</li>`).join('')}</ul><p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">View your dashboard</a></p>`,
+        const count = notifications.length
+        const plural = count > 1 ? 's' : ''
+        const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+
+        await sendEmail({
+          from: { email: 'noreply@my-liaison.app', name: 'Maimoir' },
+          to: userEmail,
+          subject: 'Your Maimoir has some questions for you 👋',
+          html: `<h2>Hi ${escapeHtml(userData.display_name ?? '')}!</h2><p>Your Maimoir has ${count} update${plural} for you.</p><ul>${notifications.map(n => `<li>${escapeHtml(n.message)}</li>`).join('')}</ul><p><a href="${dashboardUrl}">View your dashboard</a></p>`,
+          text: `Hi ${userData.display_name ?? ''}!\n\nYour Maimoir has ${count} update${plural} for you:\n\n${notifications.map(n => `- ${n.message}`).join('\n')}\n\nView your dashboard: ${dashboardUrl}`,
         })
       } catch (e) {
         console.error('Email send failed:', e)
