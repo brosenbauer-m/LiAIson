@@ -57,7 +57,7 @@ export async function generateNotifications(userId: string): Promise<void> {
       notifications.push({
         user_id: userId,
         type: 'query_surfacing',
-        message: `Visitors have been asking about '${query.topic_cluster}' — would you like to share that with your Maimoir?`,
+        message: `Visitors have been asking about '${query.topic_cluster}' — would you like to share that with your LiAIson?`,
         metadata: { query_id: query.id, topic: query.topic_cluster },
         read: false,
       })
@@ -119,11 +119,11 @@ export async function generateNotifications(userId: string): Promise<void> {
         const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
 
         await sendEmail({
-          from: { email: 'noreply@my-liaison.app', name: 'Maimoir' },
+          from: { email: 'noreply@my-liaison.app', name: 'LiAIson' },
           to: userEmail,
-          subject: 'Your Maimoir has some questions for you 👋',
-          html: `<h2>Hi ${escapeHtml(userData.display_name ?? '')}!</h2><p>Your Maimoir has ${count} update${plural} for you.</p><ul>${notifications.map(n => `<li>${escapeHtml(n.message)}</li>`).join('')}</ul><p><a href="${dashboardUrl}">View your dashboard</a></p>`,
-          text: `Hi ${userData.display_name ?? ''}!\n\nYour Maimoir has ${count} update${plural} for you:\n\n${notifications.map(n => `- ${n.message}`).join('\n')}\n\nView your dashboard: ${dashboardUrl}`,
+          subject: 'Your LiAIson has some questions for you 👋',
+          html: `<h2>Hi ${escapeHtml(userData.display_name ?? '')}!</h2><p>Your LiAIson has ${count} update${plural} for you.</p><ul>${notifications.map(n => `<li>${escapeHtml(n.message)}</li>`).join('')}</ul><p><a href="${dashboardUrl}">View your dashboard</a></p>`,
+          text: `Hi ${userData.display_name ?? ''}!\n\nYour LiAIson has ${count} update${plural} for you:\n\n${notifications.map(n => `- ${n.message}`).join('\n')}\n\nView your dashboard: ${dashboardUrl}`,
         })
       } catch (e) {
         console.error('Email send failed:', e)
