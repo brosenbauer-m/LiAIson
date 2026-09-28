@@ -16,10 +16,10 @@ interface Props {
 
 // Generate a simple visitor ID for session tracking
 function getVisitorId(): string {
-  let id = sessionStorage.getItem('maimoir_visitor_id')
+  let id = sessionStorage.getItem('liaison_visitor_id')
   if (!id) {
     id = Math.random().toString(36).slice(2) + Date.now().toString(36)
-    sessionStorage.setItem('maimoir_visitor_id', id)
+    sessionStorage.setItem('liaison_visitor_id', id)
   }
   return id
 }
