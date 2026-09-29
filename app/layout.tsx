@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SiteHeader from "@/components/nav/SiteHeader";
 
 export const metadata: Metadata = {
   title: "LiAIson — Your AI. Your Story. On Your Terms.",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-background text-text-primary font-sans">
+        <SiteHeader />
         {children}
       </body>
     </html>

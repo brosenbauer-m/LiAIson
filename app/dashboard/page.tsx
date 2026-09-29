@@ -47,19 +47,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b border-border bg-surface shadow-sm sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-accent">LiAIson</Link>
-          <div className="flex items-center gap-6">
-            <Link href="/vault" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Vault</Link>
-            <Link href="/profile" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Profile</Link>
-            <Link href="/discover" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Discover</Link>
-            <Link href="/connections" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Connections</Link>
-            <Link href="/settings" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Settings</Link>
-          </div>
-        </div>
-      </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-12 space-y-8">
         {/* Welcome */}
@@ -77,14 +64,12 @@ export default async function DashboardPage() {
             <div className="flex-1 bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-secondary font-mono truncate">
               {profileUrl}
             </div>
-            <a
+            <Link
               href={`/${profile?.username}`}
-              target="_blank"
-              rel="noopener noreferrer"
               className="px-6 py-3 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft hover:shadow-card whitespace-nowrap text-center"
             >
               View Profile
-            </a>
+            </Link>
           </div>
         </div>
 

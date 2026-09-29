@@ -52,17 +52,6 @@ export default function DiscoverPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border bg-surface/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-accent-light">LiAIson</Link>
-          <div className="flex items-center gap-4">
-            <Link href="/login" className="text-text-secondary hover:text-text-primary text-sm transition-colors">Login</Link>
-            <Link href="/signup" className="px-4 py-2 bg-accent hover:bg-accent/90 text-white text-sm rounded-lg transition-colors">
-              Sign Up
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       <div className="max-w-xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-text-primary mb-3 text-center">Discover</h1>

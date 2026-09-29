@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { User, ContactLink } from '@/types'
 
@@ -83,12 +82,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b border-border bg-surface shadow-sm sticky top-0 z-40">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="font-bold text-xl text-accent">LiAIson</Link>
-          <Link href="/dashboard" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">← Dashboard</Link>
-        </div>
-      </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <h1 className="text-4xl font-bold text-text-primary">Edit Profile</h1>

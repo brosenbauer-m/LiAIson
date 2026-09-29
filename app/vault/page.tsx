@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
@@ -30,8 +29,6 @@ export default function VaultPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('professional')
   const [showWelcome, setShowWelcome] = useState(welcome)
-  const [showPreview, setShowPreview] = useState(false)
-  const [previewContent, setPreviewContent] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [folders, setFolders] = useState<VaultFolder[]>([])
 
@@ -166,15 +163,6 @@ export default function VaultPage() {
     if (data) setSections(prev => [...prev, data as VaultSection])
   }
 
-  const loadPreview = async () => {
-    if (!userId) return
-    const publicSections = sections
-      .filter(s => (s.is_professional || s.is_personal) && s.content?.trim().length > 0)
-      .map(s => `${s.label.toUpperCase()}:\n${s.content}`)
-      .join('\n\n')
-    setPreviewContent(publicSections || 'No public content yet.')
-    setShowPreview(true)
-  }
 
   const filtered = sections.filter(section => {
     if (activeTab === 'professional') return section.is_professional
@@ -211,37 +199,7 @@ export default function VaultPage() {
         </div>
       )}
 
-      {/* Nav */}
-      <nav className="border-b border-border bg-surface shadow-sm sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/dashboard" className="font-bold text-xl text-accent">LiAIson</Link>
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">Dashboard</Link>
-            <button
-              onClick={loadPreview}
-              className="text-text-secondary hover:text-accent text-sm font-medium transition-colors"
-            >
-              Preview
-            </button>
-          </div>
-        </div>
-      </nav>
 
-      {/* Preview Panel */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 px-4">
-          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-card">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-semibold text-text-primary text-lg">Your LiAIson&apos;s knowledge preview</h3>
-              <button onClick={() => setShowPreview(false)} className="text-text-secondary hover:text-error text-xl">✕</button>
-            </div>
-            <p className="text-sm text-text-secondary mb-4">This is the information visible to your LiAIson (public + discoverable sections)</p>
-            <pre className="flex-1 overflow-y-auto text-sm text-text-primary font-mono whitespace-pre-wrap bg-background rounded-lg p-4 border border-border">
-              {previewContent}
-            </pre>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
@@ -249,12 +207,6 @@ export default function VaultPage() {
             <h1 className="text-4xl font-bold text-text-primary">My Vault</h1>
             <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
           </div>
-          <button
-            onClick={loadPreview}
-            className="px-5 py-2.5 border-2 border-border hover:border-accent text-text-primary hover:text-accent text-sm font-medium rounded-lg transition-all hidden sm:block"
-          >
-            Live Preview
-          </button>
         </div>
 
         {errorMessage && (

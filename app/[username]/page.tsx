@@ -4,7 +4,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 import ProfileChatSection from './ProfileChatSection'
 import ContactLinks from '@/components/profile/ContactLinks'
 import TagChip from '@/components/ui/TagChip'
-import Link from 'next/link'
 import type { User, VaultSection } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 
@@ -75,17 +74,6 @@ export default async function ProfilePage({ params }: Props) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <nav className="border-b border-border bg-surface shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="font-bold text-xl text-accent">LiAIson</Link>
-          <Link
-            href="/signup"
-            className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft hover:shadow-card"
-          >
-            Create yours →
-          </Link>
-        </div>
-      </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">

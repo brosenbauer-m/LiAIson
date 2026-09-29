@@ -7,29 +7,9 @@ import { fadeInUp, scaleIn } from '@/lib/animations'
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-surface/95 backdrop-blur-sm shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="font-bold text-xl text-accent">LiAIson</span>
-          <div className="flex items-center gap-6">
-            <Link href="/discover" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">
-              Discover
-            </Link>
-            <Link href="/login" className="text-text-secondary hover:text-accent text-sm font-medium transition-colors">
-              Login
-            </Link>
-            <Link
-              href="/signup"
-              className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
 
       {/* Hero */}
-      <section className="pt-40 pb-24 px-4">
+      <section className="pt-24 pb-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             variants={fadeInUp}
