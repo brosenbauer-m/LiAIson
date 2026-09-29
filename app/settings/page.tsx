@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Toggle from '@/components/ui/Toggle'
+import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 type PublicLevel = 'professional' | 'personal' | 'both'
@@ -340,6 +341,8 @@ export default function SettingsPage() {
             )}
           </div>
         )}
+
+        {userId && <SpendingLimitCard />}
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>

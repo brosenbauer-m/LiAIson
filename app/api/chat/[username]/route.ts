@@ -11,6 +11,7 @@ import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
 import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
+import { isOverSpendLimit } from '@/lib/usage/spend'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -139,6 +140,16 @@ export async function POST(
   const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
   if (scope === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
+  }
+
+  // Pay-as-you-go: the owner's monthly spending limit. When it is reached the
+  // LiAIson pauses for everyone until the 1st of next month or until the owner
+  // raises the limit. Fails open if usage can't be read.
+  if (await isOverSpendLimit(user.id)) {
+    return NextResponse.json(
+      { error: `${user.display_name}'s LiAIson is taking a break until next month.`, paused: true },
+      { status: 429 }
+    )
   }
 
   // Signed-out visitors: max 3 messages per profile, enforced on the server.

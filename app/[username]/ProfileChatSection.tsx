@@ -32,6 +32,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   const [loading, setLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const [rateLimited, setRateLimited] = useState(false)
+  const [paused, setPaused] = useState(false)
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
@@ -65,7 +66,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   }, [messages, streamingContent])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || loading || rateLimited || anonLimitReached) return
+    if (!text.trim() || loading || rateLimited || paused || anonLimitReached) return
 
     const userMsg: ChatMessage = { role: 'user', content: text }
     const newMessages = [...messages, userMsg]
@@ -84,7 +85,8 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
 
       if (res.status === 429) {
         const data = await res.json()
-        setRateLimited(true)
+        if (data.paused) setPaused(true)
+        else setRateLimited(true)
         setMessages(prev => [
           ...prev,
           { role: 'assistant', content: data.error ?? `You've reached the daily limit. Sign up to connect with ${displayName} directly.` },
@@ -125,7 +127,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, anonLimitReached, username, displayName])
+  }, [messages, loading, rateLimited, paused, anonLimitReached, username, displayName])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -246,7 +248,13 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
 
       {/* Input */}
       <div className="border-t border-border p-5 bg-surface/30">
-        {rateLimited || anonLimitReached ? (
+        {paused ? (
+          <div className="text-center py-3">
+            <p className="text-sm text-text-secondary">
+              {displayName}&apos;s LiAIson is taking a break until next month.
+            </p>
+          </div>
+        ) : rateLimited || anonLimitReached ? (
           <div className="text-center py-3">
             <p className="text-sm text-text-secondary mb-2">
               You&apos;ve had a great conversation!{' '}
