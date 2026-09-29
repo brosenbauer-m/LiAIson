@@ -36,10 +36,10 @@ const FILTER_OPTIONS: { value: ConnectionFilter; label: string }[] = [
 ]
 
 const PUBLIC_SCOPE_LABELS: Record<ChatAccessScope, string> = {
-  none: 'Closed',
-  professional: 'Professional only',
-  personal: 'Personal only',
-  both: 'Open',
+  none: 'Private',
+  professional: 'Public (Professional only)',
+  personal: 'Public (Personal only)',
+  both: 'Public (Both)',
 }
 
 interface Props {
@@ -135,7 +135,7 @@ export default function ConnectionsList({ initialConnections, publicScope }: Pro
   return (
     <div className={`space-y-4 ${selectedIds.size > 0 ? 'pb-32' : ''}`}>
       <p className="text-sm text-text-secondary" title={`Default follows your Chat Access setting: ${PUBLIC_SCOPE_LABELS[publicScope]}.`}>
-        Default means they see the same as everyone else (your Chat Access setting). Connections always get at least that.
+        Default means they get the same as everyone else based on your account setting (Public or Private). Connections always get at least that.
       </p>
 
       {connections.length === 0 ? (

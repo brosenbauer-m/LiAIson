@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import type { User, ContactLink, DiscoverMode } from '@/types'
+import type { User, ContactLink } from '@/types'
 
 const PLATFORMS = ['Instagram', 'LinkedIn', 'WhatsApp', 'Twitter/X', 'GitHub', 'Email', 'Website', 'Other']
 
@@ -17,8 +17,6 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState('')
   const [shortBio, setShortBio] = useState('')
   const [contactLinks, setContactLinks] = useState<ContactLink[]>([])
-  const [isDiscoverable, setIsDiscoverable] = useState(false)
-  const [discoverMode, setDiscoverMode] = useState<DiscoverMode>('all')
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
@@ -34,8 +32,6 @@ export default function ProfilePage() {
         setDisplayName(data.display_name)
         setShortBio(data.short_bio ?? '')
         setContactLinks(data.contact_links ?? [])
-        setIsDiscoverable(data.is_discoverable)
-        setDiscoverMode(data.discover_mode ?? 'all')
         setAvatarUrl(data.avatar_url)
       }
       setLoading(false)
@@ -67,8 +63,6 @@ export default function ProfilePage() {
         display_name: displayName,
         short_bio: shortBio.substring(0, 160),
         contact_links: contactLinks,
-        is_discoverable: isDiscoverable,
-        discover_mode: discoverMode,
         avatar_url: avatarUrl,
       })
       .eq('id', profile.id)
@@ -180,41 +174,6 @@ export default function ProfilePage() {
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Discoverability */}
-          <div className="pt-6 border-t border-border">
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-semibold text-text-primary uppercase tracking-wide">Discoverable</label>
-              <button
-                onClick={() => setIsDiscoverable(!isDiscoverable)}
-                className={`w-14 h-7 rounded-full transition-all ${isDiscoverable ? 'bg-accent' : 'bg-border'} relative shadow-soft`}
-              >
-                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-soft transition-transform ${isDiscoverable ? 'translate-x-7' : 'translate-x-1'}`} />
-              </button>
-            </div>
-            <p className="text-sm text-text-secondary mb-4">Allow others to find you on the Discover page</p>
-
-            {isDiscoverable && (
-              <div>
-                <label className="block text-xs font-semibold text-text-primary mb-2 uppercase tracking-wide">Discover Mode</label>
-                <div className="flex gap-2">
-                  {(['all', 'professional', 'personal'] as DiscoverMode[]).map(mode => (
-                    <button
-                      key={mode}
-                      onClick={() => setDiscoverMode(mode)}
-                      className={`px-4 py-2 text-sm rounded-lg border-2 transition-all capitalize font-medium ${
-                        discoverMode === mode
-                          ? 'bg-accent text-white border-accent shadow-soft'
-                          : 'border-border text-text-secondary hover:border-accent'
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
 
           {success && (

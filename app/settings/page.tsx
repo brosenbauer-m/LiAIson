@@ -6,12 +6,12 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
+type PublicLevel = 'professional' | 'personal' | 'both'
 
-const SCOPE_OPTIONS: { value: PublicScope; label: string; description: string }[] = [
-  { value: 'none', label: 'Closed', description: 'Only your connections can chat with your LiAIson.' },
-  { value: 'professional', label: 'Professional only', description: 'Anyone can chat using your professional vault.' },
-  { value: 'personal', label: 'Personal only', description: 'Anyone can chat using your personal vault.' },
-  { value: 'both', label: 'Open', description: 'Anyone can chat using your full vault.' },
+const PUBLIC_LEVEL_OPTIONS: { value: PublicLevel; label: string; description: string }[] = [
+  { value: 'professional', label: 'Professional only', description: 'Anyone can talk to your professional LiAIson (uses your professional vault).' },
+  { value: 'personal', label: 'Personal only', description: 'Anyone can talk to your personal LiAIson (uses your personal vault).' },
+  { value: 'both', label: 'Both', description: 'Anyone can talk to both (uses your professional and personal vaults).' },
 ]
 
 export default function SettingsPage() {
@@ -22,9 +22,13 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [publicScope, setPublicScope] = useState<PublicScope>('none')
+  const [lastPublicLevel, setLastPublicLevel] = useState<PublicLevel>('both')
+  const [isDiscoverable, setIsDiscoverable] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [discoverableSaving, setDiscoverableSaving] = useState(false)
+  const [discoverableSuccess, setDiscoverableSuccess] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -34,10 +38,15 @@ export default function SettingsPage() {
       setUserId(user.id)
       const { data } = await supabase
         .from('users')
-        .select('public_scope')
+        .select('public_scope, is_discoverable')
         .eq('id', user.id)
         .single()
-      if (data) setPublicScope(data.public_scope as PublicScope)
+      if (data) {
+        const scope = data.public_scope as PublicScope
+        setPublicScope(scope)
+        if (scope !== 'none') setLastPublicLevel(scope)
+        setIsDiscoverable(data.is_discoverable)
+      }
       setLoading(false)
     }
     load()
@@ -47,6 +56,7 @@ export default function SettingsPage() {
     if (!userId) return
     setSaving(true)
     setPublicScope(scope)
+    if (scope !== 'none') setLastPublicLevel(scope)
     const { error } = await supabase
       .from('users')
       .update({ public_scope: scope })
@@ -55,6 +65,30 @@ export default function SettingsPage() {
     if (!error) {
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
+    }
+  }
+
+  const handleSelectVisibility = (visibility: 'public' | 'private') => {
+    if (visibility === 'private') {
+      handleSaveScope('none')
+    } else {
+      handleSaveScope(lastPublicLevel)
+    }
+  }
+
+  const handleToggleDiscoverable = async () => {
+    if (!userId) return
+    const next = !isDiscoverable
+    setDiscoverableSaving(true)
+    setIsDiscoverable(next)
+    const { error } = await supabase
+      .from('users')
+      .update({ is_discoverable: next })
+      .eq('id', userId)
+    setDiscoverableSaving(false)
+    if (!error) {
+      setDiscoverableSuccess(true)
+      setTimeout(() => setDiscoverableSuccess(false), 3000)
     }
   }
 
@@ -104,35 +138,91 @@ export default function SettingsPage() {
         <h1 className="text-4xl font-bold text-text-primary">Settings</h1>
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
-          <h2 className="font-semibold text-text-primary text-lg">Chat Access</h2>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Control what a visitor can chat about when they land on your profile.
-          </p>
+          <h2 className="font-semibold text-text-primary text-lg">Who can talk to your LiAIson</h2>
           {loading ? (
             <p className="text-sm text-text-secondary">Loading...</p>
           ) : (
-            <div className="space-y-3">
-              {SCOPE_OPTIONS.map(opt => (
+            <div className="space-y-5">
+              <div className="flex rounded-lg border-2 border-border overflow-hidden">
                 <button
-                  key={opt.value}
-                  onClick={() => handleSaveScope(opt.value)}
+                  onClick={() => handleSelectVisibility('public')}
                   disabled={saving}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                    publicScope === opt.value
-                      ? 'border-accent bg-accent-tint'
-                      : 'border-border hover:border-accent/50'
+                  className={`flex-1 py-2.5 text-sm font-medium transition-all ${
+                    publicScope !== 'none' ? 'bg-accent text-white' : 'text-text-secondary hover:bg-accent-tint'
                   }`}
                 >
-                  <div className="font-medium text-text-primary">{opt.label}</div>
-                  <div className="text-sm text-text-secondary">{opt.description}</div>
+                  Public
                 </button>
-              ))}
+                <button
+                  onClick={() => handleSelectVisibility('private')}
+                  disabled={saving}
+                  className={`flex-1 py-2.5 text-sm font-medium transition-all ${
+                    publicScope === 'none' ? 'bg-accent text-white' : 'text-text-secondary hover:bg-accent-tint'
+                  }`}
+                >
+                  Private
+                </button>
+              </div>
+
+              {publicScope !== 'none' ? (
+                <div className="space-y-3">
+                  {PUBLIC_LEVEL_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSaveScope(opt.value)}
+                      disabled={saving}
+                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                        publicScope === opt.value
+                          ? 'border-accent bg-accent-tint'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      <div className="font-medium text-text-primary">{opt.label}</div>
+                      <div className="text-sm text-text-secondary">{opt.description}</div>
+                    </button>
+                  ))}
+                  <p className="text-sm text-text-secondary leading-relaxed">
+                    Visitors without an account can send up to 3 messages.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  Only your connections can talk to your LiAIson. When you accept a connection request, you choose what they can access — you can change it anytime on the{' '}
+                  <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.
+                </p>
+              )}
+
               <p className="text-sm text-text-secondary leading-relaxed">
-                Your connections always get at least this level, plus any extra access you give them on the Connections page.
+                People you&apos;ve already connected with keep the access you gave them.
               </p>
             </div>
           )}
           {success && (
+            <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
+              Saved ✓
+            </div>
+          )}
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+          <h2 className="font-semibold text-text-primary text-lg">Discoverable</h2>
+          {loading ? (
+            <p className="text-sm text-text-secondary">Loading...</p>
+          ) : (
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                When on, people can find you by searching in LiAIson. When off, your profile can only be reached through your link.
+              </p>
+              <button
+                onClick={handleToggleDiscoverable}
+                disabled={discoverableSaving}
+                className={`w-14 h-7 flex-shrink-0 rounded-full transition-all ${isDiscoverable ? 'bg-accent' : 'bg-border'} relative shadow-soft`}
+              >
+                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-soft transition-transform ${isDiscoverable ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          )}
+          {discoverableSuccess && (
             <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
               Saved ✓
             </div>

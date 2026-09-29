@@ -59,7 +59,11 @@ export default async function ConnectionsPage() {
         {requests && requests.length > 0 && (
           <ConnectionRequests requests={requests} isOpen={publicScope === 'both'} />
         )}
-        <ConnectionsList initialConnections={connections ?? []} publicScope={publicScope} />
+        <ConnectionsList
+          key={(connections ?? []).map(c => `${c.id}:${c.allowed_scope}`).join(',')}
+          initialConnections={connections ?? []}
+          publicScope={publicScope}
+        />
       </div>
     </div>
   )

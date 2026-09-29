@@ -15,6 +15,7 @@ export default function SignupPage() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
+  const [isDiscoverable, setIsDiscoverable] = useState(true)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [signedInEmail, setSignedInEmail] = useState('')
@@ -141,7 +142,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, username },
+        data: { display_name: displayName, username, is_discoverable: isDiscoverable },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -334,6 +335,19 @@ export default function SignupPage() {
                 className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
                 placeholder="Min. 8 characters"
               />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-1">
+              <p className="text-sm text-text-secondary">
+                Let people find me by searching in LiAIson (you can change this anytime in Settings).
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsDiscoverable(!isDiscoverable)}
+                className={`w-14 h-7 flex-shrink-0 rounded-full transition-all ${isDiscoverable ? 'bg-accent' : 'bg-border'} relative`}
+              >
+                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${isDiscoverable ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
             </div>
 
             <div className="space-y-3">
