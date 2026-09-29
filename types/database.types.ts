@@ -592,13 +592,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"public_scope": string,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
@@ -679,6 +679,25 @@ isOneToOne: false
                   Relationships: [
                     {
       foreignKeyName: "visitor_query_log_profile_user_id_fkey"
+      columns: ["profile_user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"visitor_reports": {
+                  Row: {
+                    "created_at": string,"emailed_at": string | null,"id": string,"period_end": string,"period_start": string,"period_type": string,"profile_user_id": string,"report": NonNullable<Json>,"total": number
+                  }
+                  Insert: {
+                    "created_at"?: string,"emailed_at"?: string | null,"id"?: string,"period_end": string,"period_start": string,"period_type": string,"profile_user_id": string,"report"?: NonNullable<Json>,"total"?: number
+                  }
+                  Update: {
+                    "created_at"?: string,"emailed_at"?: string | null,"id"?: string,"period_end"?: string,"period_start"?: string,"period_type"?: string,"profile_user_id"?: string,"report"?: NonNullable<Json>,"total"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "visitor_reports_profile_user_id_fkey"
       columns: ["profile_user_id"]
 isOneToOne: false
       referencedRelation: "users"
