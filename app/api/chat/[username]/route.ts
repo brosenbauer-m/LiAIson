@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { buildSystemPrompt } from '@/lib/prompts/buildSystemPrompt'
+import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystemPrompt'
 import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
@@ -16,6 +16,8 @@ function sanitizeResponse(text: string): string {
   const leakPatterns = [
     /\[VAULT DATA\]/gi,
     /\[REFERENCE ONLY\]/gi,
+    /\[READER CONTEXT\]/gi,
+    /\[READER PROFILE\]/gi,
     /STRICT RULES/gi,
     /section_type/gi,
     /vault_section/gi,
@@ -61,6 +63,42 @@ async function extractTopicCluster(message: string): Promise<string> {
     return content.trim() || 'general inquiry'
   } catch {
     return 'general inquiry'
+  }
+}
+
+const READER_VAULT_MAX_CHARS = 6000
+
+async function loadReaderContext(
+  supabase: ReturnType<typeof createServiceClient>,
+  visitorId: string
+): Promise<ReaderContext | undefined> {
+  try {
+    const { data: reader, error: readerError } = await supabase
+      .from('users')
+      .select('display_name, use_own_vault_in_chats')
+      .eq('id', visitorId)
+      .single<{ display_name: string; use_own_vault_in_chats: boolean }>()
+
+    if (readerError || !reader || reader.use_own_vault_in_chats !== true) return undefined
+
+    // Everything except drafts (drafts have neither flag set).
+    const { data: sections } = await supabase
+      .from('vault_sections')
+      .select('label, content')
+      .eq('user_id', visitorId)
+      .or('is_professional.eq.true,is_personal.eq.true')
+      .order('domain', { ascending: true })
+
+    const vaultText = ((sections as { label: string; content: string }[] | null) ?? [])
+      .filter(s => s.content && s.content.trim().length > 0)
+      .map(s => `${s.label.toUpperCase()}:\n${s.content}`)
+      .join('\n\n')
+      .slice(0, READER_VAULT_MAX_CHARS)
+
+    if (!vaultText) return undefined
+    return { displayName: reader.display_name, vaultText }
+  } catch {
+    return undefined
   }
 }
 
@@ -132,8 +170,16 @@ export async function POST(
     }
   }
 
+  // Two-vault chat: a signed-in visitor (not the owner) can have their own
+  // non-draft vault used to answer them, unless they switched it off.
+  // It is only added to this request's prompt — never stored or logged.
+  let reader: ReaderContext | undefined
+  if (visitor && visitor.id !== user.id) {
+    reader = await loadReaderContext(supabase, visitor.id)
+  }
+
   // Build system prompt
-  const systemPrompt = await buildSystemPrompt(user.id, scope)
+  const systemPrompt = await buildSystemPrompt(user.id, scope, reader)
 
   // Stream response from Mistral
   const encoder = new TextEncoder()

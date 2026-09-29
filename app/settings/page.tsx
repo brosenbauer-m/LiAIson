@@ -30,6 +30,10 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false)
   const [discoverableSaving, setDiscoverableSaving] = useState(false)
   const [discoverableSuccess, setDiscoverableSuccess] = useState(false)
+  const [useOwnVault, setUseOwnVault] = useState(true)
+  const [ownVaultAvailable, setOwnVaultAvailable] = useState(false)
+  const [ownVaultSaving, setOwnVaultSaving] = useState(false)
+  const [ownVaultSuccess, setOwnVaultSuccess] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -47,6 +51,16 @@ export default function SettingsPage() {
         setPublicScope(scope)
         if (scope !== 'none') setLastPublicLevel(scope)
         setIsDiscoverable(data.is_discoverable)
+      }
+      // Loaded separately so the rest of Settings still works if this fails.
+      const { data: ownVault, error: ownVaultError } = await supabase
+        .from('users')
+        .select('use_own_vault_in_chats')
+        .eq('id', user.id)
+        .single()
+      if (!ownVaultError && ownVault) {
+        setUseOwnVault(ownVault.use_own_vault_in_chats !== false)
+        setOwnVaultAvailable(true)
       }
       setLoading(false)
     }
@@ -91,6 +105,24 @@ export default function SettingsPage() {
       setDiscoverableSuccess(true)
       setTimeout(() => setDiscoverableSuccess(false), 3000)
     }
+  }
+
+  const handleToggleOwnVault = async () => {
+    if (!userId) return
+    const next = !useOwnVault
+    setOwnVaultSaving(true)
+    setUseOwnVault(next)
+    const { error } = await supabase
+      .from('users')
+      .update({ use_own_vault_in_chats: next })
+      .eq('id', userId)
+    setOwnVaultSaving(false)
+    if (error) {
+      setUseOwnVault(!next)
+      return
+    }
+    setOwnVaultSuccess(true)
+    setTimeout(() => setOwnVaultSuccess(false), 3000)
   }
 
   const handleSignOut = async () => {
@@ -233,6 +265,28 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        {ownVaultAvailable && (
+          <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+            <h2 className="font-semibold text-text-primary text-lg">Use my Vault when I chat</h2>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                When you chat with someone else&apos;s LiAIson, it can also use your own Vault (everything except drafts) to answer things like &ldquo;What do we have in common?&rdquo;. It&apos;s only used to answer you &mdash; never shown to them or saved.
+              </p>
+              <Toggle
+                checked={useOwnVault}
+                onChange={handleToggleOwnVault}
+                disabled={ownVaultSaving}
+                label="Use my Vault when I chat"
+              />
+            </div>
+            {ownVaultSuccess && (
+              <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
+                Saved ✓
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>
