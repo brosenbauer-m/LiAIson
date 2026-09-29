@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import ProfileCard from '@/components/ui/ProfileCard'
 import NotificationsPanel from './NotificationsPanel'
 import VisitorSummary from './VisitorSummary'
+import VisitorInsights from './VisitorInsights'
 import type { Notification, User } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -73,6 +74,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        <VisitorInsights />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Notifications */}

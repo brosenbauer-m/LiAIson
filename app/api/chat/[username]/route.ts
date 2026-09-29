@@ -8,6 +8,7 @@ import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
 import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
+import { captureVisitorInsight } from '@/lib/insights/capture'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -212,6 +213,12 @@ export async function POST(
 
       // Asynchronously extract topic and log it (don't await — fire and forget)
       const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
+      // Anonymous "what visitors want to know" statement for the owner's insights.
+      // Skipped when the owner chats with their own LiAIson. Fire and forget.
+      if (lastUserMessage && visitor?.id !== user.id) {
+        captureVisitorInsight(user.id, lastUserMessage.content).catch(() => {/* ignore */})
+      }
+
       if (lastUserMessage) {
         extractTopicCluster(lastUserMessage.content).then(async topic => {
           // Check if topic already exists for this profile
