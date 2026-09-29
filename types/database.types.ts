@@ -611,13 +611,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
@@ -729,7 +729,11 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            [_ in never]: never
+            "ai_usage_since":
+{ Args: { "p_since": string,"p_user_id": string }; Returns: {
+              "calls": number,"completion_tokens": number,"feature": string,"model": string,"prompt_tokens": number
+            }[]
+                           }
           }
           Enums: {
             [_ in never]: never
