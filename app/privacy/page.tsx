@@ -26,6 +26,7 @@ export default function PrivacyPage() {
               <li>Content you add to your Vault (professional and personal information)</li>
               <li>Files you upload (PDFs, Word documents), stored in encrypted cloud storage</li>
               <li>Anonymous conversation logs — we record topic clusters of visitor questions (e.g. &quot;professional background&quot;), never the raw text</li>
+              <li>AI usage counts — how much AI processing your LiAIson uses (feature, AI model and number of tokens), never message content or who the visitor was. We use this to run the service fairly and, in future, for usage-based pricing</li>
             </ul>
           </section>
 

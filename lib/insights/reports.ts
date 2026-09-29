@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { logAiUsage } from '@/lib/usage/log'
 import type { Period } from '@/lib/insights/periods'
 import { INSIGHTS_TIMEZONE } from '@/lib/insights/periods'
 
@@ -155,6 +156,7 @@ export async function buildAndStoreReport(
         },
       ],
     })
+    await logAiUsage({ userId: profileUserId, feature: 'echo', model: FAST_MODEL, actor: 'system', usage: response.usage })
     const parsed = JSON.parse(extractTextContent(response.choices[0]?.message?.content)) as Record<string, unknown>
     if (typeof parsed.headline === 'string' && parsed.headline.trim()) headline = parsed.headline.trim().slice(0, 90)
     if (typeof parsed.summary === 'string') summary = parsed.summary.trim().slice(0, 700)

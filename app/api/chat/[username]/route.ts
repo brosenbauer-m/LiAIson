@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/ratelimit'
 import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
 import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
+import { logAiUsage, type AiActor } from '@/lib/usage/log'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -48,7 +49,7 @@ function extractTextContent(content: unknown): string {
     .join('')
 }
 
-async function extractTopicCluster(message: string): Promise<string> {
+async function extractTopicCluster(message: string, ownerId: string, actor: AiActor): Promise<string> {
   try {
     const response = await mistral.chat.complete({
       model: FAST_MODEL,
@@ -60,6 +61,7 @@ async function extractTopicCluster(message: string): Promise<string> {
         },
       ],
     })
+    await logAiUsage({ userId: ownerId, feature: 'topic', model: FAST_MODEL, actor, usage: response.usage })
     const content = extractTextContent(response.choices[0]?.message?.content)
     return content.trim() || 'general inquiry'
   } catch {
@@ -182,6 +184,9 @@ export async function POST(
   // Build system prompt
   const systemPrompt = await buildSystemPrompt(user.id, scope, reader)
 
+  // Who caused this AI usage (for usage tracking only; no identity is stored).
+  const actor: AiActor = !visitor ? 'visitor' : visitor.id === user.id ? 'owner' : 'member'
+
   // Stream response from Mistral
   const encoder = new TextEncoder()
 
@@ -197,7 +202,9 @@ export async function POST(
           ],
         })
 
+        let usage: { promptTokens?: number; completionTokens?: number } | undefined
         for await (const event of mistralStream) {
+          if (event.data?.usage) usage = event.data.usage
           const text = extractTextContent(event.data?.choices[0]?.delta.content)
           if (text) {
             const sanitized = sanitizeResponse(text)
@@ -205,6 +212,7 @@ export async function POST(
           }
         }
 
+        await logAiUsage({ userId: user.id, feature: 'chat', model: CHAT_MODEL, actor, usage })
         controller.close()
       } catch (err) {
         console.error('CHAT_STREAM_ERROR', err)
@@ -216,11 +224,11 @@ export async function POST(
       // Anonymous "what visitors want to know" statement for the owner's insights.
       // Skipped when the owner chats with their own LiAIson. Fire and forget.
       if (lastUserMessage && visitor?.id !== user.id) {
-        captureVisitorInsight(user.id, lastUserMessage.content).catch(() => {/* ignore */})
+        captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */})
       }
 
       if (lastUserMessage) {
-        extractTopicCluster(lastUserMessage.content).then(async topic => {
+        extractTopicCluster(lastUserMessage.content, user.id, actor).then(async topic => {
           // Check if topic already exists for this profile
           const { data: existing } = await supabase
             .from('visitor_query_log')

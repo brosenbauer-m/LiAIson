@@ -1,5 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { logAiUsage, type AiActor } from '@/lib/usage/log'
 
 // Turns one visitor message into an anonymous interest statement + category.
 // Never stores the visitor's words, identity, IP or any contact details.
@@ -43,7 +44,11 @@ function scrub(text: string): string {
     .trim()
 }
 
-export async function captureVisitorInsight(profileUserId: string, visitorMessage: string): Promise<void> {
+export async function captureVisitorInsight(
+  profileUserId: string,
+  visitorMessage: string,
+  actor: AiActor = 'visitor'
+): Promise<void> {
   const message = visitorMessage.slice(0, 1000)
   if (!message.trim()) return
 
@@ -67,6 +72,8 @@ export async function captureVisitorInsight(profileUserId: string, visitorMessag
       { role: 'user', content: `Visitor message:\n${message}` },
     ],
   })
+
+  await logAiUsage({ userId: profileUserId, feature: 'insight', model: FAST_MODEL, actor, usage: response.usage })
 
   const raw = extractTextContent(response.choices[0]?.message?.content)
   let parsed: { skip?: unknown; category?: unknown; statement?: unknown }
