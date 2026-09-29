@@ -25,7 +25,7 @@ export default function PrivacyPage() {
               <li>Your display name, username, and profile information</li>
               <li>Content you add to your Vault (professional and personal information)</li>
               <li>Your profile photo, if you upload one (stored in cloud storage). Files you import into your Vault (PDF, Word) are only read to extract their text and are not stored</li>
-              <li>Anonymous conversation logs — we record topic clusters of visitor questions (e.g. &quot;professional background&quot;), never the raw text</li>
+              <li>Anonymous visitor interest statements — e.g. &quot;People want to know more about your climbing&quot; — never the visitor&apos;s words or identity, deleted after about 35 days</li>
               <li>AI usage counts — how much AI processing your LiAIson uses (feature, AI model and number of tokens), never message content or who the visitor was. We use this to run the service fairly and, in future, for usage-based pricing</li>
             </ul>
           </section>
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor interactions</h2>
-            <p>When someone chats with your LiAIson, their messages are sent to Mistral AI, a French AI provider hosting on EU servers, to generate responses. We do not store visitor messages. For each question we keep only an anonymous topic label (e.g. &quot;career goals&quot;) and a short anonymous statement of what was asked about (e.g. &quot;People want to know more about your climbing&quot;) with a category, so owners can see what visitors are interested in. These statements never contain the visitor&apos;s words, identity or contact details and are deleted after about 35 days. Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
+            <p>When someone chats with your LiAIson, their messages are sent to Mistral AI, a French AI provider hosting on EU servers, to generate responses. We do not store visitor messages. For each question we keep only a short anonymous statement of what was asked about (e.g. &quot;People want to know more about your climbing&quot;) with a category, so owners can see what visitors are interested in. These statements never contain the visitor&apos;s words, identity or contact details and are deleted after about 35 days. Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
             <p>If you are signed in and chat with someone else&apos;s LiAIson, the non-draft content of your own Vault is also sent to Mistral AI with your message, so answers can relate to you (for example &quot;what do we have in common?&quot;). It is used only to answer you, is never shown to the other person and is not stored. You can turn this off in Settings under &quot;Use my Vault when I chat&quot;.</p>
           </section>
 

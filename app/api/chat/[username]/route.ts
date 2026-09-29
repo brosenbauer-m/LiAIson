@@ -8,7 +8,7 @@ import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystem
 import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
-import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
 import type { ChatMessage, User } from '@/types'
@@ -48,26 +48,6 @@ function extractTextContent(content: unknown): string {
     )
     .map(chunk => chunk.text)
     .join('')
-}
-
-async function extractTopicCluster(message: string, ownerId: string, actor: AiActor): Promise<string> {
-  try {
-    const response = await mistral.chat.complete({
-      model: FAST_MODEL,
-      maxTokens: 50,
-      messages: [
-        {
-          role: 'user',
-          content: `In 3-5 words, what topic is this message asking about? Reply with only the topic, nothing else. Message: ${message}`,
-        },
-      ],
-    })
-    await logAiUsage({ userId: ownerId, feature: 'topic', model: FAST_MODEL, actor, usage: response.usage })
-    const content = extractTextContent(response.choices[0]?.message?.content)
-    return content.trim() || 'general inquiry'
-  } catch {
-    return 'general inquiry'
-  }
 }
 
 const READER_VAULT_MAX_CHARS = 6000
@@ -228,33 +208,6 @@ export async function POST(
       // Skipped when the owner chats with their own LiAIson.
       if (lastUserMessage && visitor?.id !== user.id) {
         waitUntil(captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */}))
-      }
-
-      if (lastUserMessage) {
-        waitUntil(extractTopicCluster(lastUserMessage.content, user.id, actor).then(async topic => {
-          // Check if topic already exists for this profile
-          const { data: existing } = await supabase
-            .from('visitor_query_log')
-            .select('id, count')
-            .eq('profile_user_id', user.id)
-            .ilike('topic_cluster', topic)
-            .limit(1)
-            .single()
-
-          if (existing) {
-            await supabase
-              .from('visitor_query_log')
-              .update({ count: (existing.count as number) + 1 })
-              .eq('id', existing.id)
-          } else {
-            await supabase.from('visitor_query_log').insert({
-              profile_user_id: user.id,
-              topic_cluster: topic,
-              count: 1,
-              surfaced_to_owner: false,
-            })
-          }
-        }).catch(() => {/* ignore async errors */}))
       }
     },
   })

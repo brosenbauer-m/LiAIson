@@ -19,7 +19,6 @@ export default async function DashboardPage() {
   const [
     { data: profile },
     { data: notifications },
-    { data: queryLogs },
     { data: suggestedUsers },
   ] = await Promise.all([
     serviceSupabase.from('users').select('*').eq('id', user.id).single<User>(),
@@ -30,12 +29,6 @@ export default async function DashboardPage() {
       .eq('read', false)
       .order('created_at', { ascending: false })
       .limit(10),
-    serviceSupabase
-      .from('visitor_query_log')
-      .select('topic_cluster, count')
-      .eq('profile_user_id', user.id)
-      .order('count', { ascending: false })
-      .limit(5),
     serviceSupabase
       .from('users')
       .select('*')
@@ -85,28 +78,7 @@ export default async function DashboardPage() {
 
           {/* Stats */}
           <div className="space-y-5">
-            <h2 className="text-xl font-semibold text-text-primary">This week</h2>
-            <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-6">
-              <div>
-                <p className="text-4xl font-bold text-accent">
-                  {queryLogs?.reduce((acc, q) => acc + (q.count ?? 0), 0) ?? 0}
-                </p>
-                <p className="text-sm text-text-secondary mt-1">Visitor conversations</p>
-              </div>
-              {queryLogs && queryLogs.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-text-primary mb-3">Top topics asked</p>
-                  <div className="space-y-2">
-                    {queryLogs.slice(0, 3).map((q, i) => (
-                      <div key={i} className="flex justify-between items-center text-sm">
-                        <span className="text-text-secondary">{q.topic_cluster}</span>
-                        <span className="text-accent font-semibold">{q.count}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <h2 className="text-xl font-semibold text-text-primary">Your LiAIson</h2>
 
             <div className="flex gap-3">
               <Link
