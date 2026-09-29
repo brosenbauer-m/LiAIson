@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt } from '@/lib/prompts/buildSystemPrompt'
 import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
+import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
 import { mistral, CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import type { ChatMessage, User } from '@/types'
 
@@ -116,6 +117,19 @@ export async function POST(
   const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
   if (scope === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
+  }
+
+  // Signed-out visitors: max 3 messages per profile, enforced on the server.
+  if (!visitor) {
+    const anonLimitMessage = `You've had a great conversation! Sign up to keep chatting with ${user.display_name}.`
+    const userTurns = messages.filter(m => m.role === 'user').length
+    if (userTurns > ANON_MESSAGE_LIMIT) {
+      return NextResponse.json({ error: anonLimitMessage, rateLimited: true }, { status: 429 })
+    }
+    const anon = await checkAnonMessageLimit(ip, user.id)
+    if (!anon.allowed) {
+      return NextResponse.json({ error: anonLimitMessage, rateLimited: true }, { status: 429 })
+    }
   }
 
   // Build system prompt
