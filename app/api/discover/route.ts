@@ -1,146 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
-import type { User, VaultSection } from '@/types'
 
-type DiscoverMode = 'professional' | 'personal' | 'all'
+// Username / name search for the Discover page.
+// Only returns discoverable users and only safe public columns.
+// Never returns vault content, scopes, ids or any other user data.
 
-function extractTextContent(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
+const MAX_QUERY_LENGTH = 50
+const MAX_RESULTS = 8
 
-  return content
-    .filter(
-      (chunk): chunk is { type: 'text'; text: string } =>
-        typeof chunk === 'object' &&
-        chunk !== null &&
-        'type' in chunk &&
-        chunk.type === 'text' &&
-        'text' in chunk &&
-        typeof chunk.text === 'string'
-    )
-    .map(chunk => chunk.text)
-    .join('')
+type SearchResult = {
+  username: string
+  display_name: string
+  avatar_url: string | null
 }
 
-async function extractKeywords(query: string): Promise<string[]> {
-  try {
-    const response = await mistral.chat.complete({
-      model: FAST_MODEL,
-      maxTokens: 100,
-      messages: [
-        {
-          role: 'user',
-          content: `Extract 3-6 search keywords from this query as a JSON array of strings. Query: ${query}`,
-        },
-      ],
-    })
-    const content = extractTextContent(response.choices[0]?.message?.content)
-    const match = content.match(/\[[\s\S]*\]/)
-    if (match) {
-      const keywords = JSON.parse(match[0])
-      return Array.isArray(keywords) ? keywords : []
-    }
-    return query.split(' ').filter(w => w.length > 3).slice(0, 5)
-  } catch {
-    return query.split(' ').filter(w => w.length > 3).slice(0, 5)
-  }
+// Escape characters that have a special meaning inside ILIKE patterns.
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, char => `\\${char}`)
 }
 
-export async function POST(request: NextRequest) {
-  const { query, mode = 'all', location } = await request.json() as {
-    query: string
-    mode: DiscoverMode
-    location?: string
-  }
+export async function GET(request: NextRequest) {
+  const raw = request.nextUrl.searchParams.get('q') ?? ''
+  // PostgREST treats * as a wildcard, so drop it; also drop a leading @.
+  const query = raw.replace(/\*/g, '').trim().replace(/^@+/, '').slice(0, MAX_QUERY_LENGTH)
 
-  if (!query || typeof query !== 'string') {
-    return NextResponse.json({ error: 'Query is required' }, { status: 400 })
+  if (query.length === 0) {
+    return NextResponse.json({ results: [] })
   }
 
   const supabase = createServiceClient()
-  const keywords = await extractKeywords(query)
+  const pattern = escapeLike(query)
 
-  // Build OR conditions for keyword matching
-  const keywordConditions = keywords
-    .map(k => `content.ilike.%${k}%`)
-    .join(',')
-
-  let sectionsQuery = supabase
-    .from('vault_sections')
-    .select('user_id, content, section_type, domain')
-    .or(keywordConditions)
-    .or('is_professional.eq.true,is_personal.eq.true')
-
-  if (mode !== 'all') {
-    sectionsQuery = sectionsQuery.eq('domain', mode)
-  }
-
-  const { data: sections } = await sectionsQuery
-
-  if (!sections || sections.length === 0) {
-    return NextResponse.json({ results: [] })
-  }
-
-  // Count keyword matches per user
-  const userMatchCounts = new Map<string, number>()
-  for (const section of sections as Pick<VaultSection, 'user_id' | 'content' | 'section_type' | 'domain'>[]) {
-    const count = keywords.filter(k =>
-      section.content.toLowerCase().includes(k.toLowerCase())
-    ).length
-    userMatchCounts.set(section.user_id, (userMatchCounts.get(section.user_id) ?? 0) + count)
-  }
-
-  // Get distinct user IDs sorted by match count
-  const sortedUserIds = Array.from(userMatchCounts.entries())
-    .sort((a, b) => b[1] - a[1])
-    .map(([id]) => id)
-    .slice(0, 20)
-
-  // Fetch user profiles
-  let usersQuery = supabase
+  // 1) Usernames that start with the query (best matches first).
+  const { data: byUsername, error: usernameError } = await supabase
     .from('users')
-    .select('*')
-    .in('id', sortedUserIds)
+    .select('username, display_name, avatar_url')
     .eq('is_discoverable', true)
+    .ilike('username', `${pattern}%`)
+    .order('username', { ascending: true })
+    .limit(MAX_RESULTS)
 
-  if (mode !== 'all') {
-    usersQuery = usersQuery.in('discover_mode', [mode, 'all'])
+  // 2) Display names that contain the query anywhere.
+  const { data: byName, error: nameError } = await supabase
+    .from('users')
+    .select('username, display_name, avatar_url')
+    .eq('is_discoverable', true)
+    .ilike('display_name', `%${pattern}%`)
+    .order('display_name', { ascending: true })
+    .limit(MAX_RESULTS)
+
+  if (usernameError || nameError) {
+    return NextResponse.json({ error: 'Search failed' }, { status: 500 })
   }
 
-  if (location) {
-    usersQuery = usersQuery.ilike('short_bio', `%${location}%`)
-  }
-
-  const { data: users } = await usersQuery
-
-  if (!users || users.length === 0) {
-    return NextResponse.json({ results: [] })
-  }
-
-  // For each user, get their top tags
-  const results = await Promise.all(
-    (users as User[]).map(async user => {
-      const { data: tags } = await supabase
-        .from('vault_sections')
-        .select('content')
-        .eq('user_id', user.id)
-        .or('is_professional.eq.true,is_personal.eq.true')
-        .in('section_type', ['skills', 'hobbies', 'interests'])
-        .limit(3)
-
-      const tagList = (tags ?? [])
-        .flatMap(t => t.content.split(','))
-        .map(t => t.trim())
-        .filter(Boolean)
-        .slice(0, 3)
-
-      return { user, tags: tagList, matchScore: userMatchCounts.get(user.id) ?? 0 }
+  const seen = new Set<string>()
+  const results: SearchResult[] = []
+  for (const row of [...(byUsername ?? []), ...(byName ?? [])] as SearchResult[]) {
+    if (!row.username || seen.has(row.username)) continue
+    seen.add(row.username)
+    results.push({
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
     })
+    if (results.length >= MAX_RESULTS) break
+  }
+
+  return NextResponse.json(
+    { results },
+    { headers: { 'Cache-Control': 'no-store' } }
   )
-
-  // Sort by match score
-  results.sort((a, b) => b.matchScore - a.matchScore)
-
-  return NextResponse.json({ results })
 }
