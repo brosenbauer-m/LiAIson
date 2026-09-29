@@ -1,7 +1,10 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
+import { createClient } from '@/lib/supabase/server'
+import { resolveScope } from '@/lib/access/resolveScope'
 import ProfileChatSection from './ProfileChatSection'
+import PrivateProfileCard from './PrivateProfileCard'
 import ContactLinks from '@/components/profile/ContactLinks'
 import TagChip from '@/components/ui/TagChip'
 import type { User, VaultSection } from '@/types'
@@ -44,20 +47,36 @@ export default async function ProfilePage({ params }: Props) {
 
   const { data: user } = await supabase
     .from('users')
-    .select('*')
+    .select('id, username, display_name, avatar_url, short_bio, contact_links')
     .eq('username', params.username)
-    .single<User>()
+    .single<Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio' | 'contact_links'>>()
 
   if (!user) notFound()
 
-  const { data: sections } = await supabase
-    .from('vault_sections')
-    .select('*')
-    .eq('user_id', user.id)
-    .or('is_professional.eq.true,is_personal.eq.true')
-    .order('domain', { ascending: true })
+  // Who is looking? Access = owner's public level combined with any accepted connection.
+  const visitorSupabase = await createClient()
+  const { data: { user: visitor } } = await visitorSupabase.auth.getUser()
+  const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
 
-  const publicSections = (sections as VaultSection[] | null) ?? []
+  // Only load vault sections the visitor is allowed to see.
+  let publicSections: VaultSection[] = []
+  if (scope) {
+    let sectionsQuery = supabase
+      .from('vault_sections')
+      .select('*')
+      .eq('user_id', user.id)
+
+    if (scope === 'professional') {
+      sectionsQuery = sectionsQuery.eq('is_professional', true)
+    } else if (scope === 'personal') {
+      sectionsQuery = sectionsQuery.eq('is_personal', true)
+    } else {
+      sectionsQuery = sectionsQuery.or('is_professional.eq.true,is_personal.eq.true')
+    }
+
+    const { data: sections } = await sectionsQuery.order('domain', { ascending: true })
+    publicSections = (sections as VaultSection[] | null) ?? []
+  }
 
   // Get skills and interests for tags display
   const skillsSection = publicSections.find(s => s.section_type === 'skills')
@@ -73,8 +92,6 @@ export default async function ProfilePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left column: Profile info */}
@@ -87,7 +104,7 @@ export default async function ProfilePage({ params }: Props) {
             />
 
             {/* Contact links */}
-            {user.contact_links && user.contact_links.length > 0 && (
+            {scope && user.contact_links && user.contact_links.length > 0 && (
               <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
                 <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Connect</p>
                 <ContactLinks links={user.contact_links} />
@@ -132,10 +149,19 @@ export default async function ProfilePage({ params }: Props) {
 
           {/* Right column: Chat interface */}
           <div className="lg:col-span-3">
-            <ProfileChatSection
-              username={params.username}
-              displayName={user.display_name}
-            />
+            {scope ? (
+              <ProfileChatSection
+                username={params.username}
+                displayName={user.display_name}
+              />
+            ) : (
+              <PrivateProfileCard
+                ownerId={user.id}
+                username={user.username}
+                displayName={user.display_name}
+                signedIn={!!visitor}
+              />
+            )}
           </div>
         </div>
       </div>
