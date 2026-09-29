@@ -527,7 +527,26 @@ isOneToOne: false
           }
         },"public": {
           Tables: {
-            "connection_interests": {
+            "ai_usage": {
+                  Row: {
+                    "actor": string,"completion_tokens": number,"created_at": string,"feature": string,"id": number,"model": string,"prompt_tokens": number,"user_id": string
+                  }
+                  Insert: {
+                    "actor": string,"completion_tokens"?: number,"created_at"?: string,"feature": string,"id"?: never,"model": string,"prompt_tokens"?: number,"user_id": string
+                  }
+                  Update: {
+                    "actor"?: string,"completion_tokens"?: number,"created_at"?: string,"feature"?: string,"id"?: never,"model"?: string,"prompt_tokens"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "ai_usage_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"connection_interests": {
                   Row: {
                     "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"status": string,"to_user_id": string
                   }
