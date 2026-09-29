@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import ProfileCard from '@/components/ui/ProfileCard'
 import NotificationsPanel from './NotificationsPanel'
+import VisitorSummary from './VisitorSummary'
 import type { Notification, User } from '@/types'
 
 export const dynamic = 'force-dynamic'
@@ -103,6 +104,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               )}
+              {queryLogs && queryLogs.length > 0 && <VisitorSummary />}
             </div>
 
             <div className="flex gap-3">
