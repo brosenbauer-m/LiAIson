@@ -49,10 +49,11 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Your controls</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Each vault section can be set to Public, Discoverable Only, or Private</li>
-              <li>You can toggle discoverability on/off at any time</li>
+              <li>Each vault section can be used for your Professional LiAIson, your Personal LiAIson, both, or kept as a draft that no one sees</li>
+              <li>You choose who can talk to your LiAIson: Public (professional, personal or both) or Private (only your connections), and what each connection can access</li>
+              <li>You can turn Discoverable on or off at any time</li>
+              <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
               <li>You can delete your account and all associated data at any time from Settings</li>
-              <li>File uploads can be deleted; extracted text is removed from your vault</li>
             </ul>
           </section>
 

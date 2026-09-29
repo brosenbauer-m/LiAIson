@@ -1,268 +1,84 @@
 # LiAIson — Agent Instructions
 
-You are the guiding senior developer for the LiAIson platform.
+These instructions are for AI coding agents (e.g. GitHub Copilot) working in this repository.
 
-Assume production impact by default. Assume the user has zero technical experience. Protect database integrity, RLS policies, AI prompt boundaries, rate limiting logic, and deployment stability at all times.
+The owner has zero technical experience. Assume every change affects production (www.my-liaison.app).
+Protect database integrity, access rules, the AI prompt, rate limiting and deployment stability at all times.
 
-The user uses Copilot Agents inside GitHub. Think carefully before responding. Always understand the full system state before proposing execution.
+## How work reaches you
 
----
+- The owner's senior developer (Claude) prepares and tests each change, then hands you ONE task.
+- Usually the task is a patch file outside the repo (e.g. `/tmp/<name>.patch`) plus a task file (`/tmp/liaison-task.md`).
+  Apply the patch exactly with `git apply --check` and `git apply`. Never retype, "improve" or reformat the code.
+  If the patch does not apply, STOP and report — do not reconstruct it by hand.
+- Change only the files the task lists. Never copy the task/patch files into the repo.
 
-## SYSTEM ARCHITECTURE TRUTH
+## Git workflow (owner's standing decision)
 
-GitHub is the source of truth for code and migrations.
-Supabase is the database (Postgres + Auth + Storage).
-Vercel deploys the frontend from GitHub.
-Mistral AI (French company, EU-hosted) powers all LiAIson AI agents (chat, notifications, discovery, compatibility) via lib/mistral/client.ts, using MISTRAL_API_KEY. Models: mistral-medium-latest (chat), mistral-small-latest (fast tasks).
-Upstash Redis handles rate limiting on public LiAIson chat endpoints.
-Scaleway Transactional Email (French company, Paris region fr-par) handles all outbound email (weekly notification digests) via lib/email/scaleway.ts, sending from noreply@my-liaison.app using SCW_SECRET_KEY and SCW_PROJECT_ID.
-Titan hosts the mailbox that receives mail at contact@my-liaison.app.
+- Always work directly on `main`: `git switch main && git pull` first.
+- No branches, no pull requests.
+- Before committing: `npm run build` (and `npm run check:migrations` if there is a migration).
+  If it fails, do not edit code unless the task allows it; stop and report without committing.
+- Commit with the exact message from the task, `git push origin main`, then `git pull` and report the commit hash,
+  changed files and the latest 3 commits.
+- The owner syncs with `git sync` (alias: `git checkout main && git fetch origin && git pull`).
 
-The live domain is www.my-liaison.app (primary). The apex my-liaison.app redirects to www.
+## Architecture
 
-**Core rule: Repo → Supabase (auto via GitHub Action) → Generated Types (auto committed by bot).**
+- GitHub is the source of truth. Vercel (project `liaison`, Frankfurt fra1) auto-deploys `main`.
+- Supabase (EU West, Ireland): Postgres + Auth + Storage (`avatars` bucket).
+- Mistral AI (EU) powers all AI via `lib/mistral/client.ts` (`mistral-medium-latest` chat, `mistral-small-latest` fast tasks). Anthropic is removed.
+- Upstash Redis (Frankfurt): rate limiting.
+- Scaleway Transactional Email (Paris): all outbound email from noreply@my-liaison.app (`lib/email/scaleway.ts`). Postmark is removed.
+- Titan: inbox for contact@my-liaison.app. DNS at WordPress.com.
+- Any new third-party service that receives user data must be added to `app/privacy/page.tsx`. Prefer EU providers.
+- Keep `.env.example` in sync with the env vars the code reads. Never commit secrets.
 
-Forward-only migrations only. Never edit or rename an applied migration.
+## Migrations
 
-Supabase migrations are automatically applied on push to main via \`supabase-db-auto.yml\`. Database types are automatically regenerated into \`types/database.types.ts\` and committed by the GitHub Actions bot.
+- Forward-only. Never edit or rename an applied migration.
+- New migrations are numbered strictly after the latest file in `supabase/migrations/` (`npm run sb:migration "<name>"`, or exactly as given in the task).
+- They auto-apply on push to main via `.github/workflows/supabase-db-auto.yml`, which also regenerates
+  `types/database.types.ts` (committed by the bot). Never run `supabase db push`. Never edit `types/database.types.ts` by hand.
+- Pushing to main skips the PR migration guard, so always run `npm run check:migrations` yourself.
 
-Therefore:
-- The user does NOT need to manually run \`supabase db push\` after a PR merge.
-- The user DOES need to run \`git sync\` after every PR merge to receive the bot's regenerated types commit.
+## Risk rules (non-negotiable)
 
-## DATA RESIDENCY & GDPR
+- UI = Low, API/logic = Medium, DB/RLS/Auth/migration/AI prompt/rate limiting = High. Never bundle a High-risk change with unrelated edits.
+- AI system prompt (`lib/prompts/buildSystemPrompt.ts`): preserve all 9 strict rules. Never let the agent use outside knowledge
+  or reveal vault structure. The optional [READER CONTEXT]/[READER PROFILE] block (two-vault chat) may only be used to answer the reader.
+- Vault privacy: no user may read another user's vault content beyond what the access rules allow (`lib/access/resolveScope.ts`),
+  via any route — including profile pages, Discover, suggested prompts and summaries.
+- Rate limiting: the key format `chat:${ip}:${userId}` in `lib/ratelimit/index.ts` must never change without a plan.
+  Signed-out visitors have a separate limit in `lib/ratelimit/anon.ts` (`anonchat:` keys).
+- Notification cron `/api/cron/notifications` is protected by `CRON_SECRET`. Never remove that check.
+- `connection_interests` is server-only (RLS on, no policies); access it only through the `/api/connections/*` routes.
 
-- Supabase (database, auth, storage): EU West, Ireland.
-- Vercel serverless functions: Frankfurt, Germany (fra1).
-- Mistral AI: EU-hosted.
-- Upstash Redis (rate limiting): Frankfurt, Germany (eu-central-1).
-- Scaleway Transactional Email: EU-hosted, Paris, France (fr-par).
-- Rule: Prefer EU-hosted providers and EU regions for any new service. Never add a new third-party service that receives user data without updating app/privacy/page.tsx.
+## Project structure
 
----
-
-## GIT SYNC RULE
-
-The user uses \`git sync\` as a terminal alias that:
-1. Switches to \`main\`
-2. Fetches from origin
-3. Pulls latest changes (including bot-committed type regenerations)
-
-**Recommend \`git sync\` after every PR merge.**
-
-To set up the alias (one time only, run in terminal):
-\`\`\`bash
-git config --global alias.sync '!git checkout main && git fetch origin && git pull origin main'
-\`\`\`
-
-Only instruct:
-- \`npm install\` if \`package.json\` changed or in a fresh environment
-- \`npm run lint\` before major milestones or risky refactors
-- Never instruct \`supabase db push\` unless explicitly required outside automation
-
----
-
-## LIAISON-SPECIFIC RULES
-
-### AI Boundary Protection
-The LiAIson system prompt is the security boundary of the product. Any change to \`lib/prompts/buildSystemPrompt.ts\` is **high risk** and must:
-- Preserve all 10 strict rules in the prompt
-- Never allow the agent to use outside knowledge about the profile owner
-- Never allow the agent to reveal vault structure, section names, or file contents
-- Always maintain the [REFERENCE ONLY] prefix handling for \`discoverable_only\` sections
-- Be reviewed carefully before merging
-
-### Rate Limiting
-\`lib/ratelimit/index.ts\` uses Upstash Redis. Changes to rate limit logic are **medium-high risk**. The key format \`chat:\${ip}:\${userId}\` must never change without a migration plan, as live keys in Redis follow this pattern.
-
-### Vault Privacy
-RLS policies on \`vault_sections\` are critical. The rule is absolute: a user can never read another user's \`private\` or \`discoverable_only\` vault sections via any API route. Any change touching vault visibility logic is **high risk**.
-
-### Notification System
-The cron job at \`/api/cron/notifications\` is protected by \`CRON_SECRET\`. Never remove this check. Changes to notification logic should not touch the security header validation. Email is sent via Scaleway Transactional Email (\`lib/email/scaleway.ts\`) using \`SCW_SECRET_KEY\` and \`SCW_PROJECT_ID\`, from noreply@my-liaison.app.
-
-### File Upload Pipeline
-The upload route extracts text from PDFs and Word docs server-side. Raw files are stored in Supabase Storage (\`uploads\` bucket). Extracted text goes into \`vault_sections\` with \`source = 'file_extracted'\`. Never store raw file content directly in vault_sections content field — always confirm extraction first.
-
----
-
-## WHEN USER MAKES A TASK REQUEST
-
-This structured format applies only when the user requests a development task. It does not apply to simple questions.
-
-You must:
-
-### 1. Understand Current State First
-- Inspect the repo and migrations if provided
-- Understand current UI, API routes, and permission logic
-- Classify risk:
-  - UI change = **Low risk**
-  - Logic change / API route = **Medium risk**
-  - Database / RLS / Auth / Migration / AI prompt = **High risk**
-  - Rate limiting / security headers = **High risk**
-
-If necessary, clarify before proceeding.
-
-Restate clearly: *"You want X so that Y happens."*
-Suggest improvements where useful. Ensure the goal is coherent and blueprint-aligned before generating execution steps.
-
-### 2. Generate Execution Plan for Copilot Agents
-
-Output format must be:
-
-\`\`\`
-STEP NAME
-One sentence describing the outcome of the step.
-
-[Single comprehensive copy-paste Copilot Agent prompt block]
-
-Manual Commands After Merge:
-- None. Just run git sync.
-  OR
-- Specify exactly which commands and why.
-\`\`\`
-
-If multiple steps exist, clearly state execution order. Explicitly state which steps must run first and which can run in parallel.
-
----
-
-## COPILOT AGENT PROMPT REQUIREMENTS
-
-Each prompt must:
-- Assume the agent works on a PR branch
-- Reference current repo state
-- Enforce forward-only migrations
-- Enforce migration timestamp strictly greater than the latest file in \`supabase/migrations/\`
-- Enforce RLS safety on any table change
-- Mention that migrations auto-apply on merge via \`supabase-db-auto.yml\`
-- Mention that types auto-regenerate into \`types/database.types.ts\`
-- Avoid unnecessary local commands
-- Include clear acceptance criteria
-- Be comprehensive but focused — one agent, one PR
-
----
-
-## DATABASE CHANGE WORKFLOW (MANDATORY)
-
-If the task touches tables, columns, indexes, policies, triggers, functions, or enums:
-
-- Check the latest timestamp in \`supabase/migrations/\`
-- New migration timestamp must be strictly greater than the latest
-- Use \`npm run sb:migration "description"\` to create new migration files — this guarantees correct ordering
-- Never rename applied migrations
-- Never edit applied migrations
-- Never instruct manual production DB edits via Supabase dashboard
-- Never use \`--include-all\`
-- Never create duplicate migrations
-
-After PR merge → GitHub Action applies migration automatically → types regenerate automatically → user runs \`git sync\`.
-
----
-
-## WORKFLOW AWARENESS
-
-- \`supabase-db-auto.yml\` — applies migrations on push to main, regenerates \`types/database.types.ts\`, commits via bot
-- \`migration-guard.yml\` — blocks PRs with out-of-order migration timestamps
-
-Do not instruct unnecessary \`db push\` or manual type generation.
-
----
-
-## RISK CLASSIFICATION
-
-| Change type | Risk level |
-|---|---|
-| UI / styling | Low |
-| New page or component | Low–Medium |
-| API route logic | Medium |
-| Suggested prompts / visitor UX | Medium |
-| AI system prompt (\`buildSystemPrompt.ts\`) | High |
-| Rate limiting logic | High |
-| Database schema / migration | High |
-| RLS policies | High |
-| Auth flow | High |
-| Notification cron security | High |
-| Vault privacy logic | High |
-
-High risk requires extra clarity, explicit ordering, strong acceptance criteria, and clear post-merge instructions.
-
----
-
-## PROJECT STRUCTURE REFERENCE
-
-\`\`\`
+```
 app/
-  [username]/         ← public profile page (LiAIson chat)
-  api/
-    chat/[username]/  ← AI chat route (rate limited)
-    prompts/[username]/ ← suggested prompts
-    connections/      ← interest + match logic
-    discover/         ← search route
-    upload/           ← file upload + text extraction
-    cron/notifications/ ← weekly notification job (CRON_SECRET protected)
-  dashboard/          ← protected: notifications, stats, recommendations
-  vault/              ← protected: user data editor
-  profile/            ← protected: public profile editor
-  settings/           ← protected: discoverability, preferences
-  discover/           ← public: search/find people
-  login/ signup/
+  [username]/            public profile + chat (access-aware; private profiles show a Connect card)
+  api/chat/[username]/   AI chat (rate limited; signed-out 3-message limit; two-vault reader context)
+  api/prompts/[username]/ suggested prompts (access-aware)
+  api/discover/          GET username/name search (discoverable users only, safe columns)
+  api/connections/       request / status / respond / access
+  api/insights/visitor-summary/  owner-only AI summary of anonymous visitor topics
+  api/account/delete/    account deletion
+  api/cron/notifications/ weekly digest (CRON_SECRET)
+  dashboard/ vault/ profile/ settings/ connections/ discover/ login/ signup/ privacy/
+components/nav/SiteHeader.tsx   shared header (rendered in app/layout.tsx)
+components/ui/Toggle.tsx        shared switch
+lib/ access/ mistral/ prompts/ ratelimit/ email/ notifications/ supabase/
+supabase/migrations/            forward-only SQL
+types/database.types.ts         generated by the bot — never edit
+```
 
-lib/
-  mistral/client.ts         ← Mistral API wrapper
-  prompts/buildSystemPrompt.ts ← AI boundary (HIGH RISK)
-  ratelimit/index.ts        ← Upstash Redis rate limiter
-  notifications/index.ts    ← notification generators
-  email/scaleway.ts         ← Scaleway Transactional Email sender
-  supabase/                 ← client / server / service clients
+## Scripts
 
-supabase/
-  migrations/               ← forward-only SQL migrations (source of truth)
-
-types/
-  index.ts                  ← manual TypeScript interfaces
-  database.types.ts         ← AUTO-GENERATED by GitHub Actions bot (never edit manually)
-\`\`\`
-
----
-
-## PACKAGE SCRIPTS REFERENCE
-
-\`\`\`bash
-npm run dev              # start local dev server
-npm run build            # production build
-npm run lint             # ESLint check
-npm run sb:migration "name"   # create new migration file with correct timestamp
-npm run check:migrations      # validate migration order (runs automatically on PRs)
-\`\`\`
-
----
-
-## OUTPUT STYLE RULES
-
-- Be comprehensive but concise
-- Minimize filler — no unnecessary repetition
-- Use simple language — the user is non-technical
-- Think before answering
-- Keep structure clean
-
-**Do not overload the user.** Pause only when:
-- Migration timestamp verification is required
-- Production safety check is required
-- Blueprint clarification is required
-
-End every task with a short plain-English summary of what will change and what the user needs to do after merge.
-
----
-
-## LIAISON PRODUCT BLUEPRINT SUMMARY
-
-LiAIson is a personal AI agent platform. Every user has a LiAIson — an AI representative that knows them and speaks on their behalf. Visitors interact with a user's LiAIson via public profile chat. The LiAIson strictly only uses information provided by the owner (their Vault). Key product pillars:
-
-- **Bounded knowledge** — LiAIson only knows what the owner tells it
-- **Owner control** — per-section privacy (public / discoverable_only / private)
-- **Temporal awareness** — proactive prompts to keep profile data current
-- **Discovery** — tag-based and semantic search to find people
-- **Anonymous connections** — mutual-interest matching with no cold rejection risk
-- **Living agent** — proactive gap detection and visitor query surfacing
-
-Phases: Core Agent → Living Agent → Discovery → Connections → Social Layer.
+```
+npm run build
+npm run lint
+npm run sb:migration "name"
+npm run check:migrations
+```
