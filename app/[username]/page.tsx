@@ -151,6 +151,7 @@ export default async function ProfilePage({ params }: Props) {
           <div className="lg:col-span-3">
             {scope ? (
               <ProfileChatSection
+                ownerId={user.id}
                 username={params.username}
                 displayName={user.display_name}
               />

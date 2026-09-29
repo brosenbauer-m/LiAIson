@@ -10,6 +10,7 @@ import SuggestedPromptChip from '@/components/ui/SuggestedPromptChip'
 import type { ChatMessage } from '@/types'
 
 interface Props {
+  ownerId: string
   username: string
   displayName: string
 }
@@ -24,7 +25,7 @@ function getVisitorId(): string {
   return id
 }
 
-export default function ProfileChatSection({ username, displayName }: Props) {
+export default function ProfileChatSection({ ownerId, username, displayName }: Props) {
   const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -143,19 +144,10 @@ export default function ProfileChatSection({ username, displayName }: Props) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
 
-      // Get target user ID
-      const { data: targetUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', username)
-        .single()
-
-      if (!targetUser) { setConnectStatus('none'); return }
-
       const res = await fetch('/api/connections/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toUserId: targetUser.id }),
+        body: JSON.stringify({ toUserId: ownerId }),
       })
 
       if (!res.ok) {

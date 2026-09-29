@@ -99,13 +99,14 @@ export default function SignupPage() {
       return
     }
     setUsernameStatus('checking')
-    const supabase = createClient()
-    const { data } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', val)
-      .limit(1)
-    setUsernameStatus(data && data.length > 0 ? 'taken' : 'available')
+    try {
+      const res = await fetch(`/api/username-available?u=${encodeURIComponent(val)}`, { cache: 'no-store' })
+      const data = await res.json()
+      if (!res.ok) { setUsernameStatus('idle'); return }
+      setUsernameStatus(data.available ? 'available' : data.valid === false ? 'invalid' : 'taken')
+    } catch {
+      setUsernameStatus('idle')
+    }
   }, [])
 
   useEffect(() => {
