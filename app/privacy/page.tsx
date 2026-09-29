@@ -53,6 +53,7 @@ export default function PrivacyPage() {
               <li>You choose who can talk to your LiAIson: Public (professional, personal or both) or Private (only your connections), and what each connection can access</li>
               <li>You can turn Discoverable on or off at any time</li>
               <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
+              <li>Files you import (PDF or Word) are only read to extract their text and are not stored; only the text you review and approve is saved to your Vault</li>
               <li>You can delete your account and all associated data at any time from Settings</li>
             </ul>
           </section>

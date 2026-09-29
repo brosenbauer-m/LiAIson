@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
+import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
 import type { VaultSection, VaultFolder } from '@/types'
 
 const SECTION_HINTS: Record<string, string> = {
@@ -164,6 +165,30 @@ export default function VaultPage() {
   }
 
 
+  const saveImportedSection = async (label: string, content: string, target: ImportTarget): Promise<boolean> => {
+    if (!userId) return false
+    setErrorMessage(null)
+    const { data, error } = await supabase
+      .from('vault_sections')
+      .insert({
+        user_id: userId,
+        domain: target === 'professional' ? 'professional' : target === 'personal' ? 'personal' : 'custom',
+        is_professional: target === 'professional' || target === 'both',
+        is_personal: target === 'personal' || target === 'both',
+        section_type: 'custom',
+        label,
+        content,
+        source: 'file_extracted',
+      })
+      .select()
+      .single()
+
+    if (error || !data) return false
+    setSections(prev => [...prev, data as VaultSection])
+    setActiveTab(target === 'both' ? 'professional' : target)
+    return true
+  }
+
   const filtered = sections.filter(section => {
     if (activeTab === 'professional') return section.is_professional
     if (activeTab === 'personal') return section.is_personal
@@ -206,6 +231,9 @@ export default function VaultPage() {
           <div>
             <h1 className="text-4xl font-bold text-text-primary">My Vault</h1>
             <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
+          </div>
+          <div className="flex flex-col items-end">
+            <FileImport defaultTarget={activeTab} onSave={saveImportedSection} />
           </div>
         </div>
 
