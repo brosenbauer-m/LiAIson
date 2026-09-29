@@ -647,6 +647,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"visitor_insights": {
+                  Row: {
+                    "category": string,"created_at": string,"id": string,"profile_user_id": string,"statement": string
+                  }
+                  Insert: {
+                    "category": string,"created_at"?: string,"id"?: string,"profile_user_id": string,"statement": string
+                  }
+                  Update: {
+                    "category"?: string,"created_at"?: string,"id"?: string,"profile_user_id"?: string,"statement"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "visitor_insights_profile_user_id_fkey"
+      columns: ["profile_user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"visitor_query_log": {
                   Row: {
                     "count": number | null,"created_at": string | null,"id": string,"profile_user_id": string,"surfaced_to_owner": boolean | null,"topic_cluster": string
