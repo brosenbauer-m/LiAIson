@@ -24,7 +24,7 @@ export default function PrivacyPage() {
               <li>Your email address and password (for authentication)</li>
               <li>Your display name, username, and profile information</li>
               <li>Content you add to your Vault (professional and personal information)</li>
-              <li>Files you upload (PDFs, Word documents), stored in encrypted cloud storage</li>
+              <li>Your profile photo, if you upload one (stored in cloud storage). Files you import into your Vault (PDF, Word) are only read to extract their text and are not stored</li>
               <li>Anonymous conversation logs — we record topic clusters of visitor questions (e.g. &quot;professional background&quot;), never the raw text</li>
               <li>AI usage counts — how much AI processing your LiAIson uses (feature, AI model and number of tokens), never message content or who the visitor was. We use this to run the service fairly and, in future, for usage-based pricing</li>
             </ul>
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
               <li>To power your LiAIson — vault content is fed into your AI agent&apos;s system prompt</li>
               <li>To surface useful notifications about your profile (gaps, visitor queries, stale content)</li>
               <li>To match you with relevant connections when both parties express interest</li>
-              <li>To send you a weekly email digest when you have new notifications</li>
+              <li>To email you your weekly and monthly Echo (what visitors wanted to know) — you can switch this off in Settings</li>
               <li>We never sell your data to third parties</li>
             </ul>
           </section>

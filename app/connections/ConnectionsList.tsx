@@ -21,7 +21,6 @@ type ConnectionFilter = 'all' | ChatAccessScope
 type SortOrder = 'newest' | 'oldest' | 'name'
 
 const SCOPE_OPTIONS: { value: ChatAccessScope; label: string }[] = [
-  { value: 'none', label: 'Default' },
   { value: 'professional', label: 'Professional' },
   { value: 'personal', label: 'Personal' },
   { value: 'both', label: 'Both' },
@@ -32,22 +31,15 @@ const FILTER_OPTIONS: { value: ConnectionFilter; label: string }[] = [
   { value: 'both', label: 'Both' },
   { value: 'professional', label: 'Professional' },
   { value: 'personal', label: 'Personal' },
-  { value: 'none', label: 'Default' },
 ]
-
-const PUBLIC_SCOPE_LABELS: Record<ChatAccessScope, string> = {
-  none: 'Private',
-  professional: 'Public (Professional only)',
-  personal: 'Public (Personal only)',
-  both: 'Public (Both)',
-}
 
 interface Props {
   initialConnections: ConnectionRow[]
+  // Still passed by the page; no longer shown since the "Default" option was removed.
   publicScope: ChatAccessScope
 }
 
-export default function ConnectionsList({ initialConnections, publicScope }: Props) {
+export default function ConnectionsList({ initialConnections }: Props) {
   const [connections, setConnections] = useState(initialConnections)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -134,8 +126,8 @@ export default function ConnectionsList({ initialConnections, publicScope }: Pro
 
   return (
     <div className={`space-y-4 ${selectedIds.size > 0 ? 'pb-32' : ''}`}>
-      <p className="text-sm text-text-secondary" title={`Default follows your Chat Access setting: ${PUBLIC_SCOPE_LABELS[publicScope]}.`}>
-        Default means they get the same as everyone else based on your account setting (Public or Private). Connections always get at least that.
+      <p className="text-sm text-text-secondary">
+        Choose what each connection can see. Connections always get at least what your public setting allows.
       </p>
 
       {connections.length === 0 ? (
@@ -237,7 +229,6 @@ export default function ConnectionsList({ initialConnections, publicScope }: Pro
                           type="button"
                           onClick={() => handleChange(connection.id, option.value)}
                           disabled={savingId === connection.id || bulkSaving}
-                          title={option.value === 'none' ? `Default follows your Chat Access setting: ${PUBLIC_SCOPE_LABELS[publicScope]}.` : undefined}
                           className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all disabled:opacity-50 ${
                             connection.allowed_scope === option.value
                               ? 'border-accent bg-accent-tint text-accent'
@@ -266,7 +257,6 @@ export default function ConnectionsList({ initialConnections, publicScope }: Pro
                 type="button"
                 onClick={() => handleBulkChange(option.value)}
                 disabled={bulkSaving}
-                title={option.value === 'none' ? `Default follows your Chat Access setting: ${PUBLIC_SCOPE_LABELS[publicScope]}.` : undefined}
                 className="px-3 py-2 rounded-lg text-sm font-medium border border-border text-text-secondary hover:border-accent/50 hover:text-accent disabled:opacity-50"
               >
                 {option.label}
