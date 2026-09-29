@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
+import Toggle from '@/components/ui/Toggle'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -341,13 +342,11 @@ export default function SignupPage() {
               <p className="text-sm text-text-secondary">
                 Let people find me by searching in LiAIson (you can change this anytime in Settings).
               </p>
-              <button
-                type="button"
-                onClick={() => setIsDiscoverable(!isDiscoverable)}
-                className={`w-14 h-7 flex-shrink-0 rounded-full transition-all ${isDiscoverable ? 'bg-accent' : 'bg-border'} relative`}
-              >
-                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-transform ${isDiscoverable ? 'translate-x-7' : 'translate-x-1'}`} />
-              </button>
+              <Toggle
+                checked={isDiscoverable}
+                onChange={() => setIsDiscoverable(!isDiscoverable)}
+                label="Discoverable"
+              />
             </div>
 
             <div className="space-y-3">

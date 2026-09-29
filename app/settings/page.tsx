@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import Toggle from '@/components/ui/Toggle'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 type PublicLevel = 'professional' | 'personal' | 'both'
@@ -177,8 +178,19 @@ export default function SettingsPage() {
                           : 'border-border hover:border-accent/50'
                       }`}
                     >
-                      <div className="font-medium text-text-primary">{opt.label}</div>
-                      <div className="text-sm text-text-secondary">{opt.description}</div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div>
+                          <div className="font-medium text-text-primary">{opt.label}</div>
+                          <div className="text-sm text-text-secondary">{opt.description}</div>
+                        </div>
+                        {publicScope === opt.value && (
+                          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-accent text-white" aria-label="Selected">
+                            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+                              <path fillRule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.5 7.55a1 1 0 0 1-1.42 0l-3.5-3.53a1 1 0 1 1 1.42-1.408l2.79 2.813 6.79-6.834a1 1 0 0 1 1.414-.006Z" clipRule="evenodd" />
+                            </svg>
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                   <p className="text-sm text-text-secondary leading-relaxed">
@@ -213,13 +225,12 @@ export default function SettingsPage() {
               <p className="text-sm text-text-secondary leading-relaxed">
                 When on, people can find you by searching in LiAIson. When off, your profile can only be reached through your link.
               </p>
-              <button
-                onClick={handleToggleDiscoverable}
+              <Toggle
+                checked={isDiscoverable}
+                onChange={handleToggleDiscoverable}
                 disabled={discoverableSaving}
-                className={`w-14 h-7 flex-shrink-0 rounded-full transition-all ${isDiscoverable ? 'bg-accent' : 'bg-border'} relative shadow-soft`}
-              >
-                <span className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-soft transition-transform ${isDiscoverable ? 'translate-x-7' : 'translate-x-1'}`} />
-              </button>
+                label="Discoverable"
+              />
             </div>
           )}
           {discoverableSuccess && (
