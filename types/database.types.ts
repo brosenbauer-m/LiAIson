@@ -592,13 +592,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"public_scope": string,"short_bio": string | null,"username": string
+                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"public_scope": string,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"username": string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"username"?: string
+                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"public_scope"?: string,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
