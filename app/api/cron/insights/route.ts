@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { previousPeriod, viennaDateParts, type Period } from '@/lib/insights/periods'
 import { buildAndStoreReport } from '@/lib/insights/reports'
+import { emailPendingReports } from '@/lib/insights/email'
 
 // Daily job (Vercel Cron, see vercel.json). Protected by CRON_SECRET.
 // - Every Monday (Vienna time): weekly report for the week that just ended (Mon–Sun).
 // - Every 1st of the month (Vienna time): monthly report for the calendar month that just ended.
+// - Every day: email reports that have not been emailed yet (owners can opt out in Settings).
 // - Every day: delete anonymous visitor_insights older than 35 days.
 // Reports are unique per owner and period, so re-running is safe.
 
@@ -56,6 +58,15 @@ export async function GET(request: NextRequest) {
     summary[period.type] = stats
   }
 
+  // Email new reports (respects users.report_emails; retries for up to 3 days).
+  let emails: { sent: number; skipped: number; failed: number } | 'failed'
+  try {
+    emails = await emailPendingReports()
+  } catch (err) {
+    console.error('REPORT_EMAILS_ERROR', err)
+    emails = 'failed'
+  }
+
   // Rotation: raw anonymous statements are kept ~35 days only.
   const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 3600 * 1000).toISOString()
   const { error: cleanupError, count: deleted } = await supabase
@@ -66,6 +77,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     viennaDate: `${today.year}-${String(today.month).padStart(2, '0')}-${String(today.day).padStart(2, '0')}`,
     reports: summary,
+    emails,
     cleanup: cleanupError ? 'failed' : { deleted: deleted ?? 0 },
   })
 }

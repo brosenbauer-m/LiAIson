@@ -34,6 +34,10 @@ export default function SettingsPage() {
   const [ownVaultAvailable, setOwnVaultAvailable] = useState(false)
   const [ownVaultSaving, setOwnVaultSaving] = useState(false)
   const [ownVaultSuccess, setOwnVaultSuccess] = useState(false)
+  const [reportEmails, setReportEmails] = useState(true)
+  const [reportEmailsAvailable, setReportEmailsAvailable] = useState(false)
+  const [reportEmailsSaving, setReportEmailsSaving] = useState(false)
+  const [reportEmailsSuccess, setReportEmailsSuccess] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -61,6 +65,15 @@ export default function SettingsPage() {
       if (!ownVaultError && ownVault) {
         setUseOwnVault(ownVault.use_own_vault_in_chats !== false)
         setOwnVaultAvailable(true)
+      }
+      const { data: emailPref, error: emailPrefError } = await supabase
+        .from('users')
+        .select('report_emails')
+        .eq('id', user.id)
+        .single()
+      if (!emailPrefError && emailPref) {
+        setReportEmails(emailPref.report_emails !== false)
+        setReportEmailsAvailable(true)
       }
       setLoading(false)
     }
@@ -123,6 +136,24 @@ export default function SettingsPage() {
     }
     setOwnVaultSuccess(true)
     setTimeout(() => setOwnVaultSuccess(false), 3000)
+  }
+
+  const handleToggleReportEmails = async () => {
+    if (!userId) return
+    const next = !reportEmails
+    setReportEmailsSaving(true)
+    setReportEmails(next)
+    const { error } = await supabase
+      .from('users')
+      .update({ report_emails: next })
+      .eq('id', userId)
+    setReportEmailsSaving(false)
+    if (error) {
+      setReportEmails(!next)
+      return
+    }
+    setReportEmailsSuccess(true)
+    setTimeout(() => setReportEmailsSuccess(false), 3000)
   }
 
   const handleSignOut = async () => {
@@ -281,6 +312,28 @@ export default function SettingsPage() {
               />
             </div>
             {ownVaultSuccess && (
+              <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
+                Saved ✓
+              </div>
+            )}
+          </div>
+        )}
+
+        {reportEmailsAvailable && (
+          <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+            <h2 className="font-semibold text-text-primary text-lg">Email me my reports</h2>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Get your weekly (Monday) and monthly (1st of the month) report on what visitors wanted to know by email. You can always read them on the <Link href="/insights" className="text-accent hover:underline">Reports page</Link>.
+              </p>
+              <Toggle
+                checked={reportEmails}
+                onChange={handleToggleReportEmails}
+                disabled={reportEmailsSaving}
+                label="Email me my reports"
+              />
+            </div>
+            {reportEmailsSuccess && (
               <div className="text-success text-sm bg-success/10 border border-success/20 rounded-lg px-4 py-3 font-medium">
                 Saved ✓
               </div>
