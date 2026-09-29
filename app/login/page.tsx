@@ -24,7 +24,12 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
-      setError(authError.message)
+      const message = authError.message.toLowerCase()
+      setError(message.includes('invalid login credentials')
+        ? 'Wrong email or password.'
+        : message.includes('not confirmed')
+          ? 'Please confirm your email first — check your inbox and spam folder.'
+          : authError.message)
       setLoading(false)
     } else {
       router.push(redirect)
@@ -42,6 +47,11 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8">
+          {searchParams.get('confirmed') === '1' && (
+            <p className="mb-5 text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
+              Your email is confirmed. Please sign in.
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">

@@ -17,6 +17,78 @@ export default function SignupPage() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [signedInEmail, setSignedInEmail] = useState('')
+  const [checkingEmail, setCheckingEmail] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    const supabase = createClient()
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setSignedInEmail(data.user.email)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!checkingEmail || !email || !password) return
+
+    const supabase = createClient()
+    const startedAt = Date.now()
+    let attemptInProgress = false
+
+    const attemptContinue = async () => {
+      if (attemptInProgress || Date.now() - startedAt >= 10 * 60 * 1000) return
+      attemptInProgress = true
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (sessionData.session) {
+          router.push('/vault?welcome=1')
+          router.refresh()
+          return
+        }
+
+        const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+        if (!authError && data.session) {
+          router.push('/vault?welcome=1')
+          router.refresh()
+        }
+      } catch {
+        // Automatic continuation is intentionally silent; the user can retry manually.
+      } finally {
+        attemptInProgress = false
+      }
+    }
+
+    const interval = window.setInterval(() => {
+      if (Date.now() - startedAt >= 10 * 60 * 1000) {
+        window.clearInterval(interval)
+        return
+      }
+      void attemptContinue()
+    }, 15000)
+    const onFocus = () => { void attemptContinue() }
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void attemptContinue()
+    }
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [checkingEmail, email, password, router])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = window.setInterval(() => {
+      setResendCooldown(current => Math.max(0, current - 1))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [resendCooldown])
 
   const checkUsername = useCallback(async (val: string) => {
     if (!val) { setUsernameStatus('idle'); return }
@@ -54,11 +126,23 @@ export default function SignupPage() {
     setLoading(true)
     const supabase = createClient()
 
+    const { data: currentUserData } = await supabase.auth.getUser()
+    if (currentUserData.user) {
+      const { error: signOutError } = await supabase.auth.signOut()
+      if (signOutError) {
+        setError(signOutError.message)
+        setLoading(false)
+        return
+      }
+      setSignedInEmail('')
+    }
+
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { display_name: displayName, username },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 
@@ -68,44 +152,71 @@ export default function SignupPage() {
       return
     }
 
-    if (data.user) {
-      // Insert user profile
-      await supabase.from('users').insert({
-        id: data.user.id,
-        username,
-        display_name: displayName,
-        is_discoverable: false,
-        discover_mode: 'all',
-        contact_links: [],
-      })
-
-      // Create default vault sections
-      const defaultSections = [
-        { domain: 'professional', section_type: 'current_role', label: 'Current Role' },
-        { domain: 'professional', section_type: 'skills', label: 'Skills & Expertise' },
-        { domain: 'professional', section_type: 'work_history', label: 'Work History' },
-        { domain: 'professional', section_type: 'education', label: 'Education' },
-        { domain: 'professional', section_type: 'projects', label: 'Projects & Publications' },
-        { domain: 'professional', section_type: 'opportunities', label: 'Open to Opportunities' },
-        { domain: 'personal', section_type: 'bio', label: 'About Me' },
-        { domain: 'personal', section_type: 'hobbies', label: 'Hobbies & Interests' },
-        { domain: 'personal', section_type: 'location', label: 'Location' },
-        { domain: 'personal', section_type: 'looking_for', label: 'Looking For' },
-        { domain: 'personal', section_type: 'values', label: 'Values & Personality' },
-        { domain: 'personal', section_type: 'lifestyle', label: 'Lifestyle' },
-      ]
-
-      await supabase.from('vault_sections').insert(
-        defaultSections.map(s => ({
-          ...s,
-          user_id: data.user!.id,
-          content: '',
-          source: 'manual',
-        }))
-      )
-
-      router.push('/vault?welcome=1')
+    if (data.user?.identities?.length === 0) {
+      setError('An account with this email may already exist. Try signing in, or reset your password.')
+      setLoading(false)
+      return
     }
+
+    if (data.session) {
+      router.push('/vault?welcome=1')
+      router.refresh()
+    } else if (data.user) {
+      setCheckingEmail(true)
+    }
+    setLoading(false)
+  }
+
+  const handleConfirmedContinue = async () => {
+    setError('')
+    setConfirming(true)
+    const supabase = createClient()
+    const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (authError) {
+      setError(authError.message.toLowerCase().includes('not confirmed')
+        ? 'Not confirmed yet — check your inbox and spam folder.'
+        : authError.message)
+      setConfirming(false)
+      return
+    }
+
+    if (data.session) {
+      router.push('/vault?welcome=1')
+      router.refresh()
+    }
+    setConfirming(false)
+  }
+
+  const handleResend = async () => {
+    setError('')
+    setResending(true)
+    const supabase = createClient()
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+    })
+
+    if (resendError) {
+      setError(resendError.message)
+    } else {
+      setResendCooldown(60)
+    }
+    setResending(false)
+  }
+
+  const handleDifferentEmail = () => {
+    setCheckingEmail(false)
+    setEmail('')
+    setPassword('')
+    setDisplayName('')
+    setUsername('')
+    setUsernameStatus('idle')
+    setAgeConfirmed(false)
+    setPrivacyAccepted(false)
+    setResendCooldown(0)
+    setError('')
   }
 
   const usernameIndicator = () => {
@@ -121,11 +232,56 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-bold text-2xl text-accent-light">LiAIson</Link>
-          <h1 className="text-2xl font-bold text-text-primary mt-4">Create your LiAIson</h1>
-          <p className="text-text-secondary mt-2">Set up your personal AI representative</p>
+          <h1 className="text-2xl font-bold text-text-primary mt-4">{checkingEmail ? 'Check your email' : 'Create your LiAIson'}</h1>
+          <p className="text-text-secondary mt-2">{checkingEmail ? 'Confirm your email to activate your account' : 'Set up your personal AI representative'}</p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8">
+          {checkingEmail ? (
+            <div className="space-y-5">
+              <p className="text-sm text-text-secondary">
+                We sent a confirmation link to {email}. Open it to activate your account. You can keep this page open — it will continue automatically once you&apos;ve confirmed.
+              </p>
+
+              {error && (
+                <div className="text-error text-sm bg-error/10 border border-error/30 rounded-lg px-3 py-2">
+                  {error}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleConfirmedContinue}
+                disabled={confirming}
+                className="w-full py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {confirming ? 'Checking...' : "I've confirmed — continue"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || resendCooldown > 0}
+                className="w-full py-3 border border-border text-text-primary font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {resending ? 'Sending...' : resendCooldown > 0 ? `Email sent (${resendCooldown}s)` : 'Resend email'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDifferentEmail}
+                className="w-full text-center text-accent-light hover:underline text-sm"
+              >
+                Use a different email
+              </button>
+            </div>
+          ) : (
+          <>
+          {signedInEmail && (
+            <p className="mb-5 text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">
+              You&apos;re currently signed in as {signedInEmail}. Creating a new account will sign you out of it.
+            </p>
+          )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">Display Name</label>
@@ -225,6 +381,8 @@ export default function SignupPage() {
             Already have an account?{' '}
             <Link href="/login" className="text-accent-light hover:underline">Sign in</Link>
           </p>
+          </>
+          )}
         </div>
       </div>
     </div>
