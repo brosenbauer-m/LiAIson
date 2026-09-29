@@ -1,6 +1,7 @@
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystemPrompt'
@@ -219,16 +220,18 @@ export async function POST(
         controller.error(err)
       }
 
-      // Asynchronously extract topic and log it (don't await — fire and forget)
+      // Background work after the reply. waitUntil keeps the Vercel function
+      // alive until it finishes; without it, the work is cut off once the
+      // response has been sent. Errors are ignored.
       const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
       // Anonymous "what visitors want to know" statement for the owner's insights.
-      // Skipped when the owner chats with their own LiAIson. Fire and forget.
+      // Skipped when the owner chats with their own LiAIson.
       if (lastUserMessage && visitor?.id !== user.id) {
-        captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */})
+        waitUntil(captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */}))
       }
 
       if (lastUserMessage) {
-        extractTopicCluster(lastUserMessage.content, user.id, actor).then(async topic => {
+        waitUntil(extractTopicCluster(lastUserMessage.content, user.id, actor).then(async topic => {
           // Check if topic already exists for this profile
           const { data: existing } = await supabase
             .from('visitor_query_log')
@@ -251,7 +254,7 @@ export async function POST(
               surfaced_to_owner: false,
             })
           }
-        }).catch(() => {/* ignore async errors */})
+        }).catch(() => {/* ignore async errors */}))
       }
     },
   })
