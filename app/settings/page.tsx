@@ -17,6 +17,9 @@ const SCOPE_OPTIONS: { value: PublicScope; label: string; description: string }[
 export default function SettingsPage() {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [publicScope, setPublicScope] = useState<PublicScope>('none')
   const [loading, setLoading] = useState(true)
@@ -62,10 +65,30 @@ export default function SettingsPage() {
   }
 
   const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return
     setDeleting(true)
-    await supabase.auth.signOut()
-    router.push('/')
+    setDeleteError('')
+
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => null) as { error?: unknown } | null
+        setDeleteError(typeof result?.error === 'string' ? result.error : 'Something went wrong. Please try again.')
+        setDeleting(false)
+        return
+      }
+
+      await supabase.auth.signOut({ scope: 'local' })
+      router.push('/')
+      router.refresh()
+    } catch {
+      setDeleteError('Something went wrong. Please try again.')
+      setDeleting(false)
+    }
   }
 
   return (
@@ -130,12 +153,53 @@ export default function SettingsPage() {
           <h2 className="font-semibold text-error text-lg">Danger Zone</h2>
           <p className="text-sm text-text-secondary leading-relaxed">Permanently delete your account and all associated data. This action cannot be undone.</p>
           <button
-            onClick={handleDeleteAccount}
+            onClick={() => {
+              setShowDeleteConfirmation(true)
+              setDeleteError('')
+            }}
             disabled={deleting}
             className="py-3 px-6 border-2 border-error text-error hover:bg-error/10 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 shadow-soft"
           >
-            {deleting ? 'Deleting...' : 'Delete Account'}
+            Delete Account
           </button>
+          {showDeleteConfirmation && (
+            <div className="space-y-4 rounded-lg border border-error/30 bg-error/5 p-4">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                This permanently deletes your account, your vault, your connections and any files you uploaded. This cannot be undone.
+              </p>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={deletePassword}
+                onChange={event => setDeletePassword(event.target.value)}
+                placeholder="Enter your password to confirm"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-error/60"
+              />
+              {deleteError && (
+                <p className="text-sm text-error" role="alert">{deleteError}</p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={!deletePassword || deleting}
+                  className="py-3 px-6 border-2 border-error bg-error text-white hover:bg-error/90 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Permanently delete my account'}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirmation(false)
+                    setDeletePassword('')
+                    setDeleteError('')
+                  }}
+                  disabled={deleting}
+                  className="py-3 px-6 border-2 border-border text-text-secondary hover:text-text-primary rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
