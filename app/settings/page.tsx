@@ -321,16 +321,16 @@ export default function SettingsPage() {
 
         {reportEmailsAvailable && (
           <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
-            <h2 className="font-semibold text-text-primary text-lg">Email me my reports</h2>
+            <h2 className="font-semibold text-text-primary text-lg">Email me my Echoes</h2>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-text-secondary leading-relaxed">
-                Get your weekly (Monday) and monthly (1st of the month) report on what visitors wanted to know by email. You can always read them on the <Link href="/insights" className="text-accent hover:underline">Reports page</Link>.
+                Get your weekly (Monday) and monthly (1st of the month) Echo, what visitors wanted to know, by email. You can always read them on the <Link href="/insights" className="text-accent hover:underline">Echoes page</Link>.
               </p>
               <Toggle
                 checked={reportEmails}
                 onChange={handleToggleReportEmails}
                 disabled={reportEmailsSaving}
-                label="Email me my reports"
+                label="Email me my Echoes"
               />
             </div>
             {reportEmailsSuccess && (

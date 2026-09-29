@@ -63,9 +63,10 @@ app/
   api/prompts/[username]/ suggested prompts (access-aware)
   api/discover/          GET username/name search (discoverable users only, safe columns)
   api/connections/       request / status / respond / access
-  api/insights/visitor-summary/  owner-only AI summary of anonymous visitor topics
+  api/insights/          owner-only visitor insights + saved "Echoes" (weekly/monthly reports; UI name is Echo)
   api/account/delete/    account deletion
-  api/cron/notifications/ weekly digest (CRON_SECRET)
+  api/cron/notifications/ weekly digest (CRON_SECRET; not scheduled)
+  api/cron/insights/     daily: build Echoes, email them, delete insights older than 35 days (CRON_SECRET)
   dashboard/ vault/ profile/ settings/ connections/ discover/ login/ signup/ privacy/
 components/nav/SiteHeader.tsx   shared header (rendered in app/layout.tsx)
 components/ui/Toggle.tsx        shared switch

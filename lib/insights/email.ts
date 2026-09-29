@@ -57,7 +57,7 @@ export async function emailReport(r: ReportRow): Promise<'sent' | 'skipped' | 'f
 
   const html = `
 <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#111">
-  <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#777;margin:0 0 6px">Your ${kind} LiAIson report · ${escapeHtml(when)}</p>
+  <p style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#777;margin:0 0 6px">Your ${kind} Echo · ${escapeHtml(when)}</p>
   <h1 style="font-size:24px;margin:0 0 12px">${escapeHtml(c.headline)}</h1>
   ${name ? `<p style="margin:0 0 12px">Hi ${escapeHtml(name)},</p>` : ''}
   ${c.summary ? `<p style="margin:0 0 16px;line-height:1.5">${escapeHtml(c.summary)}</p>` : ''}
@@ -68,23 +68,23 @@ export async function emailReport(r: ReportRow): Promise<'sent' | 'skipped' | 'f
     ${top.map(t => `<li style="margin-bottom:6px"><strong>${escapeHtml(t.category)}</strong> (${t.count})${t.examples[0] ? `<br><span style="color:#555">${escapeHtml(t.examples[0])}</span>` : ''}</li>`).join('')}
   </ul>
   ${c.suggestions.length ? `<h2 style="font-size:16px;margin:20px 0 8px">Ideas for your Vault</h2><ul style="padding-left:18px;margin:0 0 16px">${c.suggestions.map(s => `<li style="margin-bottom:6px">${escapeHtml(s)}</li>`).join('')}</ul>` : ''}
-  <p style="margin:24px 0"><a href="${reportsUrl}" style="background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">See the full report</a></p>
-  <p style="font-size:12px;color:#777;line-height:1.5">Reports are anonymous: they never show who asked or their exact words. You can turn these emails off in <a href="${settingsUrl}" style="color:#777">Settings</a>.</p>
+  <p style="margin:24px 0"><a href="${reportsUrl}" style="background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">See your full Echo</a></p>
+  <p style="font-size:12px;color:#777;line-height:1.5">Echoes are anonymous: they never show who asked or their exact words. You can turn these emails off in <a href="${settingsUrl}" style="color:#777">Settings</a>.</p>
 </div>`
 
   const text =
-    `Your ${kind} LiAIson report (${when})\n\n${c.headline}\n\n` +
+    `Your ${kind} Echo (${when})\n\n${c.headline}\n\n` +
     (c.summary ? `${c.summary}\n\n` : '') +
     `${c.total} ${c.total === 1 ? 'question' : 'questions'} this ${r.period_type}.\n\n` +
     `What people wanted to know:\n${top.map(t => `- ${t.category} (${t.count})${t.examples[0] ? `: ${t.examples[0]}` : ''}`).join('\n')}\n\n` +
     (c.suggestions.length ? `Ideas for your Vault:\n${c.suggestions.map(s => `- ${s}`).join('\n')}\n\n` : '') +
-    `See the full report: ${reportsUrl}\nTurn these emails off: ${settingsUrl}`
+    `See your full Echo: ${reportsUrl}\nTurn these emails off: ${settingsUrl}`
 
   try {
     await sendEmail({
       from: { email: 'noreply@my-liaison.app', name: 'LiAIson' },
       to,
-      subject: `Your ${kind} LiAIson report: ${c.headline}`.slice(0, 150),
+      subject: `Your ${kind} Echo: ${c.headline}`.slice(0, 150),
       html,
       text,
     })

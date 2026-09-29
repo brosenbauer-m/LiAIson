@@ -109,7 +109,7 @@ export default function VisitorInsights() {
       )}
 
       <Link href="/insights" className="inline-block text-sm font-medium text-accent hover:underline">
-        See your weekly and monthly reports →
+        See your weekly and monthly Echoes →
       </Link>
     </div>
   )

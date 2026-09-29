@@ -44,7 +44,7 @@ function ReportCard({ r }: { r: Report }) {
     <article className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-5">
       <div>
         <p className="text-xs uppercase tracking-wide font-semibold text-text-muted">
-          {r.period_type === 'week' ? 'Weekly report' : 'Monthly report'} · {periodLabel(r)}
+          {r.period_type === 'week' ? 'Weekly Echo' : 'Monthly Echo'} · {periodLabel(r)}
         </p>
         <h2 className="text-2xl font-bold text-text-primary mt-1">{c.headline}</h2>
         {c.summary && <p className="text-text-secondary mt-2 leading-relaxed">{c.summary}</p>}
@@ -142,9 +142,9 @@ export default function InsightsPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary">Your reports</h1>
+          <h1 className="text-4xl font-bold text-text-primary">Your Echoes</h1>
           <p className="text-text-secondary text-lg mt-2">
-            A new weekly report every Monday and a monthly report on the 1st — what visitors wanted to know, in anonymous form.
+            What your LiAIson heard: a new weekly Echo every Monday and a monthly Echo on the 1st — what visitors wanted to know, in anonymous form.
           </p>
         </div>
 
@@ -166,13 +166,13 @@ export default function InsightsPage() {
         {status === 'loading' && <p className="text-text-secondary">Loading...</p>}
         {status === 'signed-out' && (
           <p className="text-text-secondary">
-            Please <Link href="/login?redirect=/insights" className="text-accent hover:underline">log in</Link> to see your reports.
+            Please <Link href="/login?redirect=/insights" className="text-accent hover:underline">log in</Link> to see your Echoes.
           </p>
         )}
-        {status === 'error' && <p className="text-error" role="alert">Could not load your reports right now.</p>}
+        {status === 'error' && <p className="text-error" role="alert">Could not load your Echoes right now.</p>}
         {status === 'ok' && visible.length === 0 && (
           <div className="bg-card border border-border rounded-xl p-8 text-center shadow-soft">
-            <p className="text-text-primary font-medium">No {tab === 'week' ? 'weekly' : 'monthly'} reports yet.</p>
+            <p className="text-text-primary font-medium">No {tab === 'week' ? 'weekly' : 'monthly'} Echoes yet.</p>
             <p className="text-sm text-text-secondary mt-1">
               Your first one arrives {tab === 'week' ? 'on Monday' : 'on the 1st of next month'} if people ask your LiAIson questions.
             </p>
