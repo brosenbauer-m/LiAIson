@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 
 type Category = { category: string; count: number; examples: string[] }
 type Data = { total: number; categories: Category[] }
@@ -106,6 +107,10 @@ export default function VisitorInsights() {
           <p className="text-xs text-text-muted">Tap a topic to see what people want to know.</p>
         </div>
       )}
+
+      <Link href="/insights" className="inline-block text-sm font-medium text-accent hover:underline">
+        See your weekly and monthly reports →
+      </Link>
     </div>
   )
 }
