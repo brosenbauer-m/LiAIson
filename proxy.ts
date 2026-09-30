@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 const protectedRoutes = ['/dashboard', '/vault', '/profile', '/settings']
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })

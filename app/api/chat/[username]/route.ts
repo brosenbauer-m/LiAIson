@@ -87,10 +87,8 @@ async function loadReaderContext(
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { username: string } }
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const { username } = params
 
   // Get visitor IP

@@ -4,10 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { resolveScope } from '@/lib/access/resolveScope'
 import type { User, VaultSection } from '@/types'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { username: string } }
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ username: string }> }) {
+  const params = await props.params;
   const { username } = params
   const supabase = createServiceClient()
 

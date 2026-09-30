@@ -11,10 +11,11 @@ import type { User, VaultSection } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 
 interface Props {
-  params: { username: string }
+  params: Promise<{ username: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const supabase = createServiceClient()
   const { data: user } = await supabase
     .from('users')
@@ -42,7 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage(props: Props) {
+  const params = await props.params;
   const supabase = createServiceClient()
 
   const { data: user } = await supabase
