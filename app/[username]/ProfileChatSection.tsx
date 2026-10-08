@@ -33,15 +33,17 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   const [loading, setLoading] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const [rateLimited, setRateLimited] = useState(false)
+  const [limitMessage, setLimitMessage] = useState('')
   const [paused, setPaused] = useState(false)
   const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [authChecked, setAuthChecked] = useState(false)
   const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
   const [connectMessage, setConnectMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const userMessageCount = messages.filter(m => m.role === 'user').length
-  const anonLimitReached = !isLoggedIn && userMessageCount >= 3
+  // Chat needs an account: the person who sends a message pays for it.
+  const signedOut = authChecked && !isLoggedIn
 
   useEffect(() => {
     // Fetch suggested prompts
@@ -59,6 +61,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user)
+      setAuthChecked(true)
     })
   }, [username])
 
@@ -67,7 +70,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   }, [messages, streamingContent])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || loading || rateLimited || paused || anonLimitReached) return
+    if (!text.trim() || loading || rateLimited || paused || !isLoggedIn) return
 
     const userMsg: ChatMessage = { role: 'user', content: text }
     const newMessages = [...messages, userMsg]
@@ -84,14 +87,22 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
         body: JSON.stringify({ messages: newMessages, visitorId }),
       })
 
+      if (res.status === 401) {
+        setIsLoggedIn(false)
+        setMessages(prev => prev.slice(0, -1))
+        setLoading(false)
+        return
+      }
+
       if (res.status === 429) {
         const data = await res.json()
+        const text = data.error ?? "You've reached today's message limit. Please try again tomorrow."
         if (data.paused) setPaused(true)
-        else setRateLimited(true)
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: data.error ?? `You've reached the daily limit. Sign up to connect with ${displayName} directly.` },
-        ])
+        else {
+          setRateLimited(true)
+          setLimitMessage(text)
+        }
+        setMessages(prev => [...prev, { role: 'assistant', content: text }])
         setLoading(false)
         return
       }
@@ -128,7 +139,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, paused, anonLimitReached, username, displayName])
+  }, [messages, loading, rateLimited, paused, isLoggedIn, username])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -229,7 +240,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
       </div>
 
       {/* Suggested prompts */}
-      {messages.length === 0 && suggestedPrompts.length > 0 && (
+      {messages.length === 0 && isLoggedIn && suggestedPrompts.length > 0 && (
         <motion.div
           variants={staggerContainer}
           initial="hidden"
@@ -259,17 +270,29 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
               to keep chatting.
             </p>
           </div>
-        ) : rateLimited || anonLimitReached ? (
-          <div className="text-center py-3">
-            <p className="text-sm text-text-secondary mb-2">
-              You&apos;ve had a great conversation!{' '}
-              <a
-                href="/signup"
-                className="text-accent hover:underline font-medium"
-              >
-                Sign up to connect with {displayName} directly.
-              </a>
+        ) : signedOut ? (
+          <div className="text-center py-2 space-y-3">
+            <p className="text-sm text-text-secondary">
+              Sign up or log in to chat with {displayName}&apos;s LiAIson.
             </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/signup"
+                className="px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft"
+              >
+                Sign up
+              </Link>
+              <Link
+                href={`/login?redirect=/${encodeURIComponent(username)}`}
+                className="px-5 py-2.5 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all"
+              >
+                Log in
+              </Link>
+            </div>
+          </div>
+        ) : rateLimited ? (
+          <div className="text-center py-3">
+            <p className="text-sm text-text-secondary">{limitMessage}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex gap-3">

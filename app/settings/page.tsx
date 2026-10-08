@@ -252,7 +252,7 @@ export default function SettingsPage() {
                     </button>
                   ))}
                   <p className="text-sm text-text-secondary leading-relaxed">
-                    Visitors without an account can send up to 3 messages.
+                    Visitors need an account to chat with your LiAIson, and they pay for their own messages.
                   </p>
                 </div>
               ) : (

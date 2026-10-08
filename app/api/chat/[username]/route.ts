@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystemPrompt'
 import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
-import { checkAnonMessageLimit, ANON_MESSAGE_LIMIT } from '@/lib/ratelimit/anon'
+import { getSenderPlan, checkTrialMessageLimit } from '@/lib/ratelimit/trial'
 import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
@@ -123,19 +123,28 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
   }
 
+  // Only signed-in users can chat: the sender pays for every message
+  // (owner decision 2026-10-08), so there is no anonymous chat any more.
+  if (!visitor) {
+    return NextResponse.json(
+      { error: `Sign up or log in to chat with ${user.display_name}'s LiAIson.`, signInRequired: true },
+      { status: 401 }
+    )
+  }
+
   // Rate limit check
   const { allowed, remaining } = await checkRateLimit(ip, user.id)
   if (!allowed) {
     return NextResponse.json(
       {
-        error: `You've had a great conversation! Sign up to connect with ${user.display_name} directly.`,
+        error: `You've reached today's message limit for ${user.display_name}'s LiAIson. Please try again tomorrow.`,
         rateLimited: true,
       },
       { status: 429 }
     )
   }
 
-  const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
+  const scope = await resolveScope(user.id, { visitorUserId: visitor.id })
   if (scope === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }
@@ -144,24 +153,30 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // 2026-10-08), never the LiAIson's owner. A signed-in sender who has reached
   // their own monthly spending limit can't send more until the 1st of next month
   // or until they raise it in Settings. Fails open if usage can't be read.
-  // Signed-out visitors are not billed (capped at 3 messages; removed later).
-  if (visitor && (await isOverSpendLimit(visitor.id))) {
+  if (await isOverSpendLimit(visitor.id)) {
     return NextResponse.json(
       { error: "You've reached your monthly spending limit. You can raise it in Settings.", paused: true },
       { status: 429 }
     )
   }
 
-  // Signed-out visitors: max 3 messages per profile, enforced on the server.
-  if (!visitor) {
-    const anonLimitMessage = `You've had a great conversation! Sign up to keep chatting with ${user.display_name}.`
-    const userTurns = messages.filter(m => m.role === 'user').length
-    if (userTurns > ANON_MESSAGE_LIMIT) {
-      return NextResponse.json({ error: anonLimitMessage, rateLimited: true }, { status: 429 })
-    }
-    const anon = await checkAnonMessageLimit(ip, user.id)
-    if (!anon.allowed) {
-      return NextResponse.json({ error: anonLimitMessage, rateLimited: true }, { status: 429 })
+  // Free trial limits for the sender (exempt accounts have none):
+  // 3 messages per day to each LiAIson and 15 per day in total during the free
+  // month; after it, no messages until a payment method is added.
+  const plan = await getSenderPlan(visitor.id)
+  if (plan.kind === 'trial_ended') {
+    return NextResponse.json(
+      { error: 'Your free month has ended. Adding a payment method will be possible soon.', trialLimit: true },
+      { status: 429 }
+    )
+  }
+  if (plan.kind === 'trial') {
+    const trial = await checkTrialMessageLimit(visitor.id, user.id)
+    if (!trial.allowed) {
+      const error = trial.reason === 'total'
+        ? "You've used today's 15 free-trial messages. You can chat again tomorrow."
+        : `You've used today's 3 free-trial messages with ${user.display_name}'s LiAIson. You can chat again tomorrow.`
+      return NextResponse.json({ error, trialLimit: true }, { status: 429 })
     }
   }
 
@@ -169,7 +184,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // non-draft vault used to answer them, unless they switched it off.
   // It is only added to this request's prompt — never stored or logged.
   let reader: ReaderContext | undefined
-  if (visitor && visitor.id !== user.id) {
+  if (visitor.id !== user.id) {
     reader = await loadReaderContext(supabase, visitor.id)
   }
 
@@ -177,7 +192,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   const systemPrompt = await buildSystemPrompt(user.id, scope, reader)
 
   // Who caused this AI usage (for usage tracking only; no identity is stored).
-  const actor: AiActor = !visitor ? 'visitor' : visitor.id === user.id ? 'owner' : 'member'
+  const actor: AiActor = visitor.id === user.id ? 'owner' : 'member'
 
   // Stream response from Mistral
   const encoder = new TextEncoder()
@@ -204,10 +219,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
           }
         }
 
-        // Billed to the sender. Signed-out visitors have no account to bill.
-        if (visitor) {
-          await logAiUsage({ userId: visitor.id, feature: 'chat', model: CHAT_MODEL, actor, usage })
-        }
+        // Billed to the sender.
+        await logAiUsage({ userId: visitor.id, feature: 'chat', model: CHAT_MODEL, actor, usage })
         controller.close()
       } catch (err) {
         console.error('CHAT_STREAM_ERROR', err)
@@ -220,7 +233,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
       const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
       // Anonymous "what visitors want to know" statement for the owner's insights.
       // Skipped when the owner chats with their own LiAIson.
-      if (lastUserMessage && visitor?.id !== user.id) {
+      if (lastUserMessage && visitor.id !== user.id) {
         waitUntil(captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */}))
       }
     },

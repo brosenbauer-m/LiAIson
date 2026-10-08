@@ -9,7 +9,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo'
 
 // Who caused the call: the owner chatting with their own LiAIson, a signed-in
-// member, a signed-out visitor, or the system (scheduled Echoes).
+// member, a signed-out visitor (legacy rows only), or the system (scheduled Echoes).
 export type AiActor = 'owner' | 'member' | 'visitor' | 'system'
 
 type UsageLike = {
