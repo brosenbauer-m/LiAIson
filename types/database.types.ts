@@ -611,13 +611,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
