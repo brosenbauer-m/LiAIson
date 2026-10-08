@@ -1,7 +1,11 @@
 import { Mistral } from '@mistralai/mistralai'
 
+// All AI requests go to Mistral's EU regional endpoint (https://api.eu.mistral.ai),
+// so they are processed only in EU/EFTA data centres. The global endpoint makes
+// no location commitment. Owner decision 2026-10-08: EU only.
 export const mistral = new Mistral({
   apiKey: process.env.MISTRAL_API_KEY!,
+  server: 'eu',
 })
 
 export const CHAT_MODEL = 'mistral-medium-latest'

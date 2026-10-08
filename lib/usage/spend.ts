@@ -5,14 +5,15 @@ import { currentPeriod } from '@/lib/insights/periods'
 // Pay-as-you-go foundation: what a LiAIson's AI usage costs this month, and
 // whether it has reached the owner's monthly spending limit.
 //
-// Prices: Mistral list prices in USD per 1M tokens (checked 2026-09-30):
-// Medium 3.5 = $1.50 in / $7.50 out, Small 4 = $0.15 in / $0.60 out.
-// They are counted 1:1 as EUR, which slightly overestimates cost (safe side).
+// Prices: Mistral EUR prices per 1M tokens for EU regional inference
+// (docs.mistral.ai/inference/pricing, checked 2026-10-08; Mistral bills us in EUR):
+// Medium 3.5 = €1.4025 in / €7.0125 out, Small 4 = €0.14025 in / €0.561 out.
+// Cached-input discounts are not counted yet (safe side).
 // No payments are taken yet; this only measures and enforces the limit.
 
 const PRICES_EUR_PER_MILLION: Record<string, { input: number; output: number }> = {
-  [CHAT_MODEL]: { input: 1.5, output: 7.5 },
-  [FAST_MODEL]: { input: 0.15, output: 0.6 },
+  [CHAT_MODEL]: { input: 1.4025, output: 7.0125 },
+  [FAST_MODEL]: { input: 0.14025, output: 0.561 },
 }
 const FALLBACK_PRICE = PRICES_EUR_PER_MILLION[CHAT_MODEL]
 
