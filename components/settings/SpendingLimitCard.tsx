@@ -14,7 +14,7 @@ function euros(cents: number): string {
   return `€${(cents / 100).toFixed(2)}`
 }
 
-// Settings card: this month's AI usage of your LiAIson and your monthly
+// Settings card: this month's AI usage of your own messages and your monthly
 // spending limit (pay-as-you-go foundation; no payments are taken yet).
 export default function SpendingLimitCard() {
   const [usage, setUsage] = useState<Usage | null>(null)
@@ -91,13 +91,13 @@ export default function SpendingLimitCard() {
               />
             </div>
             <p className="text-xs text-text-secondary">
-              {usage.messages} {usage.messages === 1 ? 'message' : 'messages'} answered by your LiAIson this month.
+              {usage.messages} {usage.messages === 1 ? 'message' : 'messages'} sent by you this month.
             </p>
           </div>
 
           {usage.paused && (
             <p className="text-sm text-error bg-error/10 border border-error/20 rounded-lg px-4 py-3" role="status">
-              Your LiAIson has reached its limit and is paused for visitors until the 1st of next month. Raise the limit to turn it back on.
+              You&apos;ve reached your limit, so you can&apos;t send more messages until the 1st of next month. Raise the limit to keep chatting.
             </p>
           )}
 
@@ -132,7 +132,7 @@ export default function SpendingLimitCard() {
           </div>
 
           <p className="text-xs text-text-secondary leading-relaxed">
-            You pay for the AI your LiAIson uses when people chat with it. When this month&apos;s usage reaches your limit, your LiAIson pauses for visitors until the 1st of next month or until you raise the limit. Payments aren&apos;t switched on yet, so nothing is charged for now.
+            You only pay for the messages you send to any LiAIson, including your own. Others chatting with your LiAIson never cost you anything. When this month&apos;s usage reaches your limit, you can&apos;t send more messages until the 1st of next month or until you raise the limit. Payments aren&apos;t switched on yet, so nothing is charged for now.
           </p>
         </>
       )}

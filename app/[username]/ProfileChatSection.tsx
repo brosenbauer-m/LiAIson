@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
@@ -251,7 +252,11 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
         {paused ? (
           <div className="text-center py-3">
             <p className="text-sm text-text-secondary">
-              {displayName}&apos;s LiAIson is taking a break until next month.
+              You&apos;ve reached your monthly spending limit.{' '}
+              <Link href="/settings" className="text-accent hover:underline font-medium">
+                Raise it in Settings
+              </Link>{' '}
+              to keep chatting.
             </p>
           </div>
         ) : rateLimited || anonLimitReached ? (

@@ -1,8 +1,9 @@
 import { createServiceClient } from '@/lib/supabase/service'
 
-// Records how much AI a LiAIson uses, per call: whose LiAIson it was for,
-// which feature, which model and the token counts reported by Mistral.
-// Never stores message content, prompts or the visitor's identity.
+// Records AI usage per call: the account it is billed to (the sender for chat
+// messages; the LiAIson owner for insights and Echoes), which feature, which
+// model and the token counts reported by Mistral. Never stores message content
+// or prompts, and never which LiAIson a sender chatted with.
 // This is the "measure first" step for usage-based pricing. Never throws.
 
 export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo'

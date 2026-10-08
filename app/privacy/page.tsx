@@ -26,7 +26,7 @@ export default function PrivacyPage() {
               <li>Content you add to your Vault (professional and personal information)</li>
               <li>Your profile photo, if you upload one (stored in cloud storage). Files you import into your Vault (PDF, Word) are only read to extract their text and are not stored</li>
               <li>Anonymous visitor interest statements — e.g. &quot;People want to know more about your climbing&quot; — never the visitor&apos;s words or identity, deleted after about 35 days</li>
-              <li>AI usage counts — how much AI processing your LiAIson uses (feature, AI model and number of tokens), never message content or who the visitor was. We use this to run the service fairly and, in future, for usage-based pricing</li>
+              <li>AI usage counts — how much AI processing the messages you send use (feature, AI model and number of tokens), never message content and never which LiAIson you chatted with. We use this for your spending limit and, in future, to bill you for what you send. Others chatting with your LiAIson are never counted against you</li>
             </ul>
           </section>
 
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
               <li>You choose who can talk to your LiAIson: Public (professional, personal or both) or Private (only your connections), and what each connection can access</li>
               <li>You can turn Discoverable on or off at any time</li>
               <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
-              <li>You can set a monthly spending limit for your LiAIson&apos;s AI usage; when it is reached, your LiAIson pauses until the next month</li>
+              <li>You can set a monthly spending limit for the messages you send; when it is reached, you can&apos;t send more until the next month or until you raise it</li>
               <li>Files you import (PDF or Word) are only read to extract their text and are not stored; only the text you review and approve is saved to your Vault</li>
               <li>You can delete your account and all associated data at any time from Settings</li>
             </ul>

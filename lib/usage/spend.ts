@@ -2,8 +2,9 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import { currentPeriod } from '@/lib/insights/periods'
 
-// Pay-as-you-go foundation: what a LiAIson's AI usage costs this month, and
-// whether it has reached the owner's monthly spending limit.
+// Pay-as-you-go foundation: what a user's own messages cost this month, and
+// whether they have reached their monthly spending limit. The sender of a
+// message pays for it; nobody pays for others chatting with their LiAIson.
 //
 // Prices: Mistral EUR prices per 1M tokens for EU regional inference
 // (docs.mistral.ai/inference/pricing, checked 2026-10-08; Mistral bills us in EUR):
@@ -17,8 +18,10 @@ const PRICES_EUR_PER_MILLION: Record<string, { input: number; output: number }> 
 }
 const FALLBACK_PRICE = PRICES_EUR_PER_MILLION[CHAT_MODEL]
 
-// Features billed pay-as-you-go. Echoes ('echo') belong to a feature subscription.
-const METERED_FEATURES = new Set(['chat', 'topic', 'insight'])
+// Features billed pay-as-you-go (to the sender). 'topic' is legacy (no longer
+// produced). Insight capture and Echoes ('insight', 'echo') are logged to the
+// LiAIson owner but belong to the Echoes feature subscription, so not metered.
+const METERED_FEATURES = new Set(['chat', 'topic'])
 
 export const DEFAULT_SPEND_LIMIT_CENTS = 1500
 export const MAX_SPEND_LIMIT_CENTS = 50000
@@ -79,7 +82,7 @@ export async function getSpendLimitCents(userId: string): Promise<number> {
   return data.monthly_spend_limit_cents
 }
 
-// True when this month's metered usage has reached the owner's limit.
+// True when this month's metered usage has reached the user's own limit.
 // Fails open (returns false) if usage cannot be read, so a database problem
 // never takes every LiAIson offline.
 export async function isOverSpendLimit(userId: string): Promise<boolean> {

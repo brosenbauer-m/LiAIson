@@ -140,12 +140,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }
 
-  // Pay-as-you-go: the owner's monthly spending limit. When it is reached the
-  // LiAIson pauses for everyone until the 1st of next month or until the owner
-  // raises the limit. Fails open if usage can't be read.
-  if (await isOverSpendLimit(user.id)) {
+  // Pay-as-you-go: the person who SENDS a message pays for it (owner decision
+  // 2026-10-08), never the LiAIson's owner. A signed-in sender who has reached
+  // their own monthly spending limit can't send more until the 1st of next month
+  // or until they raise it in Settings. Fails open if usage can't be read.
+  // Signed-out visitors are not billed (capped at 3 messages; removed later).
+  if (visitor && (await isOverSpendLimit(visitor.id))) {
     return NextResponse.json(
-      { error: `${user.display_name}'s LiAIson is taking a break until next month.`, paused: true },
+      { error: "You've reached your monthly spending limit. You can raise it in Settings.", paused: true },
       { status: 429 }
     )
   }
@@ -202,7 +204,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
           }
         }
 
-        await logAiUsage({ userId: user.id, feature: 'chat', model: CHAT_MODEL, actor, usage })
+        // Billed to the sender. Signed-out visitors have no account to bill.
+        if (visitor) {
+          await logAiUsage({ userId: visitor.id, feature: 'chat', model: CHAT_MODEL, actor, usage })
+        }
         controller.close()
       } catch (err) {
         console.error('CHAT_STREAM_ERROR', err)
