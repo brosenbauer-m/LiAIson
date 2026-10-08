@@ -292,6 +292,9 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
             </button>
           </form>
         )}
+        <p className="mt-3 text-center text-xs text-text-muted">
+          You&apos;re chatting with an AI. It answers only from what {displayName} has shared and can make mistakes.
+        </p>
       </div>
     </div>
   )
