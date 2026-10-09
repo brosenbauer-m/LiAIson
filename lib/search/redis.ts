@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis'
 
 // Redis for Discover search (index locks and limits). Own keys only
-// (searchidx:*, searchq:*); never touches the chat rate-limit keys.
+// (searchidx:*, searchq:*, simq:* for Similarity); never touches the chat rate-limit keys.
 let redis: Redis | null = null
 
 export function getRedis(): Redis {

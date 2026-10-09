@@ -280,7 +280,7 @@ export default function SettingsPage() {
             <h2 className="font-semibold text-text-primary text-lg">Use my Vault when I chat</h2>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-text-secondary leading-relaxed">
-                When you chat with someone else&apos;s LiAIson, it can also use your own Vault (everything except drafts) to answer things like &ldquo;What do we have in common?&rdquo;. It&apos;s only used to answer you &mdash; never shown to them or saved.
+                When you chat with someone else&apos;s LiAIson, it can also use your own Vault (everything except drafts) to answer things like &ldquo;What do we have in common?&rdquo; and to tell you when you have something in common. It&apos;s only used to answer you &mdash; never shown to them or saved.
               </p>
               <Toggle
                 checked={useOwnVault}

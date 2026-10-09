@@ -9,6 +9,9 @@ import ContactLinks from '@/components/profile/ContactLinks'
 import TagChip from '@/components/ui/TagChip'
 import type { User, VaultSection } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
+import SimilarityCard from '@/components/similarity/SimilarityCard'
+import { getPlanAt } from '@/lib/billing/plan'
+import { PLANS } from '@/lib/plans'
 
 interface Props {
   params: Promise<{ username: string }>
@@ -61,6 +64,11 @@ export default async function ProfilePage(props: Props) {
   const circles = await resolveCircles(user.id, { visitorUserId: visitor?.id })
   const scope = circles !== null
 
+  // Similarity: score + map on Extrovert; on other plans the chat sometimes
+  // points to it (ProfileChatSection). Never for the owner's own profile.
+  const otherVisitor = !!visitor && visitor.id !== user.id && scope
+  const canCompare = otherVisitor && PLANS[await getPlanAt(visitor!.id)].similarity === 'score_visual'
+
   // Only load vault sections the visitor is allowed to see (their circles).
   let publicSections: VaultSection[] = []
   if (circles) {
@@ -97,6 +105,10 @@ export default async function ProfilePage(props: Props) {
               displayName={user.display_name}
               shortBio={user.short_bio}
             />
+
+            {canCompare && (
+              <SimilarityCard username={user.username} displayName={user.display_name} />
+            )}
 
             {/* Contact links */}
             {scope && user.contact_links && user.contact_links.length > 0 && (
@@ -149,6 +161,7 @@ export default async function ProfilePage(props: Props) {
                 ownerId={user.id}
                 username={params.username}
                 displayName={user.display_name}
+                similarityNote={otherVisitor ? (canCompare ? 'map' : 'upgrade') : null}
               />
             ) : (
               <PrivateProfileCard

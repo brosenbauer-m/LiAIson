@@ -6,7 +6,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 // or prompts, and never which LiAIson a sender chatted with.
 // This is the "measure first" step for usage-based pricing. Never throws.
 
-export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo' | 'search' | 'index'
+export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo' | 'search' | 'index' | 'similarity'
 
 // Who caused the call: the owner chatting with their own LiAIson, a signed-in
 // member, a signed-out visitor (legacy rows only), or the system (scheduled Echoes).

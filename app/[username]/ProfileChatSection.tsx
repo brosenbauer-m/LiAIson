@@ -15,6 +15,9 @@ interface Props {
   ownerId: string
   username: string
   displayName: string
+  // Shown now and then under a reply that points out something in common:
+  // 'map' links to the Similarity card (Extrovert), 'upgrade' to Plans.
+  similarityNote: 'map' | 'upgrade' | null
 }
 
 type TrialStatus = {
@@ -28,6 +31,23 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })
 }
 
+// The Similarity note shows at most once per chat per day (Vienna day).
+function viennaDay(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' })
+}
+
+function takeSimilarityNote(username: string): boolean {
+  try {
+    const key = `liaison_similarity_note:${username}`
+    const today = viennaDay()
+    if (localStorage.getItem(key) === today) return false
+    localStorage.setItem(key, today)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Generate a simple visitor ID for session tracking
 function getVisitorId(): string {
   let id = sessionStorage.getItem('liaison_visitor_id')
@@ -38,7 +58,7 @@ function getVisitorId(): string {
   return id
 }
 
-export default function ProfileChatSection({ ownerId, username, displayName }: Props) {
+export default function ProfileChatSection({ ownerId, username, displayName, similarityNote }: Props) {
   const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -53,6 +73,8 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
   const [connectMessage, setConnectMessage] = useState('')
   const [trial, setTrial] = useState<TrialStatus | null>(null)
+  // Index of the reply the Similarity note is shown under.
+  const [noteAt, setNoteAt] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   // Chat needs an account: the person who sends a message pays for it.
@@ -160,6 +182,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
 
       const reply = readChatSignals(accumulated)
       setMessages(prev => [...prev, { role: 'assistant', content: reply.text }])
+      if (reply.common && similarityNote && takeSimilarityNote(username)) setNoteAt(newMessages.length)
       setStreamingContent('')
       loadTrial()
     } catch {
@@ -170,7 +193,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, paused, isLoggedIn, username, loadTrial])
+  }, [messages, loading, rateLimited, paused, isLoggedIn, username, loadTrial, similarityNote])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -257,7 +280,18 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
           </div>
         )}
         {messages.map((msg, i) => (
-          <ChatBubble key={i} role={msg.role} content={msg.content} />
+          <div key={i}>
+            <ChatBubble role={msg.role} content={msg.content} />
+            {i === noteAt && similarityNote && (
+              <p className="-mt-1 mb-3 pl-9 text-xs text-text-secondary">
+                {similarityNote === 'map' ? (
+                  <a href="#similarity" className="hover:text-text-primary hover:underline">✨ See everything you have in common →</a>
+                ) : (
+                  <Link href="/plans#similarity" className="hover:text-text-primary hover:underline">✨ With Extrovert, see a map of everything you have in common →</Link>
+                )}
+              </p>
+            )}
+          </div>
         ))}
         {streamingContent && (
           <ChatBubble role="assistant" content={streamingContent} isStreaming />

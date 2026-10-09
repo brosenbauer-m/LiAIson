@@ -25,6 +25,7 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
 - `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
+- `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert: score + bubble map, cached in similarity_results); chat similarity marker/note → `lib/chat/signals.ts`
 - `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`)
 - `app/settings/`, `components/settings/` Public/Private, Discoverable, email, plan, card, bills
 - `app/plans/`, `lib/plans.ts` (all plan limits + texts), `lib/billing/plan.ts` (plan state/changes; `plan_changes` is the source of truth)

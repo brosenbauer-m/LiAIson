@@ -11,7 +11,7 @@ export default function PlanFeatures({ plan }: { plan: Plan }) {
             <details className="group">
               <summary className="cursor-pointer list-none flex items-start gap-2 text-sm text-text-secondary hover:text-text-primary">
                 <span aria-hidden="true" className="mt-0.5 text-accent transition-transform group-open:rotate-90">›</span>
-                <span>{f.text}</span>
+                <span className={f.highlight ? 'font-semibold text-text-primary' : undefined}>{f.text}</span>
               </summary>
               {help && <p className="mt-1.5 mb-2 ml-5 text-xs text-text-secondary leading-relaxed">{help.text}</p>}
             </details>
