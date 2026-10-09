@@ -162,7 +162,7 @@ export default function DiscoverPage() {
                 </button>
               </form>
               <p className="text-xs text-text-muted text-center">
-                {Math.max(0, quota.quota - quota.used)} of {quota.quota} searches left this month. Only people who chose to be findable are searched, and only what everyone can see on their profile.
+                {Math.max(0, quota.quota - quota.used)} of {quota.quota} searches left this month (the same search again today is free). Only people who chose to be findable are searched, and only what everyone can see on their profile.
               </p>
 
               {contentLoading && <p className="text-center text-sm text-text-secondary py-6">Searching...</p>}

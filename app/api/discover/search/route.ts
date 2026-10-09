@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getSearchQuota, searchPeople } from '@/lib/search/search'
+import { getReusedSearch, getSearchQuota, rememberSearch, searchPeople } from '@/lib/search/search'
 import { underLimit } from '@/lib/redis'
 
 // Discover AI search: find people by what they share.
@@ -52,6 +52,12 @@ export async function POST(request: NextRequest) {
   if (quota <= 0) {
     return NextResponse.json({ error: 'Searching by what people share is part of Ambivert and Extrovert.', locked: true, quota, used }, { status: 403 })
   }
+
+  // Same search again today: reuse it (free, not counted).
+  const reused = await getReusedSearch(userId, q)
+  if (reused) {
+    return NextResponse.json({ results: reused, quota, used, reused: true }, { headers: { 'Cache-Control': 'no-store' } })
+  }
   if (used >= quota) {
     return NextResponse.json({ error: `You have used all ${quota} searches for this month.`, quotaReached: true, quota, used }, { status: 429 })
   }
@@ -64,6 +70,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const results = await searchPeople(userId, q)
+    await rememberSearch(userId, q, results)
     const after = await getSearchQuota(userId).catch(() => ({ quota, used: used + 1 }))
     return NextResponse.json({ results, quota: after.quota, used: after.used }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {

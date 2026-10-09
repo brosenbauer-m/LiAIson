@@ -3,7 +3,8 @@ import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
 import { getPlanLimits } from '@/lib/billing/plan'
-import { EMBED_MODEL, embedTexts } from '@/lib/search/indexer'
+import { EMBED_MODEL, embedTexts, md5 } from '@/lib/search/indexer'
+import { getRedis } from '@/lib/redis'
 
 // Discover AI search: "find people by what they share" (owner decisions 2026-10-09).
 // - Searches only the Outer Circle of profiles that are Public AND Discoverable
@@ -27,6 +28,44 @@ export type SearchResult = {
 }
 
 export type SearchQuota = { quota: number; used: number }
+
+// The same search by the same person on the same day (Vienna) reuses the
+// result: no AI call and it doesn't count again. On reuse, everyone in it is
+// re-checked (still Public + Discoverable), so nobody who has since hidden
+// their profile shows up.
+const CACHE_TTL_SECONDS = 24 * 3600
+
+function cacheKey(searcherId: string, query: string): string {
+  const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Vienna' })
+  return `searchcache:${searcherId}:${day}:${md5(query.toLowerCase().replace(/\s+/g, ' ').trim())}`
+}
+
+export async function getReusedSearch(searcherId: string, query: string): Promise<SearchResult[] | null> {
+  let cached: SearchResult[] | null = null
+  try {
+    cached = await getRedis().get<SearchResult[]>(cacheKey(searcherId, query))
+  } catch {
+    return null
+  }
+  if (!Array.isArray(cached)) return null
+  if (cached.length === 0) return []
+  const { data } = await createServiceClient()
+    .from('users')
+    .select('username')
+    .in('username', cached.map(r => r.username))
+    .eq('is_discoverable', true)
+    .neq('public_scope', 'none')
+  const visible = new Set(((data as { username: string }[] | null) ?? []).map(u => u.username))
+  return cached.filter(r => visible.has(r.username))
+}
+
+export async function rememberSearch(searcherId: string, query: string, results: SearchResult[]): Promise<void> {
+  try {
+    await getRedis().set(cacheKey(searcherId, query), results, { ex: CACHE_TTL_SECONDS })
+  } catch {
+    // Redis unavailable: the next identical search just runs again.
+  }
+}
 
 // Searches used this month (Vienna calendar month) and the plan's quota.
 export async function getSearchQuota(userId: string): Promise<SearchQuota> {
