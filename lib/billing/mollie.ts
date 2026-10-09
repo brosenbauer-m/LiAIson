@@ -83,6 +83,26 @@ export function createCardSetupPayment(input: {
   })
 }
 
+// One-off payment (e.g. a prepaid top-up) on Mollie's checkout page.
+export function createOneOffPayment(input: {
+  customerId: string
+  amountEur: string
+  description: string
+  redirectUrl: string
+  webhookUrl: string
+  metadata: Record<string, string>
+}) {
+  return mollie<MolliePayment>('POST', '/payments', {
+    amount: { currency: 'EUR', value: input.amountEur },
+    description: input.description,
+    sequenceType: 'oneoff',
+    customerId: input.customerId,
+    redirectUrl: input.redirectUrl,
+    webhookUrl: input.webhookUrl,
+    metadata: input.metadata,
+  })
+}
+
 export function getPayment(paymentId: string) {
   return mollie<MolliePayment>('GET', `/payments/${encodeURIComponent(paymentId)}`)
 }

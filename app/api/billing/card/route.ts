@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { createServiceClient } from '@/lib/supabase/service'
-import { createCustomer, createCardSetupPayment, revokeMandate, MollieError } from '@/lib/billing/mollie'
-import { getBillingAccount, saveBillingAccount, syncPendingAccount } from '@/lib/billing/account'
+import { createCardSetupPayment, revokeMandate, MollieError } from '@/lib/billing/mollie'
+import { ensureMollieCustomer, getBillingAccount, saveBillingAccount, syncPendingAccount } from '@/lib/billing/account'
 import { isEuCountry, toCountryCode } from '@/lib/billing/countries'
 
 // The signed-in user's saved card (Mollie mandate).
@@ -60,21 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please wait a moment and try again.' }, { status: 429 })
     }
 
-    let customerId = account?.mollie_customer_id ?? null
-    if (!customerId) {
-      const supabase = createServiceClient()
-      const { data: profile } = await supabase
-        .from('users')
-        .select('display_name')
-        .eq('id', user.id)
-        .single<{ display_name: string }>()
-      const customer = await createCustomer({
-        name: profile?.display_name ?? '',
-        email: user.email ?? '',
-        userId: user.id,
-      })
-      customerId = customer.id
-    }
+    const customerId = await ensureMollieCustomer(user.id, user.email)
 
     const origin = request.nextUrl.origin
     const payment = await createCardSetupPayment({

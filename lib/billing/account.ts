@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { getMandate, getPayment, listMandates, revokeMandate, cardLabelFromMandate, MollieError } from '@/lib/billing/mollie'
+import { createCustomer, getMandate, listMandates, revokeMandate, cardLabelFromMandate, type MolliePayment } from '@/lib/billing/mollie'
 import { toCountryCode } from '@/lib/billing/countries'
 
 // Billing account helpers (server-only). The billing_accounts table is
@@ -53,17 +53,10 @@ async function storeValidMandate(account: BillingAccount, mandateId: string, car
   }
 }
 
-// Called by the Mollie webhook with a payment id. Never trusts the request body:
-// the payment is fetched from Mollie with our own key and must belong to the
-// customer stored for that user.
-export async function handleCardSetupPayment(paymentId: string): Promise<void> {
-  let payment
-  try {
-    payment = await getPayment(paymentId)
-  } catch (err) {
-    if (err instanceof MollieError && err.status === 404) return // not one of ours
-    throw err
-  }
+// Card check result, called from the Mollie webhook (lib/billing/payments.ts)
+// with a payment fetched from Mollie with our own key. The payment must belong
+// to the customer stored for that user.
+export async function handleCardSetupPayment(payment: MolliePayment): Promise<void> {
   const meta = payment.metadata ?? {}
   if (meta.purpose !== 'card_setup' || typeof meta.userId !== 'string') return
 
@@ -86,6 +79,21 @@ export async function handleCardSetupPayment(paymentId: string): Promise<void> {
   if (['failed', 'canceled', 'expired'].includes(payment.status) && account.mandate_status === 'pending') {
     await saveBillingAccount(account.user_id, { mandate_status: 'none' })
   }
+}
+
+// Returns the user's Mollie customer id, creating the Mollie customer if needed.
+export async function ensureMollieCustomer(userId: string, email: string | null | undefined): Promise<string> {
+  const account = await getBillingAccount(userId)
+  if (account?.mollie_customer_id) return account.mollie_customer_id
+  const supabase = createServiceClient()
+  const { data: profile } = await supabase
+    .from('users')
+    .select('display_name')
+    .eq('id', userId)
+    .single<{ display_name: string }>()
+  const customer = await createCustomer({ name: profile?.display_name ?? '', email: email ?? '', userId })
+  await saveBillingAccount(userId, { mollie_customer_id: customer.id })
+  return customer.id
 }
 
 // Used when the user comes back from Mollie: if the webhook hasn't arrived yet,
