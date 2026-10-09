@@ -10,6 +10,7 @@ import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import PrepaidBalanceCard from '@/components/settings/PrepaidBalanceCard'
 import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
 import PlanCard from '@/components/settings/PlanCard'
+import AccountEmailCard from '@/components/settings/AccountEmailCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 type PublicLevel = 'professional' | 'personal' | 'both'
@@ -199,6 +200,8 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <h1 className="text-4xl font-bold text-text-primary">Settings</h1>
+
+        <AccountEmailCard />
 
         <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Who can talk to your LiAIson</h2>
