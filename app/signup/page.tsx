@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
 import Toggle from '@/components/ui/Toggle'
+import { PLANS, PLAN_IDS, isPlanId, formatChars, ECHO_LABEL, type PlanId } from '@/lib/plans'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function SignupPage() {
   const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [isDiscoverable, setIsDiscoverable] = useState(true)
+  const [plan, setPlan] = useState<PlanId>('introvert')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [signedInEmail, setSignedInEmail] = useState('')
@@ -24,6 +26,15 @@ export default function SignupPage() {
   const [confirming, setConfirming] = useState(false)
   const [resending, setResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+
+  // Plan chosen on the plans page (/signup?plan=…).
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get('plan')
+    const timer = setTimeout(() => {
+      if (isPlanId(fromUrl)) setPlan(fromUrl)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const supabase = createClient()
@@ -144,7 +155,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, username, is_discoverable: isDiscoverable },
+        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -338,6 +349,36 @@ export default function SignupPage() {
                 placeholder="Min. 8 characters"
               />
             </div>
+
+            <fieldset>
+              <legend className="block text-sm font-medium text-text-primary mb-1.5">Plan</legend>
+              <div className="grid grid-cols-3 gap-2">
+                {PLAN_IDS.map(id => (
+                  <label
+                    key={id}
+                    className={`cursor-pointer rounded-lg border px-3 py-2.5 text-center transition-all ${
+                      plan === id ? 'border-accent bg-accent-tint' : 'border-border bg-surface hover:border-accent/60'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="plan"
+                      value={id}
+                      checked={plan === id}
+                      onChange={() => setPlan(id)}
+                      className="sr-only"
+                    />
+                    <span className="block text-sm font-medium text-text-primary">{PLANS[id].name}</span>
+                    <span className="block text-xs text-text-secondary">{PLANS[id].feeEur === 0 ? 'Free' : `€${PLANS[id].feeEur}/month`}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-text-secondary mt-1.5">
+                {formatChars(PLANS[plan].vaultChars)} Vault characters · Echoes: {PLANS[plan].echoes === 'none' ? 'none' : ECHO_LABEL[PLANS[plan].echoes].toLowerCase()}.
+                First month free, then it continues automatically (card needed). Messages you send are pay-per-use.{' '}
+                <Link href="/plans" className="text-accent-light hover:underline" target="_blank">Compare plans</Link>
+              </p>
+            </fieldset>
 
             <div className="flex items-center justify-between gap-4 py-1">
               <p className="text-sm text-text-secondary">

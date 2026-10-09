@@ -88,6 +88,9 @@ export default function SiteHeader() {
 
         {auth === 'signed-out' && (
           <nav className="flex items-center gap-4 sm:gap-6" aria-label="Main">
+            <Link href="/plans" className={linkClass('/plans')}>
+              Plans
+            </Link>
             <Link href="/discover" className={linkClass('/discover')}>
               Discover
             </Link>

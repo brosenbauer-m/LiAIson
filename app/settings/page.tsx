@@ -9,6 +9,7 @@ import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import PrepaidBalanceCard from '@/components/settings/PrepaidBalanceCard'
 import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
+import PlanCard from '@/components/settings/PlanCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 type PublicLevel = 'professional' | 'personal' | 'both'
@@ -344,6 +345,8 @@ export default function SettingsPage() {
             )}
           </div>
         )}
+
+        {userId && <PlanCard />}
 
         {userId && <SpendingLimitCard />}
 
