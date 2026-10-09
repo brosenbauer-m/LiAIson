@@ -8,7 +8,7 @@ import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
 import type { VaultSection, VaultFolder } from '@/types'
-import { CIRCLE_LABEL, CIRCLE_HELP, type Circle } from '@/lib/circles'
+import { placementFields, placementHelp, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -26,7 +26,7 @@ const SECTION_HINTS: Record<string, string> = {
   hobbies: "Don't just list activities — share what excites you about them.",
 }
 
-type Tab = Circle
+type Tab = Placement
 
 // Keeps the Discover search index up to date (only Outer Circle content of
 // Public + Discoverable profiles is ever indexed). Fire and forget.
@@ -49,6 +49,8 @@ export default function VaultPage() {
   const [vaultLimit, setVaultLimit] = useState<number | null>(null)
   // Inner Circle only on plans with two circles (Ambivert / Extrovert).
   const [innerAllowed, setInnerAllowed] = useState(false)
+  // Own circles (Social Butterfly), managed on the Connections page.
+  const [customCircles, setCustomCircles] = useState<CustomCircle[]>([])
   const [limitHit, setLimitHit] = useState(false)
 
   const supabase = createClient()
@@ -65,6 +67,11 @@ export default function VaultPage() {
         const plan = await planRes.json() as { vaultLimit?: number; circles?: number }
         if (typeof plan.vaultLimit === 'number') setVaultLimit(plan.vaultLimit)
         setInnerAllowed(plan.circles === 2)
+      }
+      const circlesRes = await fetch('/api/circles', { cache: 'no-store' }).catch(() => null)
+      if (circlesRes?.ok) {
+        const data = await circlesRes.json() as { extraCircles: number; circles: CustomCircle[] }
+        setCustomCircles(data.extraCircles > 0 ? data.circles.map(c => ({ id: c.id, name: c.name })) : [])
       }
 
       const { data, error } = await supabase
@@ -178,7 +185,7 @@ export default function VaultPage() {
         domain: 'custom',
         is_professional: false,
         is_personal: false,
-        circle: activeTab,
+        ...placementFields(activeTab),
         section_type: 'custom',
         label,
         content: '',
@@ -206,7 +213,7 @@ export default function VaultPage() {
         domain: 'custom',
         is_professional: false,
         is_personal: false,
-        circle: target,
+        ...placementFields(target),
         section_type: 'custom',
         label,
         content,
@@ -228,8 +235,13 @@ export default function VaultPage() {
   const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
   const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
 
-  const filtered = sections.filter(section => (section.circle ?? 'outer') === activeTab)
-  const tabs: Tab[] = innerAllowed || sections.some(s => s.circle === 'inner') ? ['outer', 'inner', 'draft'] : ['outer', 'draft']
+  const filtered = sections.filter(section => placementOf(section) === activeTab)
+  const tabs: Tab[] = [
+    'outer',
+    ...(innerAllowed || sections.some(s => s.circle === 'inner') ? ['inner' as const] : []),
+    ...customCircles.map(c => `c:${c.id}` as const),
+    'draft',
+  ]
 
   if (loading) {
     return (
@@ -269,7 +281,7 @@ export default function VaultPage() {
             <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
           </div>
           <div className="flex flex-col items-end">
-            <FileImport defaultTarget={activeTab} innerAllowed={innerAllowed} onSave={saveImportedSection} />
+            <FileImport defaultTarget={activeTab} innerAllowed={innerAllowed} customCircles={customCircles} onSave={saveImportedSection} />
           </div>
         </div>
 
@@ -305,7 +317,7 @@ export default function VaultPage() {
         <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
 
         {/* Tabs: one per circle */}
-        <div className="flex gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">
+        <div className="flex flex-wrap gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit max-w-full shadow-soft">
           {tabs.map(tab => (
             <button
               key={tab}
@@ -316,12 +328,12 @@ export default function VaultPage() {
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {CIRCLE_LABEL[tab]}
+              {placementLabel(tab, customCircles)}
             </button>
           ))}
         </div>
         <p className="mb-8 text-sm text-text-secondary">
-          {CIRCLE_HELP[activeTab]}
+          {placementHelp(activeTab, customCircles)}
           {!innerAllowed && activeTab === 'outer' && (
             <> With Ambivert or Extrovert you can also share some things only with people you choose. <Link href="/plans#circles" className="text-accent hover:underline">Learn more</Link></>
           )}
@@ -337,6 +349,7 @@ export default function VaultPage() {
               onDelete={deleteSection}
               hint={SECTION_HINTS[section.section_type]}
               innerAllowed={innerAllowed}
+              customCircles={customCircles}
               roomLeft={vaultLimit === null ? undefined : vaultLimit - (totalChars - countChars(section.content))}
             />
           ))}

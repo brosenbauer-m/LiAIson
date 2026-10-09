@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import type { CustomCircle } from '@/lib/circles'
 
 interface ConnectionUser {
   id: string
@@ -33,12 +34,40 @@ const FILTER_OPTIONS: { value: ConnectionFilter; label: string }[] = [
 
 interface Props {
   initialConnections: ConnectionRow[]
-  // Inner Circle only on plans with two circles (Ambivert / Extrovert).
+  // Inner Circle only on plans with two circles (Ambivert and up).
   innerAllowed: boolean
+  // Own circles (Social Butterfly) and, per connected user id, the circles they are in.
+  customCircles: CustomCircle[]
+  initialMemberships: Record<string, string[]>
 }
 
-export default function ConnectionsList({ initialConnections, innerAllowed }: Props) {
+export default function ConnectionsList({ initialConnections, innerAllowed, customCircles, initialMemberships }: Props) {
   const [connections, setConnections] = useState(initialConnections)
+  const [memberships, setMemberships] = useState(initialMemberships)
+  const [circleSaving, setCircleSaving] = useState<string | null>(null)
+
+  // Add a person to / remove them from one of the owner's own circles.
+  const toggleCircle = async (userId: string, circleId: string) => {
+    const was = (memberships[userId] ?? []).includes(circleId)
+    const apply = (member: boolean) => setMemberships(prev => ({
+      ...prev,
+      [userId]: member ? [...(prev[userId] ?? []).filter(id => id !== circleId), circleId] : (prev[userId] ?? []).filter(id => id !== circleId),
+    }))
+    setCircleSaving(`${userId}:${circleId}`)
+    apply(!was)
+    try {
+      const res = await fetch('/api/circles/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ circleId, memberIds: [userId], member: !was }),
+      })
+      if (!res.ok) apply(was)
+    } catch {
+      apply(was)
+    } finally {
+      setCircleSaving(null)
+    }
+  }
   const [savingId, setSavingId] = useState<string | null>(null)
   const [bulkSaving, setBulkSaving] = useState(false)
   const [filter, setFilter] = useState<ConnectionFilter>('all')
@@ -227,6 +256,28 @@ export default function ConnectionsList({ initialConnections, innerAllowed }: Pr
                         <p className="text-xs text-text-secondary">@{fromUser?.username ?? ''}</p>
                       </div>
                     </div>
+                    {fromUser && customCircles.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-text-secondary">Also in:</span>
+                        {customCircles.map(circle => {
+                          const member = (memberships[fromUser.id] ?? []).includes(circle.id)
+                          return (
+                            <button
+                              key={circle.id}
+                              type="button"
+                              onClick={() => toggleCircle(fromUser.id, circle.id)}
+                              disabled={circleSaving === `${fromUser.id}:${circle.id}` || bulkSaving}
+                              aria-pressed={member}
+                              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all disabled:opacity-50 ${
+                                member ? 'border-accent bg-accent text-white' : 'border-border text-text-secondary hover:border-accent/50'
+                              }`}
+                            >
+                              {member ? '✓ ' : ''}{circle.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                     {innerAllowed && <div className="flex flex-wrap gap-2">
                       {CIRCLE_OPTIONS.map(option => (
                         <button

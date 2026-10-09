@@ -1,22 +1,33 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { getPlanAt } from '@/lib/billing/plan'
-import { PLANS } from '@/lib/plans'
+import { getPlanLimits } from '@/lib/billing/plan'
 import type { VisibleCircle } from '@/lib/circles'
 
-// Which circles of the owner's Vault a visitor may see (see lib/circles.ts).
-// - The owner sees both circles (never drafts through their LiAIson).
+// Which parts of the owner's Vault a visitor may see (see lib/circles.ts).
+// - The owner sees everything except drafts (never drafts through their LiAIson).
 // - Public profile (users.public_scope !== 'none'): everyone sees the Outer Circle.
 // - Private profile: only accepted connections see anything.
 // - Accepted connections in the owner's Inner Circle also see the Inner Circle,
-//   but only while the owner's plan has two circles (Ambivert / Extrovert).
+//   but only while the owner's plan has two circles (Ambivert and up).
+// - Accepted connections in one of the owner's own circles (Social Butterfly)
+//   also see the sections in that circle, but only while the owner's plan has
+//   own circles. Membership without an accepted connection counts for nothing.
 // Returns null when the visitor may see nothing (no chat, no sections).
+export type VisibleScope = {
+  circles: VisibleCircle[]
+  // Own circles (custom_circles.id) whose sections this visitor may see.
+  customCircleIds: string[]
+}
+
 export async function resolveCircles(
   ownerId: string,
   options: { visitorUserId?: string }
-): Promise<VisibleCircle[] | null> {
-  if (options.visitorUserId && options.visitorUserId === ownerId) return ['outer', 'inner']
-
+): Promise<VisibleScope | null> {
   const supabase = createServiceClient()
+
+  if (options.visitorUserId && options.visitorUserId === ownerId) {
+    const { data: own } = await supabase.from('custom_circles').select('id').eq('owner_id', ownerId)
+    return { circles: ['outer', 'inner'], customCircleIds: ((own as { id: string }[] | null) ?? []).map(c => c.id) }
+  }
 
   const { data: owner } = await supabase
     .from('users')
@@ -43,9 +54,32 @@ export async function resolveCircles(
   }
 
   if (!isPublic && !connected) return null
-  if (inner) {
-    const plan = await getPlanAt(ownerId)
-    if (PLANS[plan].circles === 2) return ['outer', 'inner']
+  if (!connected) return { circles: ['outer'], customCircleIds: [] }
+
+  const limits = await getPlanLimits(ownerId)
+  const circles: VisibleCircle[] = inner && limits.circles === 2 ? ['outer', 'inner'] : ['outer']
+
+  let customCircleIds: string[] = []
+  if (limits.extraCircles > 0) {
+    const { data: own } = await supabase.from('custom_circles').select('id').eq('owner_id', ownerId)
+    const ownIds = ((own as { id: string }[] | null) ?? []).map(c => c.id)
+    if (ownIds.length > 0) {
+      const { data: memberships } = await supabase
+        .from('custom_circle_members')
+        .select('circle_id')
+        .eq('member_id', options.visitorUserId!)
+        .in('circle_id', ownIds)
+      customCircleIds = ((memberships as { circle_id: string }[] | null) ?? []).map(m => m.circle_id)
+    }
   }
-  return ['outer']
+  return { circles, customCircleIds }
+}
+
+// PostgREST filter for a vault_sections query: `.or(visibleSectionsFilter(scope))`.
+// Only the scope's circles and own circles match; drafts never do.
+export function visibleSectionsFilter(scope: VisibleScope): string {
+  const circles = scope.circles.length > 0 ? scope.circles : ['none']
+  const ids = scope.customCircleIds.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+  const byCircle = `circle.in.(${circles.join(',')})`
+  return ids.length === 0 ? byCircle : `${byCircle},and(circle.eq.custom,custom_circle_id.in.(${ids.join(',')}))`
 }

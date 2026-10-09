@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { resolveCircles } from '@/lib/access/resolveScope'
+import { resolveCircles, visibleSectionsFilter } from '@/lib/access/resolveScope'
 import ProfileChatSection from './ProfileChatSection'
 import PrivateProfileCard from './PrivateProfileCard'
 import ContactLinks from '@/components/profile/ContactLinks'
@@ -76,7 +76,7 @@ export default async function ProfilePage(props: Props) {
       .from('vault_sections')
       .select('*')
       .eq('user_id', user.id)
-      .in('circle', circles)
+      .or(visibleSectionsFilter(circles))
       .order('domain', { ascending: true })
     publicSections = (sections as VaultSection[] | null) ?? []
   }

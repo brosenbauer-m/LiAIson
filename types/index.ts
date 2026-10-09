@@ -38,8 +38,10 @@ export interface VaultSection {
   // Old Professional/Personal flags: no longer used for access (see circle).
   is_professional: boolean
   is_personal: boolean
-  // Who can see this section: 'outer' | 'inner' | 'draft' (lib/circles.ts).
-  circle: 'outer' | 'inner' | 'draft'
+  // Who can see this section (lib/circles.ts). 'custom' = one of the owner's
+  // own circles (custom_circle_id).
+  circle: 'outer' | 'inner' | 'draft' | 'custom'
+  custom_circle_id?: string | null
   section_type: string
   label: string
   content: string

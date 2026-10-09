@@ -1,22 +1,27 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { CIRCLE_LABEL, type Circle } from '@/lib/circles'
+import { placementLabel, type CustomCircle, type Placement } from '@/lib/circles'
 
-export type ImportTarget = Circle
+export type ImportTarget = Placement
 
 interface Props {
   defaultTarget: ImportTarget
   // false on plans with one circle (Introvert): no Inner Circle option
   innerAllowed: boolean
+  // The owner's own circles (Social Butterfly); empty on other plans.
+  customCircles: CustomCircle[]
   // true when saved, or an error message to show
   onSave: (label: string, content: string, target: ImportTarget) => Promise<true | string>
 }
 
-export default function FileImport({ defaultTarget, innerAllowed, onSave }: Props) {
-  const TARGETS: { value: ImportTarget; label: string }[] = (['outer', 'inner', 'draft'] as Circle[])
-    .filter(c => innerAllowed || c !== 'inner')
-    .map(c => ({ value: c, label: CIRCLE_LABEL[c] }))
+export default function FileImport({ defaultTarget, innerAllowed, customCircles, onSave }: Props) {
+  const TARGETS: { value: ImportTarget; label: string }[] = ([
+    'outer',
+    ...(innerAllowed ? ['inner'] : []),
+    ...customCircles.map(c => `c:${c.id}`),
+    'draft',
+  ] as Placement[]).map(p => ({ value: p, label: placementLabel(p, customCircles) }))
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')

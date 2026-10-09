@@ -3,7 +3,7 @@ import { mistral, FAST_MODEL } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
 import { getPlanLimits } from '@/lib/billing/plan'
-import { resolveCircles } from '@/lib/access/resolveScope'
+import { resolveCircles, visibleSectionsFilter, type VisibleScope } from '@/lib/access/resolveScope'
 import { md5 } from '@/lib/search/indexer'
 import type { SimilarityInterest, SimilarityLevel, SimilarityResult } from '@/lib/similarity/types'
 
@@ -52,13 +52,15 @@ export async function getSimilarityQuota(userId: string): Promise<SimilarityQuot
   return { quota, used: count ?? 0 }
 }
 
-async function sectionsText(userId: string, circles: string[]): Promise<string> {
+// 'own' = the viewer's own text: everything except drafts. Anyone else: what
+// their scope allows the viewer to see.
+async function sectionsText(userId: string, scope: VisibleScope | 'own'): Promise<string> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('vault_sections')
     .select('label, content')
     .eq('user_id', userId)
-    .in('circle', circles)
+    .or(scope === 'own' ? 'circle.in.(outer,inner,custom)' : visibleSectionsFilter(scope))
     .order('domain', { ascending: true })
   if (error) throw new Error(error.message)
   return ((data as { label: string | null; content: string | null }[] | null) ?? [])
@@ -76,7 +78,7 @@ async function loadInputs(viewerId: string, targetId: string, targetName: string
   const circles = await resolveCircles(targetId, { visitorUserId: viewerId })
   if (circles === null) throw new SimilarityError("This profile isn't available.", 403)
   const [viewerText, targetText] = await Promise.all([
-    sectionsText(viewerId, ['outer', 'inner']),
+    sectionsText(viewerId, 'own'),
     sectionsText(targetId, circles),
   ])
   if (!viewerText) {

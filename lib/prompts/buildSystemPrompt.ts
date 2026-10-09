@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { VaultSection, User } from '@/types'
-import type { VisibleCircle } from '@/lib/circles'
+import { visibleSectionsFilter, type VisibleScope } from '@/lib/access/resolveScope'
 import { COMMON_MARKER } from '@/lib/chat/signals'
 
 // Optional context about the signed-in person who is chatting (two-vault chat).
@@ -12,8 +12,8 @@ export type ReaderContext = {
 
 export async function buildSystemPrompt(
   userId: string,
-  // Circles this visitor may see (lib/access/resolveScope.ts). Drafts are never used.
-  circles: VisibleCircle[],
+  // What this visitor may see (lib/access/resolveScope.ts). Drafts are never used.
+  scope: VisibleScope,
   reader?: ReaderContext
 ): Promise<string> {
   const supabase = createServiceClient()
@@ -22,7 +22,7 @@ export async function buildSystemPrompt(
     .from('vault_sections')
     .select('*')
     .eq('user_id', userId)
-    .in('circle', circles.length > 0 ? circles : ['none'])
+    .or(visibleSectionsFilter(scope))
     .order('domain', { ascending: true })
 
   const [{ data: user }, { data: sections }] = await Promise.all([

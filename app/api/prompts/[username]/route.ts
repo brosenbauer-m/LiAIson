@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { resolveCircles } from '@/lib/access/resolveScope'
+import { resolveCircles, visibleSectionsFilter } from '@/lib/access/resolveScope'
 import type { User, VaultSection } from '@/types'
 
 export async function GET(request: NextRequest, props: { params: Promise<{ username: string }> }) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, props: { params: Promise<{ usern
     .from('vault_sections')
     .select('section_type, content')
     .eq('user_id', user.id)
-    .in('circle', circles)
+    .or(visibleSectionsFilter(circles))
 
   const populated = new Set<string>(
     (sections as Pick<VaultSection, 'section_type' | 'content'>[] | null ?? [])

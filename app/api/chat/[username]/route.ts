@@ -74,12 +74,12 @@ async function loadReaderContext(
 
     if (readerError || !reader || reader.use_own_vault_in_chats !== true) return undefined
 
-    // Everything except drafts.
+    // Everything except drafts (own circles included: it is their own Vault).
     const { data: sections } = await supabase
       .from('vault_sections')
       .select('label, content')
       .eq('user_id', visitorId)
-      .in('circle', ['outer', 'inner'])
+      .in('circle', ['outer', 'inner', 'custom'])
       .order('domain', { ascending: true })
 
     const vaultText = ((sections as { label: string; content: string }[] | null) ?? [])

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
-import { CIRCLE_LABEL, CIRCLE_HELP, type Circle } from '@/lib/circles'
+import { placementHelp, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
   section: VaultSection
@@ -15,13 +15,15 @@ interface VaultSectionCardProps {
   roomLeft?: number
   // false on plans with one circle (Introvert): no Inner Circle option
   innerAllowed: boolean
+  // The owner's own circles (Social Butterfly); empty on other plans.
+  customCircles: CustomCircle[]
 }
 
 const countChars = (text: string) => Array.from(text).length
 
-export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft, innerAllowed }: VaultSectionCardProps) {
+export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft, innerAllowed, customCircles }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
-  const [circle, setCircle] = useState<Circle>(section.circle ?? 'outer')
+  const [placement, setPlacement] = useState<Placement>(placementOf(section))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -31,7 +33,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(section.id, { content, circle })
+      await onUpdate(section.id, { content, ...placementFields(placement) })
       setSaved(true)
       window.setTimeout(() => setSaved(false), 1500)
     } catch {
@@ -99,23 +101,26 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-text-primary mb-1">Who can see this</legend>
         <div className="flex flex-wrap gap-2">
-          {(['outer', 'inner', 'draft'] as Circle[])
-            .filter(c => innerAllowed || c !== 'inner' || circle === 'inner')
-            .map(c => (
+          {([
+            'outer',
+            ...(innerAllowed || placement === 'inner' ? ['inner'] : []),
+            ...customCircles.map(c => `c:${c.id}`),
+            'draft',
+          ] as Placement[]).map(p => (
               <button
-                key={c}
+                key={p}
                 type="button"
-                onClick={() => setCircle(c)}
-                aria-pressed={circle === c}
+                onClick={() => setPlacement(p)}
+                aria-pressed={placement === p}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                  circle === c ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
+                  placement === p ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
                 }`}
               >
-                {CIRCLE_LABEL[c] === 'Drafts' ? 'Draft' : CIRCLE_LABEL[c]}
+                {p === 'draft' ? 'Draft' : placementLabel(p, customCircles)}
               </button>
             ))}
         </div>
-        <p className="text-xs text-text-muted">{CIRCLE_HELP[circle]}</p>
+        <p className="text-xs text-text-muted">{placementHelp(placement, customCircles)}</p>
       </fieldset>
 
       {hint && (
@@ -131,7 +136,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
             onClick={handleSave}
             disabled={saving || blocked || (
               content === section.content &&
-              circle === section.circle
+              placement === placementOf(section)
             )}
             className={`px-5 py-2 text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50 ${saved
               ? 'border border-success/30 bg-success/10 text-success'
