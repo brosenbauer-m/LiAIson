@@ -27,6 +27,7 @@ export default function PrivacyPage() {
               <li>Your profile photo, if you upload one (stored in cloud storage). Files you import into your Vault (PDF, Word) are only read to extract their text and are not stored</li>
               <li>Anonymous visitor interest statements — e.g. &quot;People want to know more about your climbing&quot; — never the visitor&apos;s words or identity, deleted after about 35 days</li>
               <li>AI usage counts — how much AI processing the messages you send use (feature, AI model and number of tokens), never message content and never which LiAIson you chatted with. We use this for your spending limit and, in future, to bill you for what you send. Others chatting with your LiAIson are never counted against you</li>
+              <li>Billing details, if you save a card — the country you live in (and the country of your card and of your connection, as required for VAT), a label like &quot;Visa •••• 4242&quot; and your payment records. Your card number is handled only by Mollie and never reaches LiAIson. Receipts are kept for 7 years as required by tax law, even after you delete your account</li>
             </ul>
           </section>
 
@@ -71,6 +72,7 @@ export default function PrivacyPage() {
               <li>Supabase – database and authentication (EU, Ireland)</li>
               <li>Vercel – application hosting (servers in Frankfurt, Germany)</li>
               <li>Mistral AI – AI responses (EU/EFTA data centres, regional EU service)</li>
+              <li>Mollie – payments and saved cards (Netherlands, EU)</li>
               <li>Upstash – rate limiting (Frankfurt, Germany)</li>
               <li>Scaleway – email notifications (EU-based, hosted in Paris, France)</li>
             </ul>
