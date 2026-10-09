@@ -75,6 +75,29 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
+  const [removing, setRemoving] = useState<string | null>(null)
+
+  // Remove someone: they lose access and can't send a new request.
+  const removeConnection = async (id: string) => {
+    setRemoving(id)
+    setFeedback(null)
+    try {
+      const res = await fetch('/api/connections/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionId: id }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setConnections(prev => prev.filter(c => c.id !== id))
+      setSelectedIds(prev => { const next = new Set(prev); next.delete(id); return next })
+      setConfirmRemove(null)
+    } catch {
+      setFeedback({ type: 'error', message: 'Could not remove this connection. Please try again.' })
+    } finally {
+      setRemoving(null)
+    }
+  }
 
   const handleChange = async (id: string, inner: boolean) => {
     const previous = connections.find(connection => connection.id === id)?.in_inner_circle
@@ -246,11 +269,38 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                         className="h-4 w-4 accent-accent flex-shrink-0"
                       />
                       <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />
-                      <div>
-                        <p className="font-semibold text-text-primary">{fromUser?.display_name ?? 'Unknown'}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-text-primary truncate">{fromUser?.display_name ?? 'Unknown'}</p>
                         <p className="text-xs text-text-secondary">@{fromUser?.username ?? ''}</p>
                       </div>
+                      {confirmRemove === connection.id ? (
+                        <span className="flex items-center gap-2 text-sm">
+                          <button
+                            type="button"
+                            onClick={() => removeConnection(connection.id)}
+                            disabled={removing === connection.id}
+                            className="px-3 py-1.5 rounded-lg text-error border border-error/30 hover:bg-error hover:text-white disabled:opacity-50"
+                          >
+                            {removing === connection.id ? 'Removing…' : 'Remove'}
+                          </button>
+                          <button type="button" onClick={() => setConfirmRemove(null)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmRemove(connection.id)}
+                          className="text-sm text-text-muted hover:text-error"
+                          aria-label={`Remove ${fromUser?.display_name ?? 'connection'}`}
+                        >
+                          Remove
+                        </button>
+                      )}
                     </div>
+                    {confirmRemove === connection.id && (
+                      <p className="text-xs text-text-secondary">
+                        {fromUser?.display_name ?? 'They'} will lose access to everything beyond your public profile and can&apos;t send you a new request.
+                      </p>
+                    )}
                     {fromUser && customCircles.length > 0 && (
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs text-text-secondary">Also in:</span>

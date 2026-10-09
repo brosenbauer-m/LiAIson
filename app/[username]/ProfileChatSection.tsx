@@ -200,6 +200,29 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
     sendMessage(input)
   }
 
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
+
+  // Disconnect from this LiAIson (you can ask again later).
+  const handleDisconnect = async () => {
+    setConnectStatus('loading')
+    try {
+      const res = await fetch('/api/connections/remove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setConnectStatus('none')
+      setConnectMessage('You are no longer connected.')
+      router.refresh()
+    } catch {
+      setConnectStatus('connected')
+      setConnectMessage('Could not disconnect. Please try again.')
+    } finally {
+      setConfirmDisconnect(false)
+    }
+  }
+
   const handleConnect = async () => {
     if (!isLoggedIn) {
       router.push(`/signup?redirect=/${username}`)
@@ -252,8 +275,9 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
           </div>
         </div>
         {connectStatus !== 'self' && <button
-          onClick={handleConnect}
-          disabled={connectStatus === 'loading' || connectStatus === 'requested' || connectStatus === 'connected'}
+          onClick={connectStatus === 'connected' ? () => { setConnectMessage(''); setConfirmDisconnect(c => !c) } : handleConnect}
+          disabled={connectStatus === 'loading' || connectStatus === 'requested'}
+          aria-expanded={connectStatus === 'connected' ? confirmDisconnect : undefined}
           className={`px-5 py-2 text-sm rounded-lg font-medium transition-all shadow-soft ${
             connectStatus === 'connected'
               ? 'bg-success/10 text-success border border-success/20'
@@ -265,6 +289,16 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
           {connectStatus === 'connected' ? '✓ Connected' : connectStatus === 'requested' ? 'Requested' : connectStatus === 'loading' ? '...' : 'Connect'}
         </button>}
       </div>
+
+      {confirmDisconnect && connectStatus === 'connected' && (
+        <div className="px-6 py-3 bg-accent-tint text-sm border-b border-accent/10 flex flex-wrap items-center justify-between gap-3">
+          <span className="text-text-secondary">Disconnect from {displayName}&apos;s LiAIson? You can ask again later.</span>
+          <span className="flex items-center gap-3">
+            <button type="button" onClick={handleDisconnect} className="px-3 py-1.5 rounded-lg text-error border border-error/30 hover:bg-error hover:text-white">Disconnect</button>
+            <button type="button" onClick={() => setConfirmDisconnect(false)} className="text-text-secondary hover:text-text-primary">Cancel</button>
+          </span>
+        </div>
+      )}
 
       {connectMessage && (
         <div className="px-6 py-4 bg-accent-tint text-accent text-sm border-b border-accent/10">
