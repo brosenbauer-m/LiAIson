@@ -49,7 +49,7 @@ export default function SiteHeader() {
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link
           href={auth === 'signed-in' ? '/dashboard' : '/'}
-          className="font-bold text-xl text-accent"
+          className="font-display text-2xl text-accent"
         >
           LiAIson
         </Link>

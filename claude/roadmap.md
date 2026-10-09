@@ -17,7 +17,8 @@ Keep this file short: 1–3 lines per change, commit it with the work.
   - Sliders (Claude's proposal, owner to confirm): €6 base incl. 2 own circles / 20 AI searches / 100 comparisons; +€0.50 per extra circle (max 10), +€1 per +20 searches (max 100), +€1 per +100 comparisons (max 500) → €6–18. Vault stays 30k (bigger Vault = dearer messages for senders). Choices in plan_changes.options; more = now, less = next month; fee = max held in month.
   - Own circles: created on Connections (members = accepted connections only), sections placed in Vault. Access re-checked in resolveCircles (accepted connection + owner plan has own circles); leaving Butterfly → those sections become drafts, circles kept. Privacy tested on local Postgres + PostgREST.
   - Compare 2–4 people at once on /compare (group bubble map + score per person; each person = 1 comparison; cached in similarity_group_results).
-- Exempt accounts (never billed, Extrovert): @brosenbauerm, @adminuser.
+- Exempt accounts (never billed, Social Butterfly with max sliders): @brosenbauerm, @adminuser.
+- Redesign step 1: warm brown palette app-wide (tokens in tailwind.config.ts + globals.css, contrast-checked), Fraunces (headlines) + Inter self-hosted via next/font, new landing page (hero with chat + Similarity visuals, facts strip, how it works, feature grid, plans teaser from lib/plans.ts, CTA). cerebrium.ai is blocked from cloud sessions, so the look is from the brief, not a copy.
 
 ## Not yet verified (needs test accounts)
 - Inner Circle visibility with two accounts.
@@ -28,7 +29,7 @@ Keep this file short: 1–3 lines per change, commit it with the work.
 
 ## Next (agreed order)
 1. Owner: test Social Butterfly, confirm slider prices → then set `available: true` in lib/plans.ts.
-2. Redesign (cerebrium.ai-inspired, brown palette; landing first).
+2. Redesign step 2: app pages in the new style (serif page titles, grid-line section style) — dashboard, Vault, profile/chat, Discover, Plans, Settings, auth pages.
 Later: cache identical searches/day, HNSW index at scale, chat retrieval for big vaults, ESLint cleanup, 16 unused Vercel env vars.
 
 ## Owner to-dos

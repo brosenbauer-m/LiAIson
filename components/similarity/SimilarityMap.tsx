@@ -107,20 +107,20 @@ function layout(people: MapPerson[], interests: SimilarityInterest[], H: number)
   return bubbles
 }
 
-// Monochrome, like the rest of the app. One-person bubbles: the viewer light
-// grey; the others outlined, each with its own line style.
+// The app's brown palette (tailwind.config.ts). One-person bubbles: the
+// viewer light; the others outlined, each with its own line style.
 const PERSON_STYLES: { fill: string; stroke: string; dash?: string; text: string }[] = [
-  { fill: '#F2F2F2', stroke: '#E5E5E5', text: '#111111' },
-  { fill: '#FFFFFF', stroke: '#111111', text: '#111111' },
-  { fill: '#FFFFFF', stroke: '#111111', dash: '5 3', text: '#111111' },
-  { fill: '#FFFFFF', stroke: '#111111', dash: '1.5 3', text: '#111111' },
-  { fill: '#FFFFFF', stroke: '#555555', dash: '7 3 1.5 3', text: '#111111' },
-  { fill: '#E5E5E5', stroke: '#555555', text: '#111111' },
+  { fill: '#EFE6DA', stroke: '#E7DDD0', text: '#2B1E16' },
+  { fill: '#FFFDF9', stroke: '#5C3B28', text: '#2B1E16' },
+  { fill: '#FFFDF9', stroke: '#5C3B28', dash: '5 3', text: '#2B1E16' },
+  { fill: '#FFFDF9', stroke: '#5C3B28', dash: '1.5 3', text: '#2B1E16' },
+  { fill: '#FFFDF9', stroke: '#6B584B', dash: '7 3 1.5 3', text: '#2B1E16' },
+  { fill: '#E7DDD0', stroke: '#6B584B', text: '#2B1E16' },
 ]
 
 function bubbleStyle(style: Bubble['style']): { fill: string; stroke: string; dash?: string; text: string } {
-  if (style === 'all') return { fill: '#111111', stroke: '#111111', text: '#FFFFFF' }
-  if (style === 'some') return { fill: '#555555', stroke: '#555555', text: '#FFFFFF' }
+  if (style === 'all') return { fill: '#5C3B28', stroke: '#5C3B28', text: '#FFFFFF' }
+  if (style === 'some') return { fill: '#8C6A52', stroke: '#8C6A52', text: '#FFFFFF' }
   return PERSON_STYLES[style] ?? PERSON_STYLES[PERSON_STYLES.length - 1]
 }
 
@@ -142,8 +142,8 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Map of your interests">
         {people.length === 2 && (
           <>
-            <text x={6} y={14} fontSize={FONT} fill="#999999">{people[0].name}</text>
-            <text x={W - 6} y={14} fontSize={FONT} fill="#999999" textAnchor="end">{people[1].name}</text>
+            <text x={6} y={14} fontSize={FONT} fill="#8F7B6C">{people[0].name}</text>
+            <text x={W - 6} y={14} fontSize={FONT} fill="#8F7B6C" textAnchor="end">{people[1].name}</text>
           </>
         )}
         {bubbles.map(b => {
@@ -169,7 +169,7 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
               <circle
                 r={b.r}
                 fill={c.fill}
-                stroke={active ? '#999999' : c.stroke}
+                stroke={active ? '#C9B8A6' : c.stroke}
                 strokeWidth={active ? 3 : 1.5}
                 strokeDasharray={c.dash}
               />
@@ -186,7 +186,7 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
         <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-accent" />{people.length === 2 ? 'Both of you' : 'Everyone'}</span>
         {people.length > 2 && (
-          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-text-secondary" />Some of you</span>
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full" style={{ background: "#8C6A52" }} />Some of you</span>
         )}
         {people.map((p, i) => {
           const c = bubbleStyle(i)

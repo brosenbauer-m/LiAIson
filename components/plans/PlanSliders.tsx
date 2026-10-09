@@ -24,7 +24,7 @@ export default function PlanSliders({ value, onChange }: { value: PlanOptions; o
               step={s.step}
               value={value[key]}
               onChange={e => onChange({ ...value, [key]: Number(e.target.value) })}
-              className="w-full accent-[#111111]"
+              className="w-full accent-[#5C3B28]"
             />
           </div>
         )

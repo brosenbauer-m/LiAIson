@@ -3,32 +3,33 @@
 @tailwind utilities;
 
 :root {
-  --background: #FAFAFA;
-  --foreground: #111111;
-  --surface: #FFFFFF;
-  --card: #FFFFFF;
+  /* Same values as tailwind.config.ts */
+  --background: #FAF6F0;
+  --foreground: #2B1E16;
+  --surface: #FFFDF9;
+  --card: #FFFDF9;
 
-  --accent: #111111;
-  --accent-light: #333333;
-  --accent-subtle: #F2F2F2;
-  --accent-tint: #F7F7F7;
+  --accent: #5C3B28;
+  --accent-light: #7A5139;
+  --accent-subtle: #EFE6DA;
+  --accent-tint: #F6EFE6;
 
-  --text-primary: #111111;
-  --text-secondary: #555555;
-  --text-muted: #999999;
+  --text-primary: #2B1E16;
+  --text-secondary: #6B584B;
+  --text-muted: #8F7B6C;
 
-  --border: #E5E5E5;
-  --border-light: #F0F0F0;
+  --border: #E7DDD0;
+  --border-light: #F0E8DD;
 
-  --success: #111111;
-  --warning: #111111;
-  --error: #111111;
+  --success: #3E6B3A;
+  --warning: #8A5A12;
+  --error: #A3322A;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -42,5 +43,12 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  /* Faint grid lines behind hero sections (landing page). */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, rgba(92, 59, 40, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(92, 59, 40, 0.07) 1px, transparent 1px);
+    background-size: 56px 56px;
   }
 }
