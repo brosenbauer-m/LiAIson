@@ -51,7 +51,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
   const left = Math.max(0, state.quota - state.used)
 
   return (
-    <div id="similarity" className="bg-card border border-border rounded-xl p-6 shadow-soft scroll-mt-6">
+    <div id="similarity" className="bg-card border border-border rounded-2xl p-6 shadow-soft scroll-mt-6">
       <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">What you have in common</p>
 
       {result ? (

@@ -38,7 +38,7 @@ export default async function ReceiptPage(props: { params: Promise<{ number: str
         <PrintButton />
       </div>
 
-      <div className="bg-card border border-border rounded-xl p-8 space-y-8 shadow-soft print:shadow-none print:border-0">
+      <div className="bg-card border border-border rounded-2xl p-8 space-y-8 shadow-soft print:shadow-none print:border-0">
         {isTestMode() && (
           <p className="text-xs font-medium text-error">TEST MODE — not a real payment</p>
         )}

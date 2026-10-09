@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import ProfileCard from '@/components/ui/ProfileCard'
+import CopyButton from '@/components/ui/CopyButton'
 import NotificationsPanel from './NotificationsPanel'
 import VisitorInsights from './VisitorInsights'
 import type { Notification, User } from '@/types'
@@ -31,7 +32,7 @@ export default async function DashboardPage() {
       .limit(10),
     serviceSupabase
       .from('users')
-      .select('*')
+      .select('id, username, display_name, avatar_url, short_bio')
       .eq('is_discoverable', true)
       .neq('id', user.id)
       .limit(6),
@@ -52,49 +53,50 @@ export default async function DashboardPage() {
         </div>
 
         {/* Share URL */}
-        <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
-          <p className="text-base font-semibold text-text-primary mb-4">Your LiAIson profile</p>
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted mb-3">Your link</p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex-1 bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-secondary font-mono truncate">
               {profileUrl}
             </div>
+            <CopyButton text={profileUrl} />
             <Link
               href={`/${profile?.username}`}
-              className="px-6 py-3 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft hover:shadow-card whitespace-nowrap text-center"
+              className="px-6 py-3 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg shadow-soft whitespace-nowrap text-center"
             >
-              View Profile
+              View profile
             </Link>
           </div>
         </div>
 
+        {/* Quick actions */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { href: '/vault', title: 'Vault', text: 'What your LiAIson knows' },
+            { href: '/profile', title: 'Profile', text: 'Photo, bio and links' },
+            { href: '/connections', title: 'Connections', text: 'Who sees what' },
+            { href: '/discover', title: 'Discover', text: 'Find people' },
+          ].map(a => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="group bg-card border border-border rounded-2xl p-5 hover:border-accent/40 hover:shadow-card"
+            >
+              <p className="font-semibold text-text-primary flex items-center justify-between">
+                {a.title}
+                <span aria-hidden="true" className="text-text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-transform">→</span>
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">{a.text}</p>
+            </Link>
+          ))}
+        </div>
+
         <VisitorInsights />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Notifications */}
-          <div className="lg:col-span-2 space-y-5">
-            <h2 className="text-xl font-semibold text-text-primary">Notifications</h2>
-            <NotificationsPanel initialNotifications={(notifications as Notification[] | null) ?? []} />
-          </div>
-
-          {/* Stats */}
-          <div className="space-y-5">
-            <h2 className="text-xl font-semibold text-text-primary">Your LiAIson</h2>
-
-            <div className="flex gap-3">
-              <Link
-                href="/vault"
-                className="flex-1 text-center py-3 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft"
-              >
-                Edit Vault
-              </Link>
-              <Link
-                href="/profile"
-                className="flex-1 text-center py-3 border-2 border-border hover:border-accent text-text-primary hover:text-accent text-sm font-medium rounded-lg transition-all"
-              >
-                Edit Profile
-              </Link>
-            </div>
-          </div>
+        {/* Notifications */}
+        <div className="space-y-5">
+          <h2 className="text-xl font-semibold text-text-primary">Notifications</h2>
+          <NotificationsPanel initialNotifications={(notifications as Notification[] | null) ?? []} />
         </div>
 
         {/* Suggested Connections */}
@@ -102,7 +104,7 @@ export default async function DashboardPage() {
           <div>
             <h2 className="text-xl font-semibold text-text-primary mb-5">Suggested connections</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-              {(suggestedUsers as User[]).map(u => (
+              {(suggestedUsers as (Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio'>)[]).map(u => (
                 <ProfileCard key={u.id} user={u} />
               ))}
             </div>

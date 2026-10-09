@@ -42,7 +42,7 @@ function ReportCard({ r }: { r: Report }) {
   const max = c.categories[0]?.count ?? 0
   const diff = c.previousTotal === null ? null : c.total - c.previousTotal
   return (
-    <article className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-5">
+    <article className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
       <div>
         <p className="text-xs uppercase tracking-wide font-semibold text-text-muted">
           {r.period_type === 'week' ? 'Weekly Echo' : 'Monthly Echo'} · {periodLabel(r)}
@@ -176,7 +176,7 @@ export default function InsightsPage() {
         {status === 'error' && <p className="text-error" role="alert">Could not load your Echoes right now.</p>}
         {status === 'ok' && tabLocked && <EchoesLocked period={tab} echoes={echoes} />}
         {status === 'ok' && !tabLocked && visible.length === 0 && (
-          <div className="bg-card border border-border rounded-xl p-8 text-center shadow-soft">
+          <div className="bg-card border border-border rounded-2xl p-8 text-center shadow-soft">
             <p className="text-text-primary font-medium">No {tab === 'week' ? 'weekly' : 'monthly'} Echoes yet.</p>
             <p className="text-sm text-text-secondary mt-1">
               Your first one arrives {tab === 'week' ? 'on Monday' : 'on the 1st of next month'} if people ask your LiAIson questions.

@@ -115,7 +115,7 @@ export default async function ProfilePage(props: Props) {
 
             {/* Contact links */}
             {scope && user.contact_links && user.contact_links.length > 0 && (
-              <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
                 <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Connect</p>
                 <ContactLinks links={user.contact_links} />
               </div>
@@ -123,7 +123,7 @@ export default async function ProfilePage(props: Props) {
 
             {/* Skills */}
             {skillTags.length > 0 && (
-              <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
                 <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Skills</p>
                 <div className="flex flex-wrap gap-2">
                   {skillTags.map(tag => (
@@ -135,7 +135,7 @@ export default async function ProfilePage(props: Props) {
 
             {/* Interests */}
             {hobbyTags.length > 0 && (
-              <div className="bg-card border border-border rounded-xl p-6 shadow-soft">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
                 <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Interests</p>
                 <div className="flex flex-wrap gap-2">
                   {hobbyTags.map(tag => (
@@ -150,7 +150,7 @@ export default async function ProfilePage(props: Props) {
               .filter(s => !['skills', 'hobbies'].includes(s.section_type) && s.content?.trim())
               .slice(0, 3)
               .map(section => (
-                <div key={section.id} className="bg-card border border-border rounded-xl p-6 shadow-soft">
+                <div key={section.id} className="bg-card border border-border rounded-2xl p-6 shadow-soft">
                   <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">{section.label}</p>
                   <p className="text-sm text-text-primary leading-relaxed line-clamp-4">{section.content}</p>
                 </div>

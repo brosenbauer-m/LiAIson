@@ -91,7 +91,7 @@ export default function ConnectionRequests({ requests: initialRequests, innerAll
           const choosing = choosingId === request.id
 
           return (
-            <div key={request.id} className="bg-card border border-border rounded-xl p-5 shadow-soft space-y-4">
+            <div key={request.id} className="bg-card border border-border rounded-2xl p-5 shadow-soft space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />

@@ -256,7 +256,7 @@ export default function VaultPage() {
       {/* Welcome Modal */}
       {showWelcome && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
-          <div className="bg-card border border-border rounded-xl p-8 max-w-md w-full shadow-card">
+          <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full shadow-card">
             <div className="text-5xl mb-4">🎉</div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">Welcome to your Vault!</h2>
             <p className="text-text-secondary text-base mb-6 leading-relaxed">

@@ -4,13 +4,13 @@ import type { User } from '@/types'
 import Avatar from './Avatar'
 
 interface ProfileCardProps {
-  user: User
+  user: Pick<User, 'username' | 'display_name' | 'avatar_url' | 'short_bio'>
   tags?: string[]
 }
 
 export default function ProfileCard({ user, tags = [] }: ProfileCardProps) {
   return (
-    <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-accent/40 transition-colors">
+    <div className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 hover:border-accent/40 hover:shadow-card">
       <div className="flex items-center gap-3">
         <Avatar url={user.avatar_url} name={user.display_name} size="md" />
         <div>

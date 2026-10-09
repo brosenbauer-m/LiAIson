@@ -137,14 +137,14 @@ export default function ComparePage() {
         </div>
 
         {locked ? (
-          <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-3">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-3">
             <p className="text-sm text-text-secondary leading-relaxed">
               Comparing yourself with several people at once is part of Social Butterfly. With Extrovert you can compare yourself with one person on their profile.
             </p>
             <Link href="/plans#butterfly" className="text-sm text-accent hover:underline font-medium">See Social Butterfly →</Link>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-5">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} people</h2>
               <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
@@ -232,7 +232,7 @@ export default function ComparePage() {
         )}
 
         {people && result && (
-          <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-5">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
             <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">What you have in common</p>
             <ul className="space-y-2">
               {people.map(p => {

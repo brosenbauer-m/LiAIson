@@ -34,9 +34,59 @@ body {
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.02em;
     font-feature-settings: "kern" 1;
+  }
+
+  ::selection {
+    background: var(--accent-subtle);
+    color: var(--text-primary);
+  }
+
+  /* Interaction feel (redesign 2026-10-09): every button and button-like link
+     eases its colours and gives a small press. `scale` is its own property, so
+     it never fights Tailwind transforms. */
+  a, button, [role="button"], summary, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+    transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  button:not(:disabled):active,
+  [role="button"]:active,
+  a[class*="rounded-lg"]:active,
+  a[class*="rounded-xl"]:active,
+  a[class*="rounded-full"]:active {
+    scale: 0.97;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Clear focus for keyboard users only (mouse clicks show nothing). */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

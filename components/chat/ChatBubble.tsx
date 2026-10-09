@@ -8,10 +8,10 @@ export default function ChatBubble({ role, content, isStreaming }: ChatBubblePro
   const isUser = role === 'user'
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 animate-message-in`}>
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center mr-2 flex-shrink-0 mt-1">
-          <span className="text-white text-xs font-bold">M</span>
+          <span className="text-white text-xs font-display">L</span>
         </div>
       )}
       <div

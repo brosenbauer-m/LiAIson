@@ -47,7 +47,7 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl shadow-card p-8 text-center flex flex-col items-center justify-center gap-4" style={{ minHeight: '320px' }}>
+    <div className="bg-card border border-border rounded-2xl shadow-card p-8 text-center flex flex-col items-center justify-center gap-4" style={{ minHeight: '320px' }}>
       <div className="w-12 h-12 rounded-full bg-accent-tint flex items-center justify-center" aria-hidden="true">
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-6 w-6 text-accent">
           <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />

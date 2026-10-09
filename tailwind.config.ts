@@ -35,6 +35,23 @@ const config: Config = {
         sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'],
         display: ['var(--font-display)', 'Georgia', 'serif'],
       },
+      // Subtle entrances: pages and chat messages.
+      keyframes: {
+        'page-in': {
+          from: { opacity: '0', transform: 'translateY(6px)' },
+          // 'none' (not translateY(0)) so the page never stays a containing
+          // block for fixed pop-ups after the animation.
+          to: { opacity: '1', transform: 'none' },
+        },
+        'message-in': {
+          from: { opacity: '0', transform: 'translateY(4px) scale(0.98)' },
+          to: { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+      },
+      animation: {
+        'page-in': 'page-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        'message-in': 'message-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+      },
       boxShadow: {
         'soft': '0 1px 3px rgba(43, 30, 22, 0.06), 0 1px 2px rgba(43, 30, 22, 0.04)',
         'card': '0 2px 8px rgba(43, 30, 22, 0.07), 0 1px 3px rgba(43, 30, 22, 0.05)',

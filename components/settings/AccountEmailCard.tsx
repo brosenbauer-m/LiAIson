@@ -56,7 +56,7 @@ export default function AccountEmailCard() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
       <h2 className="font-semibold text-text-primary text-lg">Email address</h2>
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-text-primary break-all">{email ?? 'Loading...'}</p>

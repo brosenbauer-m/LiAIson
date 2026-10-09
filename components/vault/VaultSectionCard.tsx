@@ -78,7 +78,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
     : 'Never confirmed'
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-soft">
+    <div className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>

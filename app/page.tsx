@@ -123,7 +123,7 @@ export default function LandingPage() {
             transition={{ delay: 0.4 }}
             className="mt-16 grid lg:grid-cols-5 gap-4"
           >
-            <div className="lg:col-span-3 bg-card border border-border rounded-xl shadow-card overflow-hidden">
+            <div className="lg:col-span-3 bg-card border border-border rounded-2xl shadow-card overflow-hidden">
               <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
                 <div className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center font-display text-lg">A</div>
                 <div>
@@ -151,7 +151,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-2 bg-card border border-border rounded-xl shadow-card p-5">
+            <div className="lg:col-span-2 bg-card border border-border rounded-2xl shadow-card p-5">
               <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-text-muted mb-2">What you have in common</p>
               <p className="flex items-center gap-2 text-text-primary mb-3">
                 <span aria-hidden="true" className="tracking-widest">●●●●○</span>
@@ -202,7 +202,7 @@ export default function LandingPage() {
             Meet people through what matters to them.
           </h2>
           <div className="mt-14 grid md:grid-cols-6 gap-4">
-            <div className="md:col-span-4 bg-card border border-border rounded-xl p-8 shadow-soft">
+            <div className="md:col-span-4 bg-card border border-border rounded-2xl p-8 shadow-soft">
               <h3 className="text-xl font-semibold text-text-primary">Circles</h3>
               <p className="mt-3 text-text-secondary leading-relaxed max-w-md">
                 Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for the people you choose. Drafts stay with you.
@@ -228,13 +228,13 @@ export default function LandingPage() {
                 <div className="rounded-lg bg-white/10 border border-white/20 px-4 py-3 text-sm text-white/90">tennis in Vienna</div>
               </div>
             </div>
-            <div className="md:col-span-3 bg-card border border-border rounded-xl p-8 shadow-soft">
+            <div className="md:col-span-3 bg-card border border-border rounded-2xl p-8 shadow-soft">
               <h3 className="text-xl font-semibold text-text-primary">Similarity</h3>
               <p className="mt-3 text-text-secondary leading-relaxed">
                 Your LiAIson tells you when you have something in common with someone. With Extrovert you also see how much, on a map of your interests.
               </p>
             </div>
-            <div className="md:col-span-3 bg-card border border-border rounded-xl p-8 shadow-soft">
+            <div className="md:col-span-3 bg-card border border-border rounded-2xl p-8 shadow-soft">
               <h3 className="text-xl font-semibold text-text-primary">Echoes</h3>
               <p className="mt-3 text-text-secondary leading-relaxed">
                 A short report of what people asked your LiAIson, without showing who asked, so you know what to add to your Vault.

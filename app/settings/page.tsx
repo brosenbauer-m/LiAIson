@@ -201,7 +201,7 @@ export default function SettingsPage() {
 
         <AccountEmailCard />
 
-        <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Who can talk to your LiAIson</h2>
           {loading ? (
             <p className="text-sm text-text-secondary">Loading...</p>
@@ -251,7 +251,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Discoverable</h2>
           {loading ? (
             <p className="text-sm text-text-secondary">Loading...</p>
@@ -276,7 +276,7 @@ export default function SettingsPage() {
         </div>
 
         {ownVaultAvailable && (
-          <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
             <h2 className="font-semibold text-text-primary text-lg">Use my Vault when I chat</h2>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-text-secondary leading-relaxed">
@@ -298,7 +298,7 @@ export default function SettingsPage() {
         )}
 
         {reportEmailsAvailable && (
-          <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
             <h2 className="font-semibold text-text-primary text-lg">Email me my Echoes</h2>
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-text-secondary leading-relaxed">
@@ -329,7 +329,7 @@ export default function SettingsPage() {
 
         {userId && <PrepaidBalanceCard />}
 
-        <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
           <h2 className="font-semibold text-text-primary text-lg">Account</h2>
           <button
             onClick={handleSignOut}

@@ -89,7 +89,7 @@ export default function BillingSetupPage() {
         )}
 
         {state && !state.exempt && (
-          <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+          <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
             <h2 className="font-semibold text-text-primary text-lg">Your plan</h2>
             <div className={`grid gap-2 ${choices(state).length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
               {choices(state).map(id => (

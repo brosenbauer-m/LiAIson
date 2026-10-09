@@ -38,12 +38,12 @@ export default function SiteHeader() {
   const isActive = (href: string) => pathname === href || pathname?.startsWith(`${href}/`)
 
   const linkClass = (href: string) =>
-    `text-sm font-medium transition-colors ${
-      isActive(href) ? 'text-accent' : 'text-text-secondary hover:text-accent'
+    `whitespace-nowrap text-sm font-medium rounded-full px-2.5 sm:px-3 py-1.5 ${
+      isActive(href) ? 'text-text-primary bg-accent-subtle' : 'text-text-secondary hover:text-text-primary hover:bg-accent-tint'
     }`
 
   return (
-    <header className="border-b border-border bg-surface/95 backdrop-blur-sm shadow-sm sticky top-0 z-40">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/75 backdrop-blur-xl backdrop-saturate-150">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link
           href={auth === 'signed-in' ? '/dashboard' : '/'}
@@ -54,7 +54,7 @@ export default function SiteHeader() {
 
         {auth === 'signed-in' && (
           <>
-            <nav className="hidden md:flex items-center gap-6" aria-label="Main">
+            <nav className="hidden md:flex items-center gap-1" aria-label="Main">
               {SIGNED_IN_LINKS.map(link => (
                 <Link
                   key={link.href}
@@ -85,8 +85,8 @@ export default function SiteHeader() {
         )}
 
         {auth === 'signed-out' && (
-          <nav className="flex items-center gap-4 sm:gap-6" aria-label="Main">
-            <Link href="/plans" className={linkClass('/plans')}>
+          <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
+            <Link href="/plans" className={`hidden sm:inline-block ${linkClass('/plans')}`}>
               Plans
             </Link>
             <Link href="/discover" className={linkClass('/discover')}>
@@ -97,7 +97,7 @@ export default function SiteHeader() {
             </Link>
             <Link
               href="/signup"
-              className="px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft"
+              className="ml-1 whitespace-nowrap px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-full shadow-soft"
             >
               Sign up
             </Link>
@@ -106,13 +106,13 @@ export default function SiteHeader() {
       </div>
 
       {auth === 'signed-in' && menuOpen && (
-        <nav className="md:hidden border-t border-border bg-surface" aria-label="Main mobile">
-          <div className="max-w-6xl mx-auto px-4 py-2 flex flex-col">
+        <nav className="md:hidden border-t border-border/70 animate-message-in" aria-label="Main mobile">
+          <div className="max-w-6xl mx-auto px-2 py-2 flex flex-col">
             {SIGNED_IN_LINKS.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`py-3 ${linkClass(link.href)}`}
+                className={`rounded-xl px-3 py-3 text-base font-medium ${isActive(link.href) ? 'text-text-primary bg-accent-subtle' : 'text-text-secondary hover:bg-accent-tint'}`}
                 aria-current={isActive(link.href) ? 'page' : undefined}
               >
                 {link.label}

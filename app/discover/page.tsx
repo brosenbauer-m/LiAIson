@@ -136,7 +136,7 @@ export default function DiscoverPage() {
 
         {mode === 'content' && quota && (
           quota.quota <= 0 ? (
-            <div className="bg-card border border-border rounded-xl p-6 shadow-soft text-sm text-text-secondary leading-relaxed">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-soft text-sm text-text-secondary leading-relaxed">
               With Ambivert or Extrovert you can find people by what they share, not just by their name, for example someone who plays tennis in Vienna.{' '}
               <Link href="/plans" className="text-accent hover:underline">See plans</Link>
             </div>
@@ -151,7 +151,7 @@ export default function DiscoverPage() {
                   maxLength={200}
                   autoComplete="off"
                   aria-label="Describe who you are looking for"
-                  className="flex-1 min-w-0 bg-card border border-border rounded-xl px-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
+                  className="flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
                 />
                 <button
                   type="submit"
@@ -171,7 +171,7 @@ export default function DiscoverPage() {
                 <p className="text-center text-sm text-text-secondary py-6">No one found. Try describing it differently.</p>
               )}
               {!contentLoading && contentResults && contentResults.length > 0 && (
-                <ul className="bg-card border border-border rounded-xl shadow-soft divide-y divide-border overflow-hidden">
+                <ul className="bg-card border border-border rounded-2xl shadow-soft divide-y divide-border overflow-hidden">
                   {contentResults.map(person => (
                     <li key={person.username}>
                       <Link href={`/${person.username}`} className="flex items-start gap-3 px-4 py-3 hover:bg-accent-tint transition-colors">
@@ -213,7 +213,7 @@ export default function DiscoverPage() {
             autoFocus
             autoComplete="off"
             aria-label="Search people"
-            className="w-full bg-card border border-border rounded-xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
+            className="w-full bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
           />
         </div>
 
@@ -227,7 +227,7 @@ export default function DiscoverPage() {
           )}
 
           {!loading && results.length > 0 && (
-            <ul className="bg-card border border-border rounded-xl shadow-soft divide-y divide-border overflow-hidden">
+            <ul className="bg-card border border-border rounded-2xl shadow-soft divide-y divide-border overflow-hidden">
               {results.map(person => (
                 <li key={person.username}>
                   <Link

@@ -16,7 +16,7 @@ export default function ProfileHeader({ avatarUrl, displayName, shortBio }: Prof
       variants={fadeInUp}
       initial="hidden"
       animate="visible"
-      className="bg-card border border-border rounded-xl p-8 shadow-card text-center lg:text-left"
+      className="bg-card border border-border rounded-2xl p-8 shadow-card text-center lg:text-left"
     >
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
         <Avatar url={avatarUrl} name={displayName} size="xl" className="shadow-soft" />

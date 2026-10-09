@@ -189,7 +189,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
       </p>
 
       {connections.length === 0 ? (
-        <div className="bg-card border border-border rounded-xl p-12 text-center shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-12 text-center shadow-soft">
           <div className="text-5xl mb-4">🤝</div>
           <p className="text-text-secondary text-base">No connections yet.</p>
         </div>
@@ -250,7 +250,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
           )}
 
           {shownConnections.length === 0 ? (
-            <div className="bg-card border border-border rounded-xl p-8 text-center shadow-soft">
+            <div className="bg-card border border-border rounded-2xl p-8 text-center shadow-soft">
               <p className="text-text-secondary text-base">No connections in this circle.</p>
             </div>
           ) : (
@@ -258,7 +258,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
               {shownConnections.map(connection => {
                 const fromUser = Array.isArray(connection.from_user) ? connection.from_user[0] : connection.from_user
                 return (
-                  <div key={connection.id} className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-4">
+                  <div key={connection.id} className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"

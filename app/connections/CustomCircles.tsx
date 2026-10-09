@@ -43,7 +43,7 @@ export default function CustomCircles({ circles, allowed }: { circles: (CustomCi
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-4">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="font-semibold text-text-primary text-lg">Your own circles</h2>
         <span className="text-xs text-text-secondary tabular-nums">{circles.length} of {allowed}</span>

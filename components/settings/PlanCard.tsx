@@ -36,7 +36,7 @@ export default function PlanCard() {
   const used = state && plan ? Math.min(100, Math.round((state.vaultChars / plan.vaultChars) * 100)) : 0
 
   return (
-    <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
       <div className="flex items-center justify-between gap-4">
         <h2 className="font-semibold text-text-primary text-lg">Your plan</h2>
         <Link href="/plans" className="text-sm text-accent hover:underline">Change plan →</Link>

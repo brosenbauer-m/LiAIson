@@ -43,7 +43,7 @@ export default function VisitorInsights() {
   const max = data?.categories[0]?.count ?? 0
 
   return (
-    <div className="bg-card border border-border rounded-xl p-6 shadow-soft space-y-5">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-text-primary">What visitors want to know</h2>

@@ -135,7 +135,7 @@ export default function PrepaidBalanceCard() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
       <h2 className="font-semibold text-text-primary text-lg">Prepaid balance</h2>
 
       {!state && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}

@@ -262,7 +262,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   }
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden flex flex-col shadow-card" style={{ minHeight: '600px' }}>
+    <div className="bg-card border border-border rounded-2xl overflow-hidden flex flex-col shadow-card" style={{ minHeight: '600px' }}>
       {/* Chat header */}
       <div className="border-b border-border px-6 py-5 bg-surface/30 flex items-center justify-between">
         <div className="flex items-center gap-3">

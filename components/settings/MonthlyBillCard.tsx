@@ -103,7 +103,7 @@ export default function MonthlyBillCard() {
     : ''
 
   return (
-    <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
+    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
       <div className="flex items-center justify-between gap-4">
         <h2 className="font-semibold text-text-primary text-lg">Monthly bill</h2>
         <Link href="/billing/receipts" className="text-sm text-accent hover:underline">Receipts →</Link>

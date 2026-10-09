@@ -87,7 +87,7 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Edit Profile</h1>
 
-        <div className="bg-card border border-border rounded-xl p-8 space-y-6 shadow-soft">
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-6 shadow-soft">
           {/* Avatar */}
           <div className="flex items-center gap-5">
             <div

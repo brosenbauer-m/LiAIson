@@ -96,7 +96,7 @@ export default function FileImport({ defaultTarget, innerAllowed, customCircles,
 
       {review && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
-          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col gap-4 shadow-card">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col gap-4 shadow-card">
             <div>
               <h2 className="text-xl font-semibold text-text-primary">Review before adding</h2>
               <p className="text-sm text-text-secondary mt-1">

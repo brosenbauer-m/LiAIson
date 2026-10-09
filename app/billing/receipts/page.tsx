@@ -35,7 +35,7 @@ export default async function ReceiptsPage() {
         )}
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-soft">
+      <div className="bg-card border border-border rounded-2xl shadow-soft">
         {receipts.length === 0 ? (
           <p className="p-8 text-sm text-text-secondary">No receipts yet.</p>
         ) : (
