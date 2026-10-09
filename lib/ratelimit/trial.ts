@@ -1,4 +1,4 @@
-import { Redis } from '@upstash/redis'
+import { getRedis } from '@/lib/redis'
 import { createServiceClient } from '@/lib/supabase/service'
 
 // Free trial limits (owner decisions 2026-10-08, changed 2026-10-09). The
@@ -14,17 +14,6 @@ import { createServiceClient } from '@/lib/supabase/service'
 export const TRIAL_TOTAL_DAILY = 5
 const KEY_TTL_SECONDS = 2 * 86400
 
-let redis: Redis | null = null
-
-function getRedis(): Redis {
-  if (!redis) {
-    redis = new Redis({
-      url: process.env.KV_REST_API_URL!,
-      token: process.env.KV_REST_API_TOKEN!,
-    })
-  }
-  return redis
-}
 
 function viennaDay(now = new Date()): string {
   // en-CA formats as YYYY-MM-DD

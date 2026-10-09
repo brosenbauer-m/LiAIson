@@ -8,7 +8,7 @@ import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystem
 import { resolveCircles } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { getSenderPlan, checkTrialMessageLimit, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
-import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
+import { mistral, CHAT_MODEL, messageText } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
 import { isOverSpendLimit } from '@/lib/usage/spend'
@@ -61,23 +61,6 @@ function sanitizeResponse(text: string): string {
   return sanitized
 }
 
-function extractTextContent(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-
-  return content
-    .filter(
-      (chunk): chunk is { type: 'text'; text: string } =>
-        typeof chunk === 'object' &&
-        chunk !== null &&
-        'type' in chunk &&
-        chunk.type === 'text' &&
-        'text' in chunk &&
-        typeof chunk.text === 'string'
-    )
-    .map(chunk => chunk.text)
-    .join('')
-}
 
 const READER_VAULT_MAX_CHARS = 6000
 
@@ -131,17 +114,18 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const visitorSupabase = await createClient()
-  const { data: { user: visitor } } = await visitorSupabase.auth.getUser()
-
   const supabase = createServiceClient()
+  const visitorSupabase = await createClient()
 
-  // Look up user by username
-  const { data: user, error: userError } = await supabase
-    .from('users')
-    .select('id, display_name')
-    .eq('username', username)
-    .single<Pick<User, 'id' | 'display_name'>>()
+  // Who is sending, and whose LiAIson (looked up at the same time).
+  const [{ data: { user: visitor } }, { data: user, error: userError }] = await Promise.all([
+    visitorSupabase.auth.getUser(),
+    supabase
+      .from('users')
+      .select('id, display_name')
+      .eq('username', username)
+      .single<Pick<User, 'id' | 'display_name'>>(),
+  ])
 
   if (userError || !user) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -168,7 +152,15 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     )
   }
 
-  const circles = await resolveCircles(user.id, { visitorUserId: visitor.id })
+  // The checks below are independent reads, so they run at the same time; the
+  // answers are still applied in this order.
+  const [circles, overSpendLimit, unpaidBill, plan] = await Promise.all([
+    resolveCircles(user.id, { visitorUserId: visitor.id }),
+    isOverSpendLimit(visitor.id),
+    getUnpaidBill(visitor.id).catch(() => null),
+    getSenderPlan(visitor.id),
+  ])
+
   if (circles === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }
@@ -177,7 +169,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // 2026-10-08), never the LiAIson's owner. A signed-in sender who has reached
   // their own monthly spending limit can't send more until the 1st of next month
   // or until they raise it in Settings. Fails open if usage can't be read.
-  if (await isOverSpendLimit(visitor.id)) {
+  if (overSpendLimit) {
     return NextResponse.json(
       { error: "You've reached your monthly spending limit. You can raise it in Settings.", paused: true },
       { status: 429 }
@@ -185,7 +177,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   }
 
   // An unpaid monthly bill pauses sending until it is paid (Settings → Pay now).
-  if (await getUnpaidBill(visitor.id).catch(() => null)) {
+  if (unpaidBill) {
     return NextResponse.json(
       { error: 'You have an unpaid bill. Please pay it in Settings to keep chatting.', paused: true },
       { status: 429 }
@@ -195,7 +187,6 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // Free trial limits for the sender (exempt accounts have none):
   // 5 messages per day in total (to any LiAIson) during the free month; after
   // it, only with a saved card ('paying', billed at month end).
-  const plan = await getSenderPlan(visitor.id)
   if (plan.kind === 'trial_ended') {
     return NextResponse.json(
       { error: 'Your free month has ended. Add a payment method in Settings to keep chatting.', trialLimit: true, paused: true },
@@ -215,12 +206,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // Two-vault chat: a signed-in visitor (not the owner) can have their own
   // non-draft vault used to answer them, unless they switched it off.
   // It is only added to this request's prompt — never stored or logged.
-  let reader: ReaderContext | undefined
-  if (visitor.id !== user.id) {
-    reader = await loadReaderContext(supabase, visitor.id)
-  }
-
-  // Build system prompt
+  const reader: ReaderContext | undefined = visitor.id !== user.id ? await loadReaderContext(supabase, visitor.id) : undefined
   const systemPrompt = await buildSystemPrompt(user.id, circles, reader)
 
   // Who caused this AI usage (for usage tracking only; no identity is stored).
@@ -260,7 +246,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
         }
         for await (const event of mistralStream) {
           if (event.data?.usage) usage = event.data.usage
-          const text = extractTextContent(event.data?.choices[0]?.delta.content)
+          const text = messageText(event.data?.choices[0]?.delta.content)
           if (text) {
             pending += text
             flush(false)

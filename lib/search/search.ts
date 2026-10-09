@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
 import { getPlanLimits } from '@/lib/billing/plan'
@@ -61,13 +61,6 @@ export function keywordsFrom(query: string): string[] {
   return [...new Set(words)].slice(0, 8)
 }
 
-function textOf(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-  return content
-    .map(part => (part && typeof part === 'object' && 'text' in part ? String((part as { text: unknown }).text ?? '') : ''))
-    .join('')
-}
 
 type MatchRow = { user_id: string; section_id: string; content: string; distance: number }
 type UserRow = { id: string; username: string; display_name: string; avatar_url: string | null }
@@ -139,7 +132,7 @@ export async function searchPeople(searcherId: string, query: string): Promise<S
 
   let parsed: { results?: { id?: unknown; match?: unknown; reason?: unknown }[] } = {}
   try {
-    parsed = JSON.parse(textOf(response.choices[0]?.message?.content))
+    parsed = JSON.parse(messageText(response.choices[0]?.message?.content))
   } catch {
     parsed = {}
   }

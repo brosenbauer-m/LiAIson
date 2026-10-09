@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import type { Period } from '@/lib/insights/periods'
 import { INSIGHTS_TIMEZONE } from '@/lib/insights/periods'
@@ -26,18 +26,6 @@ const MAX_ROWS = 3000
 const MAX_STATEMENTS_FOR_AI = 150
 const EXAMPLES_PER_CATEGORY = 3
 
-function extractTextContent(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-  return content
-    .filter(
-      (chunk): chunk is { type: 'text'; text: string } =>
-        typeof chunk === 'object' && chunk !== null && 'type' in chunk &&
-        chunk.type === 'text' && 'text' in chunk && typeof chunk.text === 'string'
-    )
-    .map(chunk => chunk.text)
-    .join('')
-}
 
 function cleanList(value: unknown, max: number): string[] {
   if (!Array.isArray(value)) return []
@@ -157,7 +145,7 @@ export async function buildAndStoreReport(
       ],
     })
     await logAiUsage({ userId: profileUserId, feature: 'echo', model: FAST_MODEL, actor: 'system', usage: response.usage })
-    const parsed = JSON.parse(extractTextContent(response.choices[0]?.message?.content)) as Record<string, unknown>
+    const parsed = JSON.parse(messageText(response.choices[0]?.message?.content)) as Record<string, unknown>
     if (typeof parsed.headline === 'string' && parsed.headline.trim()) headline = parsed.headline.trim().slice(0, 90)
     if (typeof parsed.summary === 'string') summary = parsed.summary.trim().slice(0, 700)
     suggestions = cleanList(parsed.suggestions, 3)

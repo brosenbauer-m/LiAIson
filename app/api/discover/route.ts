@@ -31,23 +31,24 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const pattern = escapeLike(query)
 
-  // 1) Usernames that start with the query (best matches first).
-  const { data: byUsername, error: usernameError } = await supabase
-    .from('users')
-    .select('username, display_name, avatar_url')
-    .eq('is_discoverable', true)
-    .ilike('username', `${pattern}%`)
-    .order('username', { ascending: true })
-    .limit(MAX_RESULTS)
-
-  // 2) Display names that contain the query anywhere.
-  const { data: byName, error: nameError } = await supabase
-    .from('users')
-    .select('username, display_name, avatar_url')
-    .eq('is_discoverable', true)
-    .ilike('display_name', `%${pattern}%`)
-    .order('display_name', { ascending: true })
-    .limit(MAX_RESULTS)
+  // 1) Usernames that start with the query (best matches first), and
+  // 2) display names that contain it anywhere; both at the same time.
+  const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] = await Promise.all([
+    supabase
+      .from('users')
+      .select('username, display_name, avatar_url')
+      .eq('is_discoverable', true)
+      .ilike('username', `${pattern}%`)
+      .order('username', { ascending: true })
+      .limit(MAX_RESULTS),
+    supabase
+      .from('users')
+      .select('username, display_name, avatar_url')
+      .eq('is_discoverable', true)
+      .ilike('display_name', `%${pattern}%`)
+      .order('display_name', { ascending: true })
+      .limit(MAX_RESULTS),
+  ])
 
   if (usernameError || nameError) {
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })

@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { getPlanLimits } from '@/lib/billing/plan'
 import { resolveCircles } from '@/lib/access/resolveScope'
@@ -10,7 +10,6 @@ import {
   cleanStrength,
   getSimilarityQuota,
   sectionsText,
-  textOf,
 } from '@/lib/similarity/compare'
 import type { SimilarityInterest, SimilarityLevel, SimilarityResult } from '@/lib/similarity/types'
 
@@ -186,7 +185,7 @@ export async function compareGroup(
     await logAiUsage({ userId: viewerId, feature: 'similarity', model: FAST_MODEL, actor: 'member', usage: { promptTokens: 0, completionTokens: 0 } })
   }
 
-  const result = parseGroup(textOf(response.choices[0]?.message?.content), keys)
+  const result = parseGroup(messageText(response.choices[0]?.message?.content), keys)
   const { error } = await createServiceClient().from('similarity_group_results').upsert({
     viewer_id: viewerId,
     group_key: loaded.groupKey,

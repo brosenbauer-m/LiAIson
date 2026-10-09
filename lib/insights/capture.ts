@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
 
 // Turns one visitor message into an anonymous interest statement + category.
@@ -21,18 +21,6 @@ export const INSIGHT_CATEGORIES = [
 
 const MAX_STATEMENT_CHARS = 160
 
-function extractTextContent(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-  return content
-    .filter(
-      (chunk): chunk is { type: 'text'; text: string } =>
-        typeof chunk === 'object' && chunk !== null && 'type' in chunk &&
-        chunk.type === 'text' && 'text' in chunk && typeof chunk.text === 'string'
-    )
-    .map(chunk => chunk.text)
-    .join('')
-}
 
 // Remove anything that looks like contact details, just in case.
 function scrub(text: string): string {
@@ -75,7 +63,7 @@ export async function captureVisitorInsight(
 
   await logAiUsage({ userId: profileUserId, feature: 'insight', model: FAST_MODEL, actor, usage: response.usage })
 
-  const raw = extractTextContent(response.choices[0]?.message?.content)
+  const raw = messageText(response.choices[0]?.message?.content)
   let parsed: { skip?: unknown; category?: unknown; statement?: unknown }
   try {
     parsed = JSON.parse(raw)

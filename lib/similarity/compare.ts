@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/service'
-import { mistral, FAST_MODEL } from '@/lib/mistral/client'
+import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
 import { getPlanLimits } from '@/lib/billing/plan'
@@ -111,13 +111,6 @@ export async function getCachedSimilarity(viewerId: string, targetId: string, ta
   }
 }
 
-export function textOf(content: unknown): string {
-  if (typeof content === 'string') return content
-  if (!Array.isArray(content)) return ''
-  return content
-    .map(part => (part && typeof part === 'object' && 'text' in part ? String((part as { text: unknown }).text ?? '') : ''))
-    .join('')
-}
 
 export function cleanLabel(value: unknown): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, 32) : ''
@@ -207,7 +200,7 @@ export async function compareWith(
 
   await logAiUsage({ userId: viewerId, feature: 'similarity', model: FAST_MODEL, actor: 'member', usage: response.usage })
 
-  const result = parseResult(textOf(response.choices[0]?.message?.content))
+  const result = parseResult(messageText(response.choices[0]?.message?.content))
 
   const supabase = createServiceClient()
   const { error } = await supabase.from('similarity_results').upsert({

@@ -10,3 +10,18 @@ export const mistral = new Mistral({
 
 export const CHAT_MODEL = 'mistral-medium-latest'
 export const FAST_MODEL = 'mistral-small-latest'
+
+// Text of a Mistral message or stream delta (a string, or a list of chunks of
+// which only the text ones count).
+export function messageText(content: unknown): string {
+  if (typeof content === 'string') return content
+  if (!Array.isArray(content)) return ''
+  return content
+    .filter(
+      (chunk): chunk is { type: 'text'; text: string } =>
+        typeof chunk === 'object' && chunk !== null && 'type' in chunk &&
+        chunk.type === 'text' && 'text' in chunk && typeof chunk.text === 'string'
+    )
+    .map(chunk => chunk.text)
+    .join('')
+}
