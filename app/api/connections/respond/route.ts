@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
   }
 
   // inner: put the person in the owner's Inner Circle (lib/circles.ts).
-  const { connectionId, accept, inner } = await request.json()
+  const { connectionId, accept, inner } = (await request.json().catch(() => ({}))) as { connectionId?: unknown; accept?: unknown; inner?: unknown }
 
-  if (!connectionId || typeof accept !== 'boolean') {
+  if (typeof connectionId !== 'string' || !/^[0-9a-f-]{36}$/i.test(connectionId) || typeof accept !== 'boolean') {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 

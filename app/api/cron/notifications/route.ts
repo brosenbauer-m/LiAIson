@@ -7,7 +7,8 @@ export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // Fails closed like the other cron routes: no secret configured = no access.
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -22,16 +23,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
   }
 
-  const results: { userId: string; status: string }[] = []
-
+  let processed = 0
+  let errors = 0
   for (const user of (users as Pick<User, 'id'>[] | null) ?? []) {
     try {
       await generateNotifications(user.id)
-      results.push({ userId: user.id, status: 'ok' })
+      processed++
     } catch {
-      results.push({ userId: user.id, status: 'error' })
+      errors++
     }
   }
 
-  return NextResponse.json({ processed: results.length, results })
+  return NextResponse.json({ processed, errors })
 }

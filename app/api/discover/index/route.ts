@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { waitUntil } from '@vercel/functions'
 import { createClient } from '@/lib/supabase/server'
 import { indexUser } from '@/lib/search/indexer'
-import { getRedis } from '@/lib/search/redis'
+import { underLimit } from '@/lib/redis'
 
 // Refresh the signed-in user's own Discover search index after they change
 // their Vault or their Public / Discoverable settings. Only their own data.
@@ -16,14 +16,9 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  try {
-    const r = getRedis()
-    const key = `searchidx:calls:${user.id}`
-    const n = await r.incr(key)
-    if (n === 1) await r.expire(key, 3600)
-    if (n > PER_HOUR) return NextResponse.json({ ok: false, later: true }, { status: 202 })
-  } catch {
-    // Redis unavailable: still index (only changed sections cost anything).
+  // Redis unavailable: still index (only changed sections cost anything).
+  if (!(await underLimit(`searchidx:calls:${user.id}`, PER_HOUR, 3600))) {
+    return NextResponse.json({ ok: false, later: true }, { status: 202 })
   }
 
   waitUntil(indexUser(user.id))

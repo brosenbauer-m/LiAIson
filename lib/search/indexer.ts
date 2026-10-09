@@ -2,7 +2,7 @@ import { createHash } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/service'
 import { mistral } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
-import { getRedis } from '@/lib/search/redis'
+import { getRedis } from '@/lib/redis'
 
 // Discover AI search index (owner decisions 2026-10-09):
 // only the Outer Circle of profiles that are Public AND Discoverable is indexed.

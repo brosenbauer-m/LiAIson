@@ -14,14 +14,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { connectionIds, inner } = await request.json()
+  const { connectionIds, inner } = (await request.json().catch(() => ({}))) as { connectionIds?: unknown; inner?: unknown }
 
   if (
     typeof inner !== 'boolean' ||
     !Array.isArray(connectionIds) ||
     connectionIds.length === 0 ||
     connectionIds.length > 200 ||
-    connectionIds.some(id => typeof id !== 'string')
+    connectionIds.some(id => typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id))
   ) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }

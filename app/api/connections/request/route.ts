@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { underLimit } from '@/lib/redis'
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// Connection requests per person per hour (each one notifies someone).
+const PER_HOUR = 30
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -12,10 +17,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { toUserId } = await request.json()
-
-  if (!toUserId || toUserId === user.id) {
+  const body = await request.json().catch(() => null) as { toUserId?: unknown } | null
+  const toUserId = body?.toUserId
+  if (typeof toUserId !== 'string' || !UUID.test(toUserId) || toUserId === user.id) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
+  if (!(await underLimit(`connreq:${user.id}`, PER_HOUR, 3600))) {
+    return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
   }
 
   const serviceSupabase = createServiceClient()

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { getRedis } from '@/lib/search/redis'
+import { underLimit } from '@/lib/redis'
 import { needsCard } from '@/lib/billing/access'
 import {
   compareWith,
@@ -56,16 +56,8 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ use
   }
 
   // A few comparisons per minute at most (double clicks and scripts).
-  try {
-    const r = getRedis()
-    const key = `simq:${loaded.viewerId}`
-    const n = await r.incr(key)
-    if (n === 1) await r.expire(key, 60)
-    if (n > PER_MINUTE) {
-      return NextResponse.json({ error: 'Please wait a minute before comparing again.' }, { status: 429 })
-    }
-  } catch {
-    // Redis unavailable: the monthly limit still applies.
+  if (!(await underLimit(`simq:${loaded.viewerId}`, PER_MINUTE, 60))) {
+    return NextResponse.json({ error: 'Please wait a minute before comparing again.' }, { status: 429 })
   }
 
   try {

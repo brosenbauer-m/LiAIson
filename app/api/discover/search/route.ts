@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getSearchQuota, searchPeople } from '@/lib/search/search'
-import { getRedis } from '@/lib/search/redis'
+import { underLimit } from '@/lib/redis'
 
 // Discover AI search: find people by what they share.
 // GET  → { quota, used } for the signed-in user (quota 0 = not in their plan).
@@ -56,17 +56,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `You have used all ${quota} searches for this month.`, quotaReached: true, quota, used }, { status: 429 })
   }
 
-  // A few searches per minute at most (protects the AI quota from double clicks and scripts).
-  try {
-    const r = getRedis()
-    const key = `searchq:${userId}`
-    const n = await r.incr(key)
-    if (n === 1) await r.expire(key, 60)
-    if (n > PER_MINUTE) {
-      return NextResponse.json({ error: 'Please wait a minute before searching again.' }, { status: 429 })
-    }
-  } catch {
-    // Redis unavailable: the monthly quota still applies.
+  // A few searches per minute at most (protects the AI quota from double clicks
+  // and scripts). Redis unavailable: the monthly quota still applies.
+  if (!(await underLimit(`searchq:${userId}`, PER_MINUTE, 60))) {
+    return NextResponse.json({ error: 'Please wait a minute before searching again.' }, { status: 429 })
   }
 
   try {
