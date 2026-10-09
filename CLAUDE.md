@@ -15,7 +15,7 @@ Production app (www.my-liaison.app). Owner is non-technical. Every push to `main
 - Vault privacy: visitors see only the circles `resolveCircles` allows (`lib/access/resolveScope.ts`) — on every route (profile, chat, prompts, Discover, search).
 - Rate-limit key `chat:${ip}:${userId}` (`lib/ratelimit/index.ts`) never changes without a plan.
 - Cron routes require `CRON_SECRET`; never remove the check.
-- Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks.
+- Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks, similarity_results.
 - New third-party data processor → add to `app/privacy/page.tsx`; prefer EU. Keep `.env.example` in sync. Never commit secrets.
 
 ## Stack
