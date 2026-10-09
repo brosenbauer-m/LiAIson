@@ -2,10 +2,24 @@
 // storage bucket are shown: a stored link to another site could track
 // visitors (their browser would load it on every profile view).
 
-const OWN_AVATARS = `${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''}/storage/v1/object/public/avatars/`
+function originOf(url: string | undefined): string | null {
+  try {
+    return url ? new URL(url).origin : null
+  } catch {
+    return null
+  }
+}
+
+const STORAGE_ORIGIN = originOf(process.env.NEXT_PUBLIC_SUPABASE_URL)
 
 export function isOwnAvatarUrl(url: string | null | undefined): url is string {
-  return !!url && !!process.env.NEXT_PUBLIC_SUPABASE_URL && url.startsWith(OWN_AVATARS)
+  if (!url || !STORAGE_ORIGIN) return false
+  try {
+    const parsed = new URL(url)
+    return parsed.origin === STORAGE_ORIGIN && parsed.pathname.startsWith('/storage/v1/object/public/avatars/')
+  } catch {
+    return false
+  }
 }
 
 const SIZES = {
