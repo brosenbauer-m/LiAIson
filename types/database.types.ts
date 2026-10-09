@@ -818,6 +818,12 @@ isOneToOne: false
                            },
 "next_receipt_number":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"plan_vault_limit":
+{ Args: { "p": string }; Returns: number
+                           },
+"vault_char_limit":
+{ Args: { "uid": string }; Returns: number
                            }
           }
           Enums: {
