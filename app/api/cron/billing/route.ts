@@ -3,13 +3,15 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { previousPeriod, viennaDateParts } from '@/lib/insights/periods'
 import { billMonth, type BillResult } from '@/lib/billing/monthly'
 import { processUnverifiedAccounts, type UnverifiedSummary } from '@/lib/auth/unverified'
+import { indexStaleUsers } from '@/lib/search/indexer'
 
 // Daily job (Vercel Cron, see vercel.json). Protected by CRON_SECRET.
 // On the 1st of the month (Vienna time) — or with ?run=month — bills the month
 // that just ended for everyone who sent messages in it, has an amount carried
 // over or may owe a plan fee. Bills are unique per user and month, so re-running is safe.
 // Every day it also reminds and, after 30 days, deletes accounts whose email
-// was never confirmed (lib/auth/unverified.ts).
+// was never confirmed (lib/auth/unverified.ts). On the other days it also
+// brings the Discover search index up to date (lib/search/indexer.ts).
 
 export const maxDuration = 60
 
@@ -32,7 +34,14 @@ export async function GET(request: NextRequest) {
 
   const manual = request.nextUrl.searchParams.get('run') === 'month'
   if (viennaDateParts(now).day !== 1 && !manual) {
-    return NextResponse.json({ ok: true, unverified, skipped: 'not the 1st' })
+    let search: Awaited<ReturnType<typeof indexStaleUsers>> | { error: string }
+    try {
+      search = await indexStaleUsers(10)
+    } catch (err) {
+      console.error('SEARCH_SWEEP_ERROR', err)
+      search = { error: 'failed' }
+    }
+    return NextResponse.json({ ok: true, unverified, search, skipped: 'not the 1st' })
   }
 
   const period = previousPeriod('month', now)

@@ -14,6 +14,11 @@ import AccountEmailCard from '@/components/settings/AccountEmailCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 
+// Keeps the Discover search index in step with Public / Discoverable. Fire and forget.
+const refreshSearchIndex = () => {
+  void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
+}
+
 export default function SettingsPage() {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
@@ -87,6 +92,7 @@ export default function SettingsPage() {
       .eq('id', userId)
     setSaving(false)
     if (!error) {
+      refreshSearchIndex()
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     }
@@ -112,6 +118,7 @@ export default function SettingsPage() {
       .eq('id', userId)
     setDiscoverableSaving(false)
     if (!error) {
+      refreshSearchIndex()
       setDiscoverableSuccess(true)
       setTimeout(() => setDiscoverableSuccess(false), 3000)
     }
@@ -251,7 +258,7 @@ export default function SettingsPage() {
           ) : (
             <div className="flex items-center justify-between gap-4">
               <p className="text-sm text-text-secondary leading-relaxed">
-                When on, people can find you by searching in LiAIson. When off, your profile can only be reached through your link.
+                When on, people can find you by your name on Discover. If your profile is Public, people with Ambivert or Extrovert can also find you by what is in your Outer Circle, using AI search (they see your name and a short reason, never your Vault text). When off, your profile can only be reached through your link.
               </p>
               <Toggle
                 checked={isDiscoverable}

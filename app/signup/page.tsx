@@ -404,7 +404,7 @@ export default function SignupPage() {
 
             <div className="flex items-center justify-between gap-4 py-1">
               <p className="text-sm text-text-secondary">
-                Let people find me by searching in LiAIson (you can change this anytime in Settings).
+                Let people find me on Discover: by my name, and (if my profile is Public) by what I share in my Outer Circle, using AI search. You can change this anytime in Settings.
               </p>
               <Toggle
                 checked={isDiscoverable}

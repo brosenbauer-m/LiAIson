@@ -28,6 +28,12 @@ const SECTION_HINTS: Record<string, string> = {
 
 type Tab = Circle
 
+// Keeps the Discover search index up to date (only Outer Circle content of
+// Public + Discoverable profiles is ever indexed). Fire and forget.
+const refreshSearchIndex = () => {
+  void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
+}
+
 export default function VaultPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -110,6 +116,7 @@ export default function VaultPage() {
     if (data) {
       setSections(prev => prev.map(s => s.id === id ? { ...s, ...data } : s))
     }
+    refreshSearchIndex()
   }, [supabase])
 
   const deleteSection = useCallback(async (id: string) => {
@@ -214,6 +221,7 @@ export default function VaultPage() {
     }
     setSections(prev => [...prev, data as VaultSection])
     setActiveTab(target)
+    refreshSearchIndex()
     return true
   }
 

@@ -62,6 +62,8 @@ app/
   api/chat/[username]/   AI chat (sign-in required; rate limited; trial limits; sender pays; two-vault reader context)
   api/prompts/[username]/ suggested prompts (access-aware)
   api/discover/          GET username/name search (discoverable users only, safe columns)
+  api/discover/search/   AI search by what people share (Outer Circle of Public + Discoverable profiles only; plan quota; never returns Vault text)
+  api/discover/index/    refresh own search index (lib/search/; daily sweep in the billing cron)
   api/connections/       request / status / respond / access
   api/insights/          owner-only visitor insights + saved "Echoes" (weekly/monthly reports; UI name is Echo)
   api/account/delete/    account deletion

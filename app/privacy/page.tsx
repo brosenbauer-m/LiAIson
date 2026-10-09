@@ -27,6 +27,7 @@ export default function PrivacyPage() {
               <li>Your profile photo, if you upload one (stored in cloud storage). Files you import into your Vault (PDF, Word) are only read to extract their text and are not stored</li>
               <li>Anonymous visitor interest statements — e.g. &quot;People want to know more about your climbing&quot; — never the visitor&apos;s words or identity, deleted after about 35 days</li>
               <li>AI usage counts — how much AI processing the messages you send use (feature, AI model and number of tokens), never message content and never which LiAIson you chatted with. We use this for your spending limit and, in future, to bill you for what you send. Others chatting with your LiAIson are never counted against you</li>
+              <li>A search index for Discover, only if your profile is Public and Discoverable — the text of your Outer Circle sections split into short passages, each with a numeric fingerprint made by Mistral AI (EU) so people can find you by what you share. Inner Circle sections and drafts are never indexed. The index is updated when you change your Vault and removed when you turn off Discoverable, make your profile Private, or delete your account. People who search see your name, photo and a one-sentence reason written by the AI, never your Vault text</li>
               <li>Billing details, if you save a card — the country you live in (and the country of your card and of your connection, as required for VAT), a label like &quot;Visa •••• 4242&quot; and your payment records. Your card number is handled only by Mollie and never reaches LiAIson. Receipts are kept for 7 years as required by tax law, even after you delete your account</li>
             </ul>
           </section>
@@ -53,7 +54,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, on Ambivert and Extrovert) or kept as a draft that no one sees</li>
               <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
-              <li>You can turn Discoverable on or off at any time</li>
+              <li>You can turn Discoverable on or off at any time. When it is off, or your profile is Private, no one can find you by what you share</li>
               <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
               <li>You can set a monthly spending limit for the messages you send; when it is reached, you can&apos;t send more until the next month or until you raise it</li>
               <li>Files you import (PDF or Word) are only read to extract their text and are not stored; only the text you review and approve is saved to your Vault</li>
