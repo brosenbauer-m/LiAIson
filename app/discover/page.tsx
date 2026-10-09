@@ -78,17 +78,23 @@ export default function DiscoverPage() {
     }
   }
 
-  useEffect(() => {
-    const q = query.trim().replace(/^@+/, '')
-    if (!q) {
+  // Typing: show "searching" at once; an empty box clears the results.
+  const changeQuery = (value: string) => {
+    setQuery(value)
+    if (value.trim().replace(/^@+/, '')) {
+      setLoading(true)
+    } else {
       setResults([])
       setSearched(false)
       setLoading(false)
-      return
     }
+  }
+
+  useEffect(() => {
+    const q = query.trim().replace(/^@+/, '')
+    if (!q) return
 
     const controller = new AbortController()
-    setLoading(true)
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/discover?q=${encodeURIComponent(q)}`, {
@@ -215,7 +221,7 @@ export default function DiscoverPage() {
           <input
             type="search"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => changeQuery(e.target.value)}
             placeholder="Search by name or @username"
             maxLength={50}
             autoFocus

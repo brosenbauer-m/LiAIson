@@ -30,7 +30,7 @@ Keep this file short: 1–3 lines per change, commit it with the work.
 ## Next (agreed order)
 1. Owner: test Social Butterfly, confirm slider prices → then set `available: true` in lib/plans.ts.
 2. Redesign step 2: app pages in the new style (serif page titles, grid-line section style) — dashboard, Vault, profile/chat, Discover, Plans, Settings, auth pages.
-Later: cache identical searches/day, HNSW index at scale, chat retrieval for big vaults, ESLint cleanup, 16 unused Vercel env vars.
+Later: cache identical searches/day, HNSW index at scale, chat retrieval for big vaults, 16 unused Vercel env vars. (ESLint: 0 errors since 2026-10-09; 8 warnings left: <img> and hook deps.)
 
 ## Owner to-dos
 - Register Einzelunternehmen → seller details in `lib/billing/seller.ts`, Mollie live key (Vercel), accountant: VAT/receipt wording.

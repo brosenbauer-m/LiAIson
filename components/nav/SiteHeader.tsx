@@ -19,7 +19,10 @@ const SIGNED_IN_LINKS = [
 export default function SiteHeader() {
   const pathname = usePathname()
   const [auth, setAuth] = useState<AuthState>('loading')
-  const [menuOpen, setMenuOpen] = useState(false)
+  // The mobile menu is open only on the page where it was opened, so it
+  // closes by itself when the page changes.
+  const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null)
+  const menuOpen = menuOpenOn !== null && menuOpenOn === pathname
 
   useEffect(() => {
     const supabase = createClient()
@@ -31,11 +34,6 @@ export default function SiteHeader() {
     })
     return () => listener.subscription.unsubscribe()
   }, [])
-
-  // Close the mobile menu whenever the page changes.
-  useEffect(() => {
-    setMenuOpen(false)
-  }, [pathname])
 
   const isActive = (href: string) => pathname === href || pathname?.startsWith(`${href}/`)
 
@@ -70,7 +68,7 @@ export default function SiteHeader() {
             </nav>
             <button
               type="button"
-              onClick={() => setMenuOpen(open => !open)}
+              onClick={() => setMenuOpenOn(menuOpen ? null : pathname)}
               className="md:hidden p-2 -mr-2 text-text-primary"
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}

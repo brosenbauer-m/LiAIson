@@ -15,10 +15,15 @@ export default function VisitorInsights() {
   const [error, setError] = useState('')
   const [open, setOpen] = useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const choosePeriod = (p: 'week' | 'month') => {
+    if (p === period) return
     setLoading(true)
     setError('')
+    setPeriod(p)
+  }
+
+  useEffect(() => {
+    let cancelled = false
     fetch(`/api/insights?period=${period}`, { cache: 'no-store' })
       .then(async res => {
         const body = await res.json().catch(() => null)
@@ -51,7 +56,7 @@ export default function VisitorInsights() {
             <button
               key={p}
               type="button"
-              onClick={() => setPeriod(p)}
+              onClick={() => choosePeriod(p)}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                 period === p ? 'bg-accent text-white shadow-soft' : 'text-text-secondary hover:text-text-primary'
               }`}
