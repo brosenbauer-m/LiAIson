@@ -546,6 +546,69 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"billing_accounts": {
+                  Row: {
+                    "billing_country": string | null,"card_country": string | null,"card_label": string | null,"created_at": string,"ip_country": string | null,"mandate_id": string | null,"mandate_status": string,"mollie_customer_id": string | null,"updated_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_accounts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"billing_balance_entries": {
+                  Row: {
+                    "amount_eur": number,"created_at": string,"document_id": number | null,"id": number,"kind": string,"user_id": string
+                  }
+                  Insert: {
+                    "amount_eur": number,"created_at"?: string,"document_id"?: number | null,"id"?: never,"kind": string,"user_id": string
+                  }
+                  Update: {
+                    "amount_eur"?: number,"created_at"?: string,"document_id"?: number | null,"id"?: never,"kind"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_balance_entries_document_id_fkey"
+      columns: ["document_id"]
+isOneToOne: false
+      referencedRelation: "billing_documents"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "billing_balance_entries_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"billing_documents": {
+                  Row: {
+                    "carried_in_eur": number,"country": string | null,"created_at": string,"customer_email": string | null,"customer_name": string | null,"id": number,"kind": string,"mollie_payment_id": string | null,"net_eur": number,"paid_at": string | null,"period_end": string | null,"period_start": string | null,"prepaid_applied_eur": number,"receipt_number": string | null,"status": string,"total_eur": number,"usage_eur": number,"user_id": string | null,"vat_eur": number,"vat_exempt": boolean,"vat_rate": number
+                  }
+                  Insert: {
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind": string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                  }
+                  Update: {
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind"?: string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "billing_documents_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"connection_interests": {
                   Row: {
                     "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"status": string,"to_user_id": string
@@ -733,6 +796,9 @@ isOneToOne: false
 { Args: { "p_since": string,"p_user_id": string }; Returns: {
               "calls": number,"completion_tokens": number,"feature": string,"model": string,"prompt_tokens": number
             }[]
+                           },
+"next_receipt_number":
+{ Args: Record<PropertyKey, never>; Returns: string
                            }
           }
           Enums: {
