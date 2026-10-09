@@ -8,6 +8,7 @@ import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
 import type { VaultSection, VaultFolder } from '@/types'
+import { CIRCLE_LABEL, CIRCLE_HELP, type Circle } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -25,7 +26,7 @@ const SECTION_HINTS: Record<string, string> = {
   hobbies: "Don't just list activities — share what excites you about them.",
 }
 
-type Tab = 'professional' | 'personal' | 'draft'
+type Tab = Circle
 
 export default function VaultPage() {
   const searchParams = useSearchParams()
@@ -35,11 +36,13 @@ export default function VaultPage() {
   const [sections, setSections] = useState<VaultSection[]>([])
   const [loading, setLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('professional')
+  const [activeTab, setActiveTab] = useState<Tab>('outer')
   const [showWelcome, setShowWelcome] = useState(welcome)
   const [userId, setUserId] = useState<string | null>(null)
   const [folders, setFolders] = useState<VaultFolder[]>([])
   const [vaultLimit, setVaultLimit] = useState<number | null>(null)
+  // Inner Circle only on plans with two circles (Ambivert / Extrovert).
+  const [innerAllowed, setInnerAllowed] = useState(false)
   const [limitHit, setLimitHit] = useState(false)
 
   const supabase = createClient()
@@ -49,6 +52,14 @@ export default function VaultPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       setUserId(user.id)
+
+      // Loaded first: on a one-circle plan this also turns Inner Circle sections into drafts.
+      const planRes = await fetch('/api/plan', { cache: 'no-store' }).catch(() => null)
+      if (planRes?.ok) {
+        const plan = await planRes.json() as { vaultLimit?: number; circles?: number }
+        if (typeof plan.vaultLimit === 'number') setVaultLimit(plan.vaultLimit)
+        setInnerAllowed(plan.circles === 2)
+      }
 
       const { data, error } = await supabase
         .from('vault_sections')
@@ -69,12 +80,6 @@ export default function VaultPage() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
       setFolders(folderData as VaultFolder[] ?? [])
-
-      const planRes = await fetch('/api/plan', { cache: 'no-store' }).catch(() => null)
-      if (planRes?.ok) {
-        const plan = await planRes.json() as { vaultLimit?: number }
-        if (typeof plan.vaultLimit === 'number') setVaultLimit(plan.vaultLimit)
-      }
 
       setLoading(false)
     }
@@ -163,13 +168,10 @@ export default function VaultPage() {
       .from('vault_sections')
       .insert({
         user_id: userId,
-        domain: activeTab === 'professional'
-          ? 'professional'
-          : activeTab === 'personal'
-            ? 'personal'
-            : 'custom',
-        is_professional: activeTab === 'professional',
-        is_personal: activeTab === 'personal',
+        domain: 'custom',
+        is_professional: false,
+        is_personal: false,
+        circle: activeTab,
         section_type: 'custom',
         label,
         content: '',
@@ -194,9 +196,10 @@ export default function VaultPage() {
       .from('vault_sections')
       .insert({
         user_id: userId,
-        domain: target === 'professional' ? 'professional' : target === 'personal' ? 'personal' : 'custom',
-        is_professional: target === 'professional' || target === 'both',
-        is_personal: target === 'personal' || target === 'both',
+        domain: 'custom',
+        is_professional: false,
+        is_personal: false,
+        circle: target,
         section_type: 'custom',
         label,
         content,
@@ -210,18 +213,15 @@ export default function VaultPage() {
       return limit ? limitMessage(Number(limit[1])) : "Couldn't save this section — please try again."
     }
     setSections(prev => [...prev, data as VaultSection])
-    setActiveTab(target === 'both' ? 'professional' : target)
+    setActiveTab(target)
     return true
   }
 
   const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
   const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
 
-  const filtered = sections.filter(section => {
-    if (activeTab === 'professional') return section.is_professional
-    if (activeTab === 'personal') return section.is_personal
-    return !section.is_professional && !section.is_personal
-  })
+  const filtered = sections.filter(section => (section.circle ?? 'outer') === activeTab)
+  const tabs: Tab[] = innerAllowed || sections.some(s => s.circle === 'inner') ? ['outer', 'inner', 'draft'] : ['outer', 'draft']
 
   if (loading) {
     return (
@@ -261,7 +261,7 @@ export default function VaultPage() {
             <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
           </div>
           <div className="flex flex-col items-end">
-            <FileImport defaultTarget={activeTab} onSave={saveImportedSection} />
+            <FileImport defaultTarget={activeTab} innerAllowed={innerAllowed} onSave={saveImportedSection} />
           </div>
         </div>
 
@@ -296,22 +296,28 @@ export default function VaultPage() {
 
         <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-8 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">
-          {(['professional', 'personal', 'draft'] as Tab[]).map(tab => (
+        {/* Tabs: one per circle */}
+        <div className="flex gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit shadow-soft">
+          {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all capitalize ${
+              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab
                   ? 'bg-accent text-white shadow-soft'
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {tab}
+              {CIRCLE_LABEL[tab]}
             </button>
           ))}
         </div>
+        <p className="mb-8 text-sm text-text-secondary">
+          {CIRCLE_HELP[activeTab]}
+          {!innerAllowed && activeTab === 'outer' && (
+            <> With Ambivert or Extrovert you can also share some things only with people you choose. <Link href="/plans#circles" className="text-accent hover:underline">Learn more</Link></>
+          )}
+        </p>
 
         {/* Sections */}
         <div className="space-y-5">
@@ -322,6 +328,7 @@ export default function VaultPage() {
               onUpdate={updateSection}
               onDelete={deleteSection}
               hint={SECTION_HINTS[section.section_type]}
+              innerAllowed={innerAllowed}
               roomLeft={vaultLimit === null ? undefined : vaultLimit - (totalChars - countChars(section.content))}
             />
           ))}

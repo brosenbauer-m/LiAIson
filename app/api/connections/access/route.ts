@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
-type AccessScope = 'none' | 'professional' | 'personal' | 'both'
-
-const ACCESS_SCOPES: AccessScope[] = ['none', 'professional', 'personal', 'both']
-
+// Owner moves accepted connections into or out of their Inner Circle.
+// Body: { connectionIds: string[], inner: boolean }
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -16,11 +14,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { connectionIds, scope } = await request.json()
+  const { connectionIds, inner } = await request.json()
 
   if (
-    typeof scope !== 'string' ||
-    !ACCESS_SCOPES.includes(scope as AccessScope) ||
+    typeof inner !== 'boolean' ||
     !Array.isArray(connectionIds) ||
     connectionIds.length === 0 ||
     connectionIds.length > 200 ||
@@ -32,7 +29,7 @@ export async function POST(request: NextRequest) {
   const serviceSupabase = createServiceClient()
   const { data, error } = await serviceSupabase
     .from('connection_interests')
-    .update({ allowed_scope: scope as AccessScope })
+    .update({ in_inner_circle: inner })
     .in('id', connectionIds)
     .eq('to_user_id', user.id)
     .eq('status', 'accepted')

@@ -35,8 +35,11 @@ export interface VaultSection {
   id: string
   user_id: string
   domain: VaultDomain
+  // Old Professional/Personal flags: no longer used for access (see circle).
   is_professional: boolean
   is_personal: boolean
+  // Who can see this section: 'outer' | 'inner' | 'draft' (lib/circles.ts).
+  circle: 'outer' | 'inner' | 'draft'
   section_type: string
   label: string
   content: string

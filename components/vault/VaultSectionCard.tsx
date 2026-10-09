@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
+import { CIRCLE_LABEL, CIRCLE_HELP, type Circle } from '@/lib/circles'
 
 interface VaultSectionCardProps {
   section: VaultSection
@@ -12,14 +13,15 @@ interface VaultSectionCardProps {
   // Characters this section may hold without going over the Vault limit
   // (limit minus everything saved in the other sections). Undefined = unknown.
   roomLeft?: number
+  // false on plans with one circle (Introvert): no Inner Circle option
+  innerAllowed: boolean
 }
 
 const countChars = (text: string) => Array.from(text).length
 
-export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft }: VaultSectionCardProps) {
+export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft, innerAllowed }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
-  const [isProfessional, setIsProfessional] = useState(section.is_professional)
-  const [isPersonal, setIsPersonal] = useState(section.is_personal)
+  const [circle, setCircle] = useState<Circle>(section.circle ?? 'outer')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -29,15 +31,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
   const handleSave = async () => {
     setSaving(true)
     try {
-      const updates: Partial<VaultSection> = {
-        content,
-        is_professional: isProfessional,
-        is_personal: isPersonal,
-      }
-      if (isProfessional !== isPersonal) {
-        updates.domain = isProfessional ? 'professional' : 'personal'
-      }
-      await onUpdate(section.id, updates)
+      await onUpdate(section.id, { content, circle })
       setSaved(true)
       window.setTimeout(() => setSaved(false), 1500)
     } catch {
@@ -102,29 +96,27 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
           : `${length.toLocaleString('en-GB')} characters`}
       </p>
 
-      <div className="space-y-2">
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input
-            type="checkbox"
-            checked={isProfessional}
-            onChange={event => setIsProfessional(event.target.checked)}
-            className="h-4 w-4 accent-accent"
-          />
-          Add to Professional Liaison
-        </label>
-        <label className="flex items-center gap-2 text-sm text-text-secondary">
-          <input
-            type="checkbox"
-            checked={isPersonal}
-            onChange={event => setIsPersonal(event.target.checked)}
-            className="h-4 w-4 accent-accent"
-          />
-          Add to Personal Liaison
-        </label>
-        {!isProfessional && !isPersonal && (
-          <p className="text-xs text-text-muted">Private draft — not shown to any visitor yet</p>
-        )}
-      </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium text-text-primary mb-1">Who can see this</legend>
+        <div className="flex flex-wrap gap-2">
+          {(['outer', 'inner', 'draft'] as Circle[])
+            .filter(c => innerAllowed || c !== 'inner' || circle === 'inner')
+            .map(c => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCircle(c)}
+                aria-pressed={circle === c}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                  circle === c ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
+                }`}
+              >
+                {CIRCLE_LABEL[c] === 'Drafts' ? 'Draft' : CIRCLE_LABEL[c]}
+              </button>
+            ))}
+        </div>
+        <p className="text-xs text-text-muted">{CIRCLE_HELP[circle]}</p>
+      </fieldset>
 
       {hint && (
         <p className="text-sm text-text-secondary italic border-l-2 border-accent pl-4">{hint}</p>
@@ -139,8 +131,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
             onClick={handleSave}
             disabled={saving || blocked || (
               content === section.content &&
-              isProfessional === section.is_professional &&
-              isPersonal === section.is_personal
+              circle === section.circle
             )}
             className={`px-5 py-2 text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50 ${saved
               ? 'border border-success/30 bg-success/10 text-success'

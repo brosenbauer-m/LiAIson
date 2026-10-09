@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { resolveScope } from '@/lib/access/resolveScope'
+import { resolveCircles } from '@/lib/access/resolveScope'
 import ProfileChatSection from './ProfileChatSection'
 import PrivateProfileCard from './PrivateProfileCard'
 import ContactLinks from '@/components/profile/ContactLinks'
@@ -58,25 +58,18 @@ export default async function ProfilePage(props: Props) {
   // Who is looking? Access = owner's public level combined with any accepted connection.
   const visitorSupabase = await createClient()
   const { data: { user: visitor } } = await visitorSupabase.auth.getUser()
-  const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
+  const circles = await resolveCircles(user.id, { visitorUserId: visitor?.id })
+  const scope = circles !== null
 
-  // Only load vault sections the visitor is allowed to see.
+  // Only load vault sections the visitor is allowed to see (their circles).
   let publicSections: VaultSection[] = []
-  if (scope) {
-    let sectionsQuery = supabase
+  if (circles) {
+    const { data: sections } = await supabase
       .from('vault_sections')
       .select('*')
       .eq('user_id', user.id)
-
-    if (scope === 'professional') {
-      sectionsQuery = sectionsQuery.eq('is_professional', true)
-    } else if (scope === 'personal') {
-      sectionsQuery = sectionsQuery.eq('is_personal', true)
-    } else {
-      sectionsQuery = sectionsQuery.or('is_professional.eq.true,is_personal.eq.true')
-    }
-
-    const { data: sections } = await sectionsQuery.order('domain', { ascending: true })
+      .in('circle', circles)
+      .order('domain', { ascending: true })
     publicSections = (sections as VaultSection[] | null) ?? []
   }
 

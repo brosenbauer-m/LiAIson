@@ -1,7 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import type { VaultSection, User } from '@/types'
-
-export type ChatScope = 'professional' | 'personal' | 'both'
+import type { VisibleCircle } from '@/lib/circles'
 
 // Optional context about the signed-in person who is chatting (two-vault chat).
 // Only ever used to answer that same person; never shown to the profile owner.
@@ -12,20 +11,18 @@ export type ReaderContext = {
 
 export async function buildSystemPrompt(
   userId: string,
-  scope: ChatScope = 'both',
+  // Circles this visitor may see (lib/access/resolveScope.ts). Drafts are never used.
+  circles: VisibleCircle[],
   reader?: ReaderContext
 ): Promise<string> {
   const supabase = createServiceClient()
 
-  let sectionsQuery = supabase.from('vault_sections').select('*').eq('user_id', userId)
-  if (scope === 'professional') {
-    sectionsQuery = sectionsQuery.eq('is_professional', true)
-  } else if (scope === 'personal') {
-    sectionsQuery = sectionsQuery.eq('is_personal', true)
-  } else {
-    sectionsQuery = sectionsQuery.or('is_professional.eq.true,is_personal.eq.true')
-  }
-  sectionsQuery = sectionsQuery.order('domain', { ascending: true })
+  const sectionsQuery = supabase
+    .from('vault_sections')
+    .select('*')
+    .eq('user_id', userId)
+    .in('circle', circles.length > 0 ? circles : ['none'])
+    .order('domain', { ascending: true })
 
   const [{ data: user }, { data: sections }] = await Promise.all([
     supabase.from('users').select('display_name').eq('id', userId).single<Pick<User, 'display_name'>>(),

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { resolveScope } from '@/lib/access/resolveScope'
+import { resolveCircles } from '@/lib/access/resolveScope'
 import type { User, VaultSection } from '@/types'
 
 export async function GET(request: NextRequest, props: { params: Promise<{ username: string }> }) {
@@ -22,25 +22,16 @@ export async function GET(request: NextRequest, props: { params: Promise<{ usern
   // Only base suggestions on sections this visitor is allowed to chat about.
   const visitorSupabase = await createClient()
   const { data: { user: visitor } } = await visitorSupabase.auth.getUser()
-  const scope = await resolveScope(user.id, { visitorUserId: visitor?.id })
-  if (!scope) {
+  const circles = await resolveCircles(user.id, { visitorUserId: visitor?.id })
+  if (!circles) {
     return NextResponse.json({ prompts: [] })
   }
 
-  let sectionsQuery = supabase
+  const { data: sections } = await supabase
     .from('vault_sections')
     .select('section_type, content')
     .eq('user_id', user.id)
-
-  if (scope === 'professional') {
-    sectionsQuery = sectionsQuery.eq('is_professional', true)
-  } else if (scope === 'personal') {
-    sectionsQuery = sectionsQuery.eq('is_personal', true)
-  } else {
-    sectionsQuery = sectionsQuery.or('is_professional.eq.true,is_personal.eq.true')
-  }
-
-  const { data: sections } = await sectionsQuery
+    .in('circle', circles)
 
   const populated = new Set<string>(
     (sections as Pick<VaultSection, 'section_type' | 'content'>[] | null ?? [])

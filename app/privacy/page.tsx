@@ -51,8 +51,8 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Your controls</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Each vault section can be used for your Professional LiAIson, your Personal LiAIson, both, or kept as a draft that no one sees</li>
-              <li>You choose who can talk to your LiAIson: Public (professional, personal or both) or Private (only your connections), and what each connection can access</li>
+              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, on Ambivert and Extrovert) or kept as a draft that no one sees</li>
+              <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
               <li>You can turn Discoverable on or off at any time</li>
               <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
               <li>You can set a monthly spending limit for the messages you send; when it is reached, you can&apos;t send more until the next month or until you raise it</li>

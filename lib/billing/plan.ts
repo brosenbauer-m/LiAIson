@@ -25,6 +25,8 @@ export type PlanState = {
   // Vault size allowed now: the plan's limit, or the smaller one of a scheduled
   // downgrade (same rule as the database trigger enforce_vault_char_limit).
   vaultLimit: number
+  // 1 = Outer Circle only (Introvert); 2 = Inner + Outer.
+  circles: 1 | 2
 }
 
 type ChangeRow = { id: number; to_plan: string; effective_at: string }
@@ -84,6 +86,12 @@ export async function getPlanState(userId: string): Promise<PlanState> {
     await supabase.from('users').update({ plan, pending_plan: pendingPlan }).eq('id', userId)
   }
 
+  // One-circle plan (Introvert): Inner Circle sections become drafts (owner
+  // decision). They are already hidden from everyone by resolveCircles.
+  if (PLANS[plan].circles === 1 && user.billing_exempt !== true) {
+    await supabase.from('vault_sections').update({ circle: 'draft' }).eq('user_id', userId).eq('circle', 'inner')
+  }
+
   const { data: account } = await supabase
     .from('billing_accounts')
     .select('mandate_status, mandate_id')
@@ -100,6 +108,7 @@ export async function getPlanState(userId: string): Promise<PlanState> {
     hasCard: account?.mandate_status === 'valid' && !!account.mandate_id,
     vaultChars: await getVaultChars(userId),
     vaultLimit: Math.min(PLANS[plan].vaultChars, pendingPlan ? PLANS[pendingPlan].vaultChars : Infinity),
+    circles: PLANS[plan].circles,
   }
 }
 

@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
-type AccessScope = 'professional' | 'personal' | 'both'
-
-const ACCEPTED_SCOPES: AccessScope[] = ['professional', 'personal', 'both']
-
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -16,7 +12,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { connectionId, accept, scope } = await request.json()
+  // inner: put the person in the owner's Inner Circle (lib/circles.ts).
+  const { connectionId, accept, inner } = await request.json()
 
   if (!connectionId || typeof accept !== 'boolean') {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -33,30 +30,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
   }
 
-  let update: { status: 'accepted' | 'declined'; allowed_scope?: 'none' | AccessScope }
-
-  if (!accept) {
-    update = { status: 'declined' }
-  } else {
-    const { data: owner, error: ownerError } = await serviceSupabase
-      .from('users')
-      .select('public_scope')
-      .eq('id', user.id)
-      .single()
-
-    if (ownerError || !owner) {
-      return NextResponse.json({ error: 'User profile not found' }, { status: 500 })
-    }
-
-    if (owner.public_scope === 'both') {
-      update = { status: 'accepted', allowed_scope: 'both' }
-    } else {
-      if (typeof scope !== 'string' || !ACCEPTED_SCOPES.includes(scope as AccessScope)) {
-        return NextResponse.json({ error: 'A valid access scope is required' }, { status: 400 })
-      }
-      update = { status: 'accepted', allowed_scope: scope as AccessScope }
-    }
-  }
+  // allowed_scope is kept at 'both' for old code paths only; access now
+  // comes from the circle (in_inner_circle), see lib/access/resolveScope.ts.
+  const update: { status: 'accepted' | 'declined'; allowed_scope?: 'both'; in_inner_circle?: boolean } = accept
+    ? { status: 'accepted', allowed_scope: 'both', in_inner_circle: inner === true }
+    : { status: 'declined' }
 
   const { error: updateError } = await serviceSupabase
     .from('connection_interests')

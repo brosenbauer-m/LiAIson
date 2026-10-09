@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { ChatAccessScope } from '@/types'
+import Link from 'next/link'
 
 interface ConnectionUser {
   id: string
@@ -12,34 +12,32 @@ interface ConnectionUser {
 
 interface ConnectionRow {
   id: string
-  allowed_scope: ChatAccessScope
+  in_inner_circle: boolean
   created_at: string
   from_user: ConnectionUser | ConnectionUser[] | null
 }
 
-type ConnectionFilter = 'all' | ChatAccessScope
+type ConnectionFilter = 'all' | 'inner' | 'outer'
 type SortOrder = 'newest' | 'oldest' | 'name'
 
-const SCOPE_OPTIONS: { value: ChatAccessScope; label: string }[] = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'both', label: 'Both' },
+const CIRCLE_OPTIONS: { inner: boolean; label: string }[] = [
+  { inner: false, label: 'Outer Circle' },
+  { inner: true, label: 'Inner Circle' },
 ]
 
 const FILTER_OPTIONS: { value: ConnectionFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'both', label: 'Both' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'personal', label: 'Personal' },
+  { value: 'inner', label: 'Inner Circle' },
+  { value: 'outer', label: 'Outer Circle' },
 ]
 
 interface Props {
   initialConnections: ConnectionRow[]
-  // Still passed by the page; no longer shown since the "Default" option was removed.
-  publicScope: ChatAccessScope
+  // Inner Circle only on plans with two circles (Ambivert / Extrovert).
+  innerAllowed: boolean
 }
 
-export default function ConnectionsList({ initialConnections }: Props) {
+export default function ConnectionsList({ initialConnections, innerAllowed }: Props) {
   const [connections, setConnections] = useState(initialConnections)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [bulkSaving, setBulkSaving] = useState(false)
@@ -48,23 +46,23 @@ export default function ConnectionsList({ initialConnections }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
-  const handleChange = async (id: string, scope: ChatAccessScope) => {
-    const previousScope = connections.find(connection => connection.id === id)?.allowed_scope
-    if (previousScope === undefined) return
+  const handleChange = async (id: string, inner: boolean) => {
+    const previous = connections.find(connection => connection.id === id)?.in_inner_circle
+    if (previous === undefined) return
 
     setSavingId(id)
-    setConnections(prev => prev.map(c => c.id === id ? { ...c, allowed_scope: scope } : c))
+    setConnections(prev => prev.map(c => c.id === id ? { ...c, in_inner_circle: inner } : c))
     try {
       const response = await fetch('/api/connections/access', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ connectionIds: [id], scope }),
+        body: JSON.stringify({ connectionIds: [id], inner }),
       })
       if (!response.ok) {
-        setConnections(prev => prev.map(c => c.id === id ? { ...c, allowed_scope: previousScope } : c))
+        setConnections(prev => prev.map(c => c.id === id ? { ...c, in_inner_circle: previous } : c))
       }
     } catch {
-      setConnections(prev => prev.map(c => c.id === id ? { ...c, allowed_scope: previousScope } : c))
+      setConnections(prev => prev.map(c => c.id === id ? { ...c, in_inner_circle: previous } : c))
     } finally {
       setSavingId(null)
     }
@@ -78,7 +76,7 @@ export default function ConnectionsList({ initialConnections }: Props) {
     })
   }
 
-  const handleBulkChange = async (scope: ChatAccessScope) => {
+  const handleBulkChange = async (inner: boolean) => {
     const ids = Array.from(selectedIds)
     if (ids.length === 0) return
 
@@ -89,13 +87,13 @@ export default function ConnectionsList({ initialConnections }: Props) {
         const response = await fetch('/api/connections/access', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ connectionIds: ids.slice(index, index + 200), scope }),
+          body: JSON.stringify({ connectionIds: ids.slice(index, index + 200), inner }),
         })
         if (!response.ok) throw new Error('Failed to update access')
       }
 
       setConnections(previous => previous.map(connection => (
-        selectedIds.has(connection.id) ? { ...connection, allowed_scope: scope } : connection
+        selectedIds.has(connection.id) ? { ...connection, in_inner_circle: inner } : connection
       )))
       setSelectedIds(new Set())
       const message = `Updated ${ids.length} connections`
@@ -110,8 +108,10 @@ export default function ConnectionsList({ initialConnections }: Props) {
     }
   }
 
-  const countFor = (scope: ChatAccessScope) => connections.filter(connection => connection.allowed_scope === scope).length
-  const filteredConnections = connections.filter(connection => filter === 'all' || connection.allowed_scope === filter)
+  const matches = (connection: ConnectionRow, f: ConnectionFilter) =>
+    f === 'all' || (f === 'inner') === connection.in_inner_circle
+  const countFor = (f: ConnectionFilter) => connections.filter(connection => matches(connection, f)).length
+  const filteredConnections = connections.filter(connection => matches(connection, filter))
   const shownConnections = [...filteredConnections].sort((a, b) => {
     if (sortOrder === 'name') {
       const aUser = Array.isArray(a.from_user) ? a.from_user[0] : a.from_user
@@ -127,7 +127,12 @@ export default function ConnectionsList({ initialConnections }: Props) {
   return (
     <div className={`space-y-4 ${selectedIds.size > 0 ? 'pb-32' : ''}`}>
       <p className="text-sm text-text-secondary">
-        Choose what each connection can see. Connections always get at least what your public setting allows.
+        {innerAllowed
+          ? 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'
+          : 'Everyone you connect with sees your Vault (except drafts).'}
+        {!innerAllowed && (
+          <> With Ambivert or Extrovert you can also put people in an Inner Circle. <Link href="/plans#circles" className="text-accent hover:underline">Learn more</Link></>
+        )}
       </p>
 
       {connections.length === 0 ? (
@@ -139,9 +144,9 @@ export default function ConnectionsList({ initialConnections }: Props) {
         <>
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Filter connections by access">
-                {FILTER_OPTIONS.map(option => {
-                  const count = option.value === 'all' ? connections.length : countFor(option.value)
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filter connections by circle">
+                {(innerAllowed ? FILTER_OPTIONS : FILTER_OPTIONS.slice(0, 1)).map(option => {
+                  const count = countFor(option.value)
                   return (
                     <button
                       key={option.value}
@@ -193,7 +198,7 @@ export default function ConnectionsList({ initialConnections }: Props) {
 
           {shownConnections.length === 0 ? (
             <div className="bg-card border border-border rounded-xl p-8 text-center shadow-soft">
-              <p className="text-text-secondary text-base">No connections with this access level.</p>
+              <p className="text-text-secondary text-base">No connections in this circle.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -222,15 +227,15 @@ export default function ConnectionsList({ initialConnections }: Props) {
                         <p className="text-xs text-text-secondary">@{fromUser?.username ?? ''}</p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {SCOPE_OPTIONS.map(option => (
+                    {innerAllowed && <div className="flex flex-wrap gap-2">
+                      {CIRCLE_OPTIONS.map(option => (
                         <button
-                          key={option.value}
+                          key={option.label}
                           type="button"
-                          onClick={() => handleChange(connection.id, option.value)}
+                          onClick={() => handleChange(connection.id, option.inner)}
                           disabled={savingId === connection.id || bulkSaving}
                           className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all disabled:opacity-50 ${
-                            connection.allowed_scope === option.value
+                            connection.in_inner_circle === option.inner
                               ? 'border-accent bg-accent-tint text-accent'
                               : 'border-border text-text-secondary hover:border-accent/50'
                           }`}
@@ -238,7 +243,7 @@ export default function ConnectionsList({ initialConnections }: Props) {
                           {option.label}
                         </button>
                       ))}
-                    </div>
+                    </div>}
                   </div>
                 )
               })}
@@ -247,15 +252,15 @@ export default function ConnectionsList({ initialConnections }: Props) {
         </>
       )}
 
-      {selectedIds.size > 0 && (
+      {innerAllowed && selectedIds.size > 0 && (
         <div className="fixed bottom-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 rounded-xl border border-border bg-card p-4 shadow-soft">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium text-text-primary">{selectedIds.size} selected — Set access to:</span>
-            {SCOPE_OPTIONS.map(option => (
+            <span className="text-sm font-medium text-text-primary">{selectedIds.size} selected — Move to:</span>
+            {CIRCLE_OPTIONS.map(option => (
               <button
-                key={option.value}
+                key={option.label}
                 type="button"
-                onClick={() => handleBulkChange(option.value)}
+                onClick={() => handleBulkChange(option.inner)}
                 disabled={bulkSaving}
                 className="px-3 py-2 rounded-lg text-sm font-medium border border-border text-text-secondary hover:border-accent/50 hover:text-accent disabled:opacity-50"
               >

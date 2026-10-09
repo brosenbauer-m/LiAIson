@@ -13,13 +13,6 @@ import PlanCard from '@/components/settings/PlanCard'
 import AccountEmailCard from '@/components/settings/AccountEmailCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
-type PublicLevel = 'professional' | 'personal' | 'both'
-
-const PUBLIC_LEVEL_OPTIONS: { value: PublicLevel; label: string; description: string }[] = [
-  { value: 'professional', label: 'Professional only', description: 'Anyone can talk to your professional LiAIson (uses your professional vault).' },
-  { value: 'personal', label: 'Personal only', description: 'Anyone can talk to your personal LiAIson (uses your personal vault).' },
-  { value: 'both', label: 'Both', description: 'Anyone can talk to both (uses your professional and personal vaults).' },
-]
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -29,7 +22,6 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState('')
   const [userId, setUserId] = useState<string | null>(null)
   const [publicScope, setPublicScope] = useState<PublicScope>('none')
-  const [lastPublicLevel, setLastPublicLevel] = useState<PublicLevel>('both')
   const [isDiscoverable, setIsDiscoverable] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -59,7 +51,6 @@ export default function SettingsPage() {
       if (data) {
         const scope = data.public_scope as PublicScope
         setPublicScope(scope)
-        if (scope !== 'none') setLastPublicLevel(scope)
         setIsDiscoverable(data.is_discoverable)
       }
       // Loaded separately so the rest of Settings still works if this fails.
@@ -90,7 +81,6 @@ export default function SettingsPage() {
     if (!userId) return
     setSaving(true)
     setPublicScope(scope)
-    if (scope !== 'none') setLastPublicLevel(scope)
     const { error } = await supabase
       .from('users')
       .update({ public_scope: scope })
@@ -106,7 +96,8 @@ export default function SettingsPage() {
     if (visibility === 'private') {
       handleSaveScope('none')
     } else {
-      handleSaveScope(lastPublicLevel)
+      // Public = everyone sees your Outer Circle (circles replace the old levels).
+      handleSaveScope('both')
     }
   }
 
@@ -231,46 +222,18 @@ export default function SettingsPage() {
               </div>
 
               {publicScope !== 'none' ? (
-                <div className="space-y-3">
-                  {PUBLIC_LEVEL_OPTIONS.map(opt => (
-                    <button
-                      key={opt.value}
-                      onClick={() => handleSaveScope(opt.value)}
-                      disabled={saving}
-                      className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                        publicScope === opt.value
-                          ? 'border-accent bg-accent-tint'
-                          : 'border-border hover:border-accent/50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <div className="font-medium text-text-primary">{opt.label}</div>
-                          <div className="text-sm text-text-secondary">{opt.description}</div>
-                        </div>
-                        {publicScope === opt.value && (
-                          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-accent text-white" aria-label="Selected">
-                            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-                              <path fillRule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.5 7.55a1 1 0 0 1-1.42 0l-3.5-3.53a1 1 0 1 1 1.42-1.408l2.79 2.813 6.79-6.834a1 1 0 0 1 1.414-.006Z" clipRule="evenodd" />
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    Visitors need an account to chat with your LiAIson, and they pay for their own messages.
-                  </p>
-                </div>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  Everyone can talk to your LiAIson about what is in your Outer Circle. People you put in your Inner Circle also hear about your Inner Circle. Visitors need an account to chat, and they pay for their own messages.
+                </p>
               ) : (
                 <p className="text-sm text-text-secondary leading-relaxed">
-                  Only your connections can talk to your LiAIson. When you accept a connection request, you choose what they can access — you can change it anytime on the{' '}
+                  Only people whose connection request you accepted can talk to your LiAIson. You decide who is in your Inner Circle on the{' '}
                   <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.
                 </p>
               )}
 
               <p className="text-sm text-text-secondary leading-relaxed">
-                People you&apos;ve already connected with keep the access you gave them.
+                People you&apos;ve already connected with keep their circle.
               </p>
             </div>
           )}

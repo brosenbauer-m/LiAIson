@@ -4,8 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-type AccessScope = 'professional' | 'personal' | 'both'
-
 interface RequestUser {
   id: string
   username: string
@@ -21,21 +19,21 @@ interface ConnectionRequest {
 
 interface Props {
   requests: ConnectionRequest[]
-  isOpen: boolean
+  // Inner Circle only on plans with two circles (Ambivert / Extrovert).
+  innerAllowed: boolean
 }
 
-const SCOPE_OPTIONS: { value: AccessScope; label: string }[] = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'both', label: 'Both' },
+const CIRCLE_OPTIONS: { inner: boolean; label: string; help: string }[] = [
+  { inner: false, label: 'Outer Circle', help: 'They see what everyone sees.' },
+  { inner: true, label: 'Inner Circle', help: 'They also see your Inner Circle.' },
 ]
 
-export default function ConnectionRequests({ requests: initialRequests, isOpen }: Props) {
+export default function ConnectionRequests({ requests: initialRequests, innerAllowed }: Props) {
   const router = useRouter()
   const [requests, setRequests] = useState(initialRequests)
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   const [choosingId, setChoosingId] = useState<string | null>(null)
-  const [selectedScope, setSelectedScope] = useState<AccessScope>('professional')
+  const [selectedInner, setSelectedInner] = useState(false)
   const [errorIds, setErrorIds] = useState<Set<string>>(new Set())
 
   const setBusy = (id: string, busy: boolean) => {
@@ -47,7 +45,7 @@ export default function ConnectionRequests({ requests: initialRequests, isOpen }
     })
   }
 
-  const respond = async (request: ConnectionRequest, accept: boolean, scope?: AccessScope) => {
+  const respond = async (request: ConnectionRequest, accept: boolean, inner = false) => {
     setBusy(request.id, true)
     setErrorIds(previous => {
       const next = new Set(previous)
@@ -59,7 +57,7 @@ export default function ConnectionRequests({ requests: initialRequests, isOpen }
       const response = await fetch('/api/connections/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ connectionId: request.id, accept, ...(scope ? { scope } : {}) }),
+        body: JSON.stringify({ connectionId: request.id, accept, inner }),
       })
       if (!response.ok) throw new Error('Failed to respond to request')
 
@@ -74,12 +72,12 @@ export default function ConnectionRequests({ requests: initialRequests, isOpen }
   }
 
   const handleAccept = (request: ConnectionRequest) => {
-    if (isOpen) {
+    if (!innerAllowed) {
       void respond(request, true)
       return
     }
     setChoosingId(request.id)
-    setSelectedScope('professional')
+    setSelectedInner(false)
   }
 
   return (
@@ -134,34 +132,34 @@ export default function ConnectionRequests({ requests: initialRequests, isOpen }
               {choosing && (
                 <fieldset disabled={busy} className="space-y-3 border-t border-border pt-4">
                   <legend className="text-sm font-medium text-text-primary">
-                    What can @{fromUser?.username ?? 'this person'} see?
+                    Which circle should @{fromUser?.username ?? 'this person'} join?
                   </legend>
                   <div className="flex flex-wrap gap-2">
-                    {SCOPE_OPTIONS.map(option => (
+                    {CIRCLE_OPTIONS.map(option => (
                       <label
-                        key={option.value}
+                        key={option.label}
                         className={`cursor-pointer px-3 py-2 rounded-lg border text-sm transition-colors ${
-                          selectedScope === option.value
+                          selectedInner === option.inner
                             ? 'border-accent bg-accent-tint text-accent'
                             : 'border-border text-text-secondary hover:border-accent/50'
                         }`}
                       >
                         <input
                           type="radio"
-                          name={`scope-${request.id}`}
-                          value={option.value}
-                          checked={selectedScope === option.value}
-                          onChange={() => setSelectedScope(option.value)}
+                          name={`circle-${request.id}`}
+                          checked={selectedInner === option.inner}
+                          onChange={() => setSelectedInner(option.inner)}
                           className="sr-only"
                         />
-                        {option.label}
+                        <span className="block font-medium">{option.label}</span>
+                        <span className="block text-xs">{option.help}</span>
                       </label>
                     ))}
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => void respond(request, true, selectedScope)}
+                      onClick={() => void respond(request, true, selectedInner)}
                       disabled={busy}
                       className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-light text-white text-sm font-medium disabled:opacity-50"
                     >

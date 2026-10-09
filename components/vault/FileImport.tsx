@@ -1,23 +1,22 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { CIRCLE_LABEL, type Circle } from '@/lib/circles'
 
-export type ImportTarget = 'professional' | 'personal' | 'both' | 'draft'
+export type ImportTarget = Circle
 
 interface Props {
   defaultTarget: ImportTarget
+  // false on plans with one circle (Introvert): no Inner Circle option
+  innerAllowed: boolean
   // true when saved, or an error message to show
   onSave: (label: string, content: string, target: ImportTarget) => Promise<true | string>
 }
 
-const TARGETS: { value: ImportTarget; label: string }[] = [
-  { value: 'professional', label: 'Professional' },
-  { value: 'personal', label: 'Personal' },
-  { value: 'both', label: 'Both' },
-  { value: 'draft', label: 'Draft (not used yet)' },
-]
-
-export default function FileImport({ defaultTarget, onSave }: Props) {
+export default function FileImport({ defaultTarget, innerAllowed, onSave }: Props) {
+  const TARGETS: { value: ImportTarget; label: string }[] = (['outer', 'inner', 'draft'] as Circle[])
+    .filter(c => innerAllowed || c !== 'inner')
+    .map(c => ({ value: c, label: CIRCLE_LABEL[c] }))
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
@@ -124,7 +123,7 @@ export default function FileImport({ defaultTarget, onSave }: Props) {
             )}
 
             <div>
-              <span className="block text-sm font-semibold text-text-primary mb-2">Use this for</span>
+              <span className="block text-sm font-semibold text-text-primary mb-2">Who can see this</span>
               <div className="flex flex-wrap gap-2">
                 {TARGETS.map(t => (
                   <button

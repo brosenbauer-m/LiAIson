@@ -5,7 +5,7 @@ import { waitUntil } from '@vercel/functions'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystemPrompt'
-import { resolveScope } from '@/lib/access/resolveScope'
+import { resolveCircles } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
 import { getSenderPlan, checkTrialMessageLimit, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
 import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
@@ -69,12 +69,12 @@ async function loadReaderContext(
 
     if (readerError || !reader || reader.use_own_vault_in_chats !== true) return undefined
 
-    // Everything except drafts (drafts have neither flag set).
+    // Everything except drafts.
     const { data: sections } = await supabase
       .from('vault_sections')
       .select('label, content')
       .eq('user_id', visitorId)
-      .or('is_professional.eq.true,is_personal.eq.true')
+      .in('circle', ['outer', 'inner'])
       .order('domain', { ascending: true })
 
     const vaultText = ((sections as { label: string; content: string }[] | null) ?? [])
@@ -147,8 +147,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     )
   }
 
-  const scope = await resolveScope(user.id, { visitorUserId: visitor.id })
-  if (scope === null) {
+  const circles = await resolveCircles(user.id, { visitorUserId: visitor.id })
+  if (circles === null) {
     return NextResponse.json({ error: "This chat isn't available." }, { status: 403 })
   }
 
@@ -200,7 +200,7 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   }
 
   // Build system prompt
-  const systemPrompt = await buildSystemPrompt(user.id, scope, reader)
+  const systemPrompt = await buildSystemPrompt(user.id, circles, reader)
 
   // Who caused this AI usage (for usage tracking only; no identity is stored).
   const actor: AiActor = visitor.id === user.id ? 'owner' : 'member'
