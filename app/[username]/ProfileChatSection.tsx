@@ -97,11 +97,9 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
       if (res.status === 429) {
         const data = await res.json()
         const text = data.error ?? "You've reached today's message limit. Please try again tomorrow."
+        setLimitMessage(text)
         if (data.paused) setPaused(true)
-        else {
-          setRateLimited(true)
-          setLimitMessage(text)
-        }
+        else setRateLimited(true)
         setMessages(prev => [...prev, { role: 'assistant', content: text }])
         setLoading(false)
         return
@@ -263,11 +261,10 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
         {paused ? (
           <div className="text-center py-3">
             <p className="text-sm text-text-secondary">
-              You&apos;ve reached your monthly spending limit.{' '}
+              {limitMessage}{' '}
               <Link href="/settings" className="text-accent hover:underline font-medium">
-                Raise it in Settings
-              </Link>{' '}
-              to keep chatting.
+                Go to Settings
+              </Link>
             </p>
           </div>
         ) : signedOut ? (

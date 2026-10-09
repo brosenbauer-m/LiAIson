@@ -8,6 +8,7 @@ import Toggle from '@/components/ui/Toggle'
 import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import PrepaidBalanceCard from '@/components/settings/PrepaidBalanceCard'
+import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
 
 type PublicScope = 'none' | 'professional' | 'personal' | 'both'
 type PublicLevel = 'professional' | 'personal' | 'both'
@@ -345,6 +346,8 @@ export default function SettingsPage() {
         )}
 
         {userId && <SpendingLimitCard />}
+
+        {userId && <MonthlyBillCard />}
 
         {userId && <PaymentMethodCard />}
 

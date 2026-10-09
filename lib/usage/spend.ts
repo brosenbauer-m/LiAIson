@@ -10,6 +10,8 @@ import { currentPeriod } from '@/lib/insights/periods'
 // (docs.mistral.ai/inference/pricing, checked 2026-10-08; Mistral bills us in EUR):
 // Medium 3.5 = €1.4025 in / €7.0125 out, Small 4 = €0.14025 in / €0.561 out.
 // Cached-input discounts are not counted yet (safe side).
+// Users pay the AI cost + MARKUP (owner decision: cost + 30%); costCents below
+// and the spending limit are always the price incl. markup.
 // No payments are taken yet; this only measures and enforces the limit.
 
 const PRICES_EUR_PER_MILLION: Record<string, { input: number; output: number }> = {
@@ -17,6 +19,18 @@ const PRICES_EUR_PER_MILLION: Record<string, { input: number; output: number }> 
   [FAST_MODEL]: { input: 0.14025, output: 0.561 },
 }
 const FALLBACK_PRICE = PRICES_EUR_PER_MILLION[CHAT_MODEL]
+
+export const MARKUP = 0.3
+
+// Raw AI cost in EUR of one call (or a sum of calls) for a model.
+export function rawCostEur(model: string, promptTokens: number, completionTokens: number): number {
+  const price = PRICES_EUR_PER_MILLION[model] ?? FALLBACK_PRICE
+  return ((promptTokens || 0) / 1_000_000) * price.input + ((completionTokens || 0) / 1_000_000) * price.output
+}
+
+export function isMeteredFeature(feature: string): boolean {
+  return METERED_FEATURES.has(feature)
+}
 
 // Features billed pay-as-you-go (to the sender). 'topic' is legacy (no longer
 // produced). Insight capture and Echoes ('insight', 'echo') are logged to the
@@ -55,11 +69,9 @@ export async function getMonthUsage(userId: string): Promise<MonthUsage> {
   for (const row of (data ?? []) as UsageRow[]) {
     if (row.feature === 'chat') messages += Number(row.calls) || 0
     if (!METERED_FEATURES.has(row.feature)) continue
-    const price = PRICES_EUR_PER_MILLION[row.model] ?? FALLBACK_PRICE
-    costEur +=
-      ((Number(row.prompt_tokens) || 0) / 1_000_000) * price.input +
-      ((Number(row.completion_tokens) || 0) / 1_000_000) * price.output
+    costEur += rawCostEur(row.model, Number(row.prompt_tokens) || 0, Number(row.completion_tokens) || 0)
   }
+  costEur *= 1 + MARKUP
 
   return {
     messages,

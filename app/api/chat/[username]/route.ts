@@ -12,6 +12,7 @@ import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
 import { isOverSpendLimit } from '@/lib/usage/spend'
+import { getUnpaidBill } from '@/lib/billing/monthly'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -156,6 +157,14 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   if (await isOverSpendLimit(visitor.id)) {
     return NextResponse.json(
       { error: "You've reached your monthly spending limit. You can raise it in Settings.", paused: true },
+      { status: 429 }
+    )
+  }
+
+  // An unpaid monthly bill pauses sending until it is paid (Settings → Pay now).
+  if (await getUnpaidBill(visitor.id).catch(() => null)) {
+    return NextResponse.json(
+      { error: 'You have an unpaid bill. Please pay it in Settings to keep chatting.', paused: true },
       { status: 429 }
     )
   }

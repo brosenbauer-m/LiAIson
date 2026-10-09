@@ -1,6 +1,7 @@
 import { getPayment, MollieError } from '@/lib/billing/mollie'
 import { handleCardSetupPayment } from '@/lib/billing/account'
 import { handleTopUpPayment } from '@/lib/billing/topup'
+import { handleMonthlyPayment } from '@/lib/billing/monthly'
 
 // Entry point for the Mollie webhook. Never trusts the request body: the
 // payment is always fetched from Mollie with our own API key, then handled
@@ -20,6 +21,9 @@ export async function handleMolliePayment(paymentId: string): Promise<void> {
       return
     case 'topup':
       await handleTopUpPayment(payment)
+      return
+    case 'monthly':
+      await handleMonthlyPayment(payment)
       return
     default:
       return
