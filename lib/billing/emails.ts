@@ -60,7 +60,7 @@ export async function sendMonthlyBillEmail(documentId: number, kind: 'paid' | 'f
   ${name ? `<p style="margin:0 0 12px">Hi ${escapeHtml(name)},</p>` : ''}
   ${lines.map(l => `<p style="margin:0 0 12px;line-height:1.5">${escapeHtml(l)}</p>`).join('')}
   <p style="margin:24px 0"><a href="${button.url}" style="background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">${escapeHtml(button.label)}</a></p>
-  <p style="font-size:12px;color:#777;line-height:1.5">You only pay for the messages you send (AI cost + 30%). Amounts under €5 carry over to the next month.</p>
+  <p style="font-size:12px;color:#777;line-height:1.5">You only pay for the messages you send and your plan. If the total is under €5, it carries over to the next month.</p>
 </div>`
   const text = `${name ? `Hi ${name},\n\n` : ''}${lines.join('\n\n')}\n\n${button.label}: ${button.url}`
 

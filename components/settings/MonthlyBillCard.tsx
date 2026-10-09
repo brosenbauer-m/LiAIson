@@ -138,7 +138,7 @@ export default function MonthlyBillCard() {
               </div>
               <p className="text-xs text-text-secondary leading-relaxed">
                 Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your prepaid credit); smaller amounts carry over.
-                {summary.inTrial ? ' Messages during your free month are free (up to 5 per day) and not billed.' : ''}
+                {summary.inTrial ? ' During your free month, you can send up to 5 free messages a day.' : ''}
               </p>
               {summary.inTrial && summary.trialEndsAt && (
                 <p className="text-xs text-text-secondary leading-relaxed">

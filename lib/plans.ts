@@ -1,9 +1,11 @@
 // LiAIson plans (owner decisions 2026-10-08/09). One place for every plan
 // limit and text, used by the server and the UI.
-// - Messages are always pay-per-use for the SENDER (AI cost + 30%), on every plan.
+// - Messages are always pay-per-use for the SENDER, on every plan (price = AI cost +
+//   markup, see lib/usage/spend.ts; the markup is not shown in the UI).
 // - Fees are a monthly platform fee, charged at month end with usage.
 // - The plan is chosen at sign-up; the free month gives that plan's features.
-// Not built yet (shown as "coming soon"): circles, Discover AI search, similarity.
+// Circles: Introvert 1; Ambivert and Extrovert have Inner + Outer. Custom extra
+// circles belong to the future Social Butterfly plan.
 
 export type PlanId = 'introvert' | 'ambivert' | 'extrovert'
 
@@ -19,8 +21,10 @@ export type Plan = {
   vaultChars: number
   echoes: EchoLevel
   aiSearchesPerMonth: number
-  similarity: 'none' | 'score' | 'score_overlap'
-  circles: number
+  similarity: 'none' | 'score' | 'score_visual'
+  circles: 1 | 2
+  // What the plan includes, in plain sentences (plans page).
+  features: string[]
 }
 
 export const PLANS: Record<PlanId, Plan> = {
@@ -28,34 +32,53 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'introvert',
     name: 'Introvert',
     feeEur: 0,
-    tagline: 'A simple LiAIson that speaks for you.',
+    tagline: 'A simple LiAIson that answers questions about you.',
     vaultChars: 3000,
     echoes: 'none',
     aiSearchesPerMonth: 0,
     similarity: 'none',
     circles: 1,
+    features: [
+      'Your Vault can hold up to 3,000 characters.',
+      'Everyone who visits your profile sees the same information.',
+      'You can find people on LiAIson by their name.',
+    ],
   },
   ambivert: {
     id: 'ambivert',
     name: 'Ambivert',
     feeEur: 2,
-    tagline: 'More room to share, and a monthly look at what people ask.',
+    tagline: 'More room to share, and a monthly report of what people ask about you.',
     vaultChars: 15000,
     echoes: 'monthly',
     aiSearchesPerMonth: 10,
     similarity: 'score',
     circles: 2,
+    features: [
+      'Your Vault can hold up to 15,000 characters.',
+      'You get an Echo every month.',
+      'You can share some things with everyone and other things only with people you choose.',
+      'You can find people by what they share, up to 10 times a month.',
+      'You can see how much you have in common with someone.',
+    ],
   },
   extrovert: {
     id: 'extrovert',
     name: 'Extrovert',
     feeEur: 4,
-    tagline: 'Everything, with weekly insights and the biggest Vault.',
+    tagline: 'Everything LiAIson offers, with weekly reports and the biggest Vault.',
     vaultChars: 30000,
     echoes: 'weekly_monthly',
     aiSearchesPerMonth: 20,
-    similarity: 'score_overlap',
-    circles: 3,
+    similarity: 'score_visual',
+    circles: 2,
+    features: [
+      'Your Vault can hold up to 30,000 characters.',
+      'You get an Echo every week and every month.',
+      'You can share some things with everyone and other things only with people you choose.',
+      'You can find people by what they share, up to 20 times a month.',
+      'You can see how much you have in common with someone, shown as a visual map of your shared interests.',
+    ],
   },
 }
 
@@ -71,45 +94,42 @@ export function formatChars(n: number): string {
   return n.toLocaleString('en-GB')
 }
 
-export const ECHO_LABEL: Record<EchoLevel, string> = {
-  none: '—',
-  monthly: 'Monthly',
-  weekly_monthly: 'Weekly + monthly',
-}
-
-// "Learn more" texts for each feature (plans page and upgrade prompts).
-export const FEATURE_HELP: { key: string; title: string; text: string; comingSoon?: boolean }[] = [
+// "Learn more" texts (plans page and upgrade prompts). Written for people who
+// have never used LiAIson: simple, full sentences, no pricing formulas.
+export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
+  {
+    key: 'liaison',
+    title: 'What is a LiAIson?',
+    text: 'A LiAIson is your personal AI. It answers questions about you when people visit your profile, using only what you have written in your Vault. It never makes things up from other sources.',
+  },
   {
     key: 'messages',
-    title: 'Messages',
-    text: 'You pay only for the messages you send: the actual AI cost of each answer plus 30%. A typical message costs about 0.5–2 cents. Nobody pays for others talking to your LiAIson. You control it with your monthly spending limit.',
+    title: 'What do messages cost?',
+    text: 'When you send a message to someone’s LiAIson, you pay a small amount for the answer, usually between half a cent and two cents. You never pay when other people talk to your LiAIson. You can set a monthly spending limit, so you never pay more than you want to.',
   },
   {
     key: 'vault',
-    title: 'Vault size',
-    text: 'Your Vault is what your LiAIson knows about you. A bigger Vault lets your LiAIson answer more questions in more detail. 3,000 characters is about one page of text.',
+    title: 'Vault',
+    text: 'Your Vault is where you write what your LiAIson should know about you, for example your work, your hobbies or what you are looking for. A bigger Vault lets your LiAIson answer more questions in more detail.',
   },
   {
     key: 'echoes',
     title: 'Echoes',
-    text: 'Echoes are short reports of what visitors wanted to know about you (never their words or who they are), so you can see what interests people and improve your Vault.',
+    text: 'An Echo is a short report about what people asked your LiAIson. It never shows who asked or their exact words. It helps you understand what people want to know about you, so you can improve your Vault.',
   },
   {
     key: 'search',
-    title: 'Discover AI search',
-    text: 'Search people by what they share, e.g. "climbers in Vienna who work in design". Only content people chose to make discoverable is searched.',
-    comingSoon: true,
+    title: 'Discover',
+    text: 'Discover helps you find people on LiAIson. On every plan you can search by name. With Ambivert or Extrovert you can also search by what people share, for example people who climb and live in Vienna. Only information that people chose to make findable is searched.',
   },
   {
     key: 'similarity',
     title: 'Similarity',
-    text: 'See how much you have in common with someone, and what you share, based only on what both of you made visible.',
-    comingSoon: true,
+    text: 'Similarity shows how much you have in common with another person. With Extrovert you also see a visual map of the interests you share.',
   },
   {
     key: 'circles',
     title: 'Circles',
-    text: 'Circles decide who sees what: e.g. an Outer Circle for anyone, an Inner Circle for people you connect with, and a Middle Circle in between.',
-    comingSoon: true,
+    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. With Introvert there is one circle, so everyone sees the same information.',
   },
 ]

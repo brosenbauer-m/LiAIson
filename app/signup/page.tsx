@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
 import Toggle from '@/components/ui/Toggle'
-import { PLANS, PLAN_IDS, isPlanId, formatChars, ECHO_LABEL, type PlanId } from '@/lib/plans'
+import { PLANS, PLAN_IDS, isPlanId, type PlanId } from '@/lib/plans'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -374,8 +374,7 @@ export default function SignupPage() {
                 ))}
               </div>
               <p className="text-xs text-text-secondary mt-1.5">
-                {formatChars(PLANS[plan].vaultChars)} Vault characters · Echoes: {PLANS[plan].echoes === 'none' ? 'none' : ECHO_LABEL[PLANS[plan].echoes].toLowerCase()}.
-                First month free, then it continues automatically (card needed). Messages you send are pay-per-use.{' '}
+                {PLANS[plan].tagline} Your first month is free. After that, your plan continues automatically and you&apos;ll need to save a card.{' '}
                 <Link href="/plans" className="text-accent-light hover:underline" target="_blank">Compare plans</Link>
               </p>
             </fieldset>

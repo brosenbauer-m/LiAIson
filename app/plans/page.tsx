@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { PLANS, PLAN_IDS, FEATURE_HELP, ECHO_LABEL, formatChars, type PlanId } from '@/lib/plans'
+import { PLANS, PLAN_IDS, FEATURE_HELP, type PlanId } from '@/lib/plans'
 
 type PlanState = {
   plan: PlanId
@@ -18,8 +18,6 @@ type PlanState = {
 function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', timeZone: 'Europe/Vienna' })
 }
-
-const SIMILARITY_LABEL = { none: '—', score: 'Score', score_overlap: 'Score + what you share' } as const
 
 // Plans page: compare plans, "Learn more" texts, and change plan when signed in.
 export default function PlansPage() {
@@ -155,8 +153,8 @@ export default function PlansPage() {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-4xl font-bold text-text-primary mb-3">Plans</h1>
         <p className="text-text-secondary mb-2 max-w-2xl">
-          Every plan starts with a free month. After it, your plan continues automatically and you&apos;ll need a saved card.
-          On every plan you only pay for the messages you send (AI cost + 30%).
+          Every plan starts with a free month. After that, your plan continues automatically and you&apos;ll need to save a card.
+          On every plan, you also pay for the messages you send, usually between half a cent and two cents each.
         </p>
 
         {state?.exempt && (
@@ -199,14 +197,12 @@ export default function PlansPage() {
                 <p className="text-3xl font-semibold text-text-primary">
                   {plan.feeEur === 0 ? 'Free' : `€${plan.feeEur}`}
                   <span className="text-sm font-normal text-text-secondary">{plan.feeEur === 0 ? '' : ' / month'}</span>
-                  <span className="block text-xs font-normal text-text-secondary mt-1">+ the messages you send</span>
+                  <span className="block text-xs font-normal text-text-secondary mt-1">plus the messages you send</span>
                 </p>
-                <ul className="space-y-2 text-sm text-text-secondary flex-1">
-                  <li><span className="text-text-primary font-medium">{formatChars(plan.vaultChars)}</span> characters in your Vault</li>
-                  <li>Echoes: <span className="text-text-primary font-medium">{ECHO_LABEL[plan.echoes]}</span></li>
-                  <li>Discover: username search{plan.aiSearchesPerMonth > 0 ? ` + ${plan.aiSearchesPerMonth} AI searches / month (soon)` : ''}</li>
-                  <li>Similarity: {SIMILARITY_LABEL[plan.similarity]}{plan.similarity !== 'none' ? ' (soon)' : ''}</li>
-                  <li>Circles: {plan.circles} (soon)</li>
+                <ul className="space-y-2 text-sm text-text-secondary flex-1 list-disc pl-5">
+                  {plan.features.map(f => (
+                    <li key={f}>{f}</li>
+                  ))}
                 </ul>
                 {buttonFor(id)}
               </div>
@@ -214,17 +210,11 @@ export default function PlansPage() {
           })}
         </div>
 
-        <p className="mt-6 text-sm text-text-secondary">
-          Social Butterfly — a custom plan with sliders for power users — is coming later.
-        </p>
-
         <h2 className="text-2xl font-semibold text-text-primary mt-14 mb-4">Learn more</h2>
         <div className="space-y-3">
           {FEATURE_HELP.map(f => (
             <details key={f.key} id={f.key} className="bg-card border border-border rounded-lg px-5 py-4">
-              <summary className="cursor-pointer font-medium text-text-primary">
-                {f.title}{f.comingSoon ? <span className="ml-2 text-xs text-text-secondary font-normal">coming soon</span> : null}
-              </summary>
+              <summary className="cursor-pointer font-medium text-text-primary">{f.title}</summary>
               <p className="mt-3 text-sm text-text-secondary leading-relaxed">{f.text}</p>
             </details>
           ))}
