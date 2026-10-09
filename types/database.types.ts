@@ -697,6 +697,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"similarity_results": {
+                  Row: {
+                    "created_at": string,"input_hash": string,"result": NonNullable<Json>,"target_id": string,"viewer_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"input_hash": string,"result": NonNullable<Json>,"target_id": string,"viewer_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"input_hash"?: string,"result"?: NonNullable<Json>,"target_id"?: string,"viewer_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "similarity_results_target_id_fkey"
+      columns: ["target_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "similarity_results_viewer_id_fkey"
+      columns: ["viewer_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"uploaded_files": {
                   Row: {
                     "created_at": string | null,"extracted_text": string | null,"extraction_confirmed": boolean | null,"file_name": string,"file_url": string,"id": string,"user_id": string
