@@ -672,6 +672,31 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"search_chunks": {
+                  Row: {
+                    "content": string,"created_at": string,"embedding": string,"id": number,"section_hash": string,"section_id": string,"user_id": string
+                  }
+                  Insert: {
+                    "content": string,"created_at"?: string,"embedding": string,"id"?: never,"section_hash": string,"section_id": string,"user_id": string
+                  }
+                  Update: {
+                    "content"?: string,"created_at"?: string,"embedding"?: string,"id"?: never,"section_hash"?: string,"section_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "search_chunks_section_id_fkey"
+      columns: ["section_id"]
+isOneToOne: false
+      referencedRelation: "vault_sections"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "search_chunks_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"uploaded_files": {
                   Row: {
                     "created_at": string | null,"extracted_text": string | null,"extraction_confirmed": boolean | null,"file_name": string,"file_url": string,"id": string,"user_id": string
@@ -821,6 +846,16 @@ isOneToOne: false
                            },
 "plan_vault_limit":
 { Args: { "p": string }; Returns: number
+                           },
+"search_match_chunks":
+{ Args: { "exclude_user": string,"keywords": (string)[],"match_count": number,"query_embedding": string }; Returns: {
+              "content": string,"distance": number,"section_id": string,"user_id": string
+            }[]
+                           },
+"search_stale_users":
+{ Args: { "max_users": number }; Returns: {
+              "user_id": string
+            }[]
                            },
 "vault_char_limit":
 { Args: { "uid": string }; Returns: number
