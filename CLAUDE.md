@@ -1,87 +1,38 @@
-# LiAIson — Agent Instructions
+# LiAIson — agent guide
 
-These instructions are for AI coding agents (e.g. GitHub Copilot) working in this repository.
+Production app (www.my-liaison.app). Owner is non-technical. Every push to `main` deploys.
 
-The owner has zero technical experience. Assume every change affects production (www.my-liaison.app).
-Protect database integrity, access rules, the AI prompt, rate limiting and deployment stability at all times.
+## Workflow
+- Work directly on `main` (`git pull` first). No branches, no PRs.
+- Given a patch: `git apply` it exactly; never retype or "improve" it. If it fails, stop and report.
+- Before committing: `npm run build` (+ `npm run check:migrations` if a migration changed). Failing → don't commit, report.
+- Commit with the given message, `git push origin main`, report hash + changed files.
 
-## How work reaches you
+## Risk rules
+- Low = UI, Medium = API/logic, High = DB/RLS/auth/migration/AI prompt/rate limiting/vault privacy. Never bundle High with unrelated edits.
+- Migrations (`supabase/migrations/`) are forward-only, auto-applied on push (`supabase-db-auto.yml`, which also commits `types/database.types.ts` — never edit that by hand, never `supabase db push`). New file numbers come after the latest.
+- `lib/prompts/buildSystemPrompt.ts`: keep all 9 strict rules; no outside knowledge; never reveal vault structure.
+- Vault privacy: visitors see only the circles `resolveCircles` allows (`lib/access/resolveScope.ts`) — on every route (profile, chat, prompts, Discover, search).
+- Rate-limit key `chat:${ip}:${userId}` (`lib/ratelimit/index.ts`) never changes without a plan.
+- Cron routes require `CRON_SECRET`; never remove the check.
+- Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks.
+- New third-party data processor → add to `app/privacy/page.tsx`; prefer EU. Keep `.env.example` in sync. Never commit secrets.
 
-- The owner's senior developer (Claude) prepares and tests each change, then hands you ONE task.
-- Usually the task is a patch file outside the repo (e.g. `/tmp/<name>.patch`) plus a task file (`/tmp/liaison-task.md`).
-  Apply the patch exactly with `git apply --check` and `git apply`. Never retype, "improve" or reformat the code.
-  If the patch does not apply, STOP and report — do not reconstruct it by hand.
-- Change only the files the task lists. Never copy the task/patch files into the repo.
+## Stack
+Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgres, Auth, Storage `avatars`) · Mistral EU (`lib/mistral/client.ts`: medium = chat, small = fast tasks, mistral-embed = search) · Upstash Redis · Scaleway email (`lib/email/scaleway.ts`) · Mollie payments · Vercel fra1 (2 crons in `vercel.json`).
 
-## Git workflow (owner's standing decision)
-
-- Always work directly on `main`: `git switch main && git pull` first.
-- No branches, no pull requests.
-- Before committing: `npm run build` (and `npm run check:migrations` if there is a migration).
-  If it fails, do not edit code unless the task allows it; stop and report without committing.
-- Commit with the exact message from the task, `git push origin main`, then `git pull` and report the commit hash,
-  changed files and the latest 3 commits.
-- The owner syncs with `git sync` (alias: `git checkout main && git fetch origin && git pull`).
-
-## Architecture
-
-- GitHub is the source of truth. Vercel (project `liaison`, Frankfurt fra1) auto-deploys `main`.
-- Supabase (EU West, Ireland): Postgres + Auth + Storage (`avatars` bucket).
-- Mistral AI (EU) powers all AI via `lib/mistral/client.ts` (`mistral-medium-latest` chat, `mistral-small-latest` fast tasks). Anthropic is removed.
-- Upstash Redis (Frankfurt): rate limiting.
-- Scaleway Transactional Email (Paris): all outbound email from noreply@my-liaison.app (`lib/email/scaleway.ts`). Postmark is removed.
-- Titan: inbox for contact@my-liaison.app. DNS at WordPress.com.
-- Any new third-party service that receives user data must be added to `app/privacy/page.tsx`. Prefer EU providers.
-- Keep `.env.example` in sync with the env vars the code reads. Never commit secrets.
-
-## Migrations
-
-- Forward-only. Never edit or rename an applied migration.
-- New migrations are numbered strictly after the latest file in `supabase/migrations/` (`npm run sb:migration "<name>"`, or exactly as given in the task).
-- They auto-apply on push to main via `.github/workflows/supabase-db-auto.yml`, which also regenerates
-  `types/database.types.ts` (committed by the bot). Never run `supabase db push`. Never edit `types/database.types.ts` by hand.
-- Pushing to main skips the PR migration guard, so always run `npm run check:migrations` yourself.
-
-## Risk rules (non-negotiable)
-
-- UI = Low, API/logic = Medium, DB/RLS/Auth/migration/AI prompt/rate limiting = High. Never bundle a High-risk change with unrelated edits.
-- AI system prompt (`lib/prompts/buildSystemPrompt.ts`): preserve all 9 strict rules. Never let the agent use outside knowledge
-  or reveal vault structure. The optional [READER CONTEXT]/[READER PROFILE] block (two-vault chat) may only be used to answer the reader.
-- Vault privacy: no user may read another user's vault content beyond what the access rules allow (`lib/access/resolveScope.ts`),
-  via any route — including profile pages, Discover, suggested prompts and summaries.
-- Rate limiting: the key format `chat:${ip}:${userId}` in `lib/ratelimit/index.ts` must never change without a plan.
-  Chat requires sign-in (the sender pays). Free-trial limits for senders live in `lib/ratelimit/trial.ts` (`trialchat:` keys); after the free month only senders with a valid saved card (or billing_exempt) can chat.
-- Notification cron `/api/cron/notifications` is protected by `CRON_SECRET`. Never remove that check.
-- `connection_interests` is server-only (RLS on, no policies); access it only through the `/api/connections/*` routes.
-
-## Project structure
-
-```
-app/
-  [username]/            public profile + chat (access-aware; private profiles show a Connect card)
-  api/chat/[username]/   AI chat (sign-in required; rate limited; trial limits; sender pays; two-vault reader context)
-  api/prompts/[username]/ suggested prompts (access-aware)
-  api/discover/          GET username/name search (discoverable users only, safe columns)
-  api/discover/search/   AI search by what people share (Outer Circle of Public + Discoverable profiles only; plan quota; never returns Vault text)
-  api/discover/index/    refresh own search index (lib/search/; daily sweep in the billing cron)
-  api/connections/       request / status / respond / access
-  api/insights/          owner-only visitor insights + saved "Echoes" (weekly/monthly reports; UI name is Echo)
-  api/account/delete/    account deletion
-  api/cron/notifications/ weekly digest (CRON_SECRET; not scheduled)
-  api/cron/insights/     daily: build Echoes, email them, delete insights older than 35 days (CRON_SECRET)
-  dashboard/ vault/ profile/ settings/ connections/ discover/ login/ signup/ privacy/
-components/nav/SiteHeader.tsx   shared header (rendered in app/layout.tsx)
-components/ui/Toggle.tsx        shared switch
-lib/ access/ mistral/ prompts/ ratelimit/ email/ notifications/ supabase/
-supabase/migrations/            forward-only SQL
-types/database.types.ts         generated by the bot — never edit
-```
+## Code map
+- `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
+- `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access
+- `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
+- `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`)
+- `app/settings/`, `components/settings/` Public/Private, Discoverable, email, plan, card, bills
+- `app/plans/`, `lib/plans.ts` (all plan limits + texts), `lib/billing/plan.ts` (plan state/changes; `plan_changes` is the source of truth)
+- `lib/billing/*` Mollie, month-end bills (`monthly.ts`), plan fee (`planFee.ts`), card lock (`access.ts`, used by `proxy.ts`), receipts, VAT
+- `lib/ratelimit/trial.ts` free-month limits · `lib/usage/` AI usage log + spend/markup
+- `lib/insights/` visitor insights + Echoes (weekly/monthly) · `app/api/cron/insights` daily
+- `app/api/cron/billing` daily: unconfirmed accounts (`lib/auth/unverified.ts`), search index sweep, month-end billing on the 1st
+- `app/auth/confirm` email confirm button · `app/api/auth/discard-signup` · `app/api/account/delete`
 
 ## Scripts
-
-```
-npm run build
-npm run lint
-npm run sb:migration "name"
-npm run check:migrations
-```
+`npm run build` · `npm run lint` · `npm run sb:migration "name"` · `npm run check:migrations`
