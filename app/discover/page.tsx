@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
+import Avatar from '@/components/ui/Avatar'
 
 type SearchResult = {
   username: string
@@ -11,21 +12,6 @@ type SearchResult = {
 
 type ContentResult = SearchResult & { match: 'full' | 'partial'; reason: string }
 type Mode = 'name' | 'content'
-
-function Avatar({ person }: { person: SearchResult }) {
-  return person.avatar_url ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={person.avatar_url}
-      alt=""
-      className="h-10 w-10 flex-shrink-0 rounded-full object-cover border border-border"
-    />
-  ) : (
-    <div className="h-10 w-10 flex-shrink-0 rounded-full bg-accent-subtle flex items-center justify-center text-accent-light font-semibold">
-      {person.display_name?.[0]?.toUpperCase() ?? '?'}
-    </div>
-  )
-}
 
 export default function DiscoverPage() {
   const [query, setQuery] = useState('')
@@ -189,7 +175,7 @@ export default function DiscoverPage() {
                   {contentResults.map(person => (
                     <li key={person.username}>
                       <Link href={`/${person.username}`} className="flex items-start gap-3 px-4 py-3 hover:bg-accent-tint transition-colors">
-                        <Avatar person={person} />
+                        <Avatar url={person.avatar_url} name={person.display_name} />
                         <div className="min-w-0">
                           <p className="font-medium text-text-primary truncate">
                             {person.display_name}{' '}
@@ -248,7 +234,7 @@ export default function DiscoverPage() {
                     href={`/${person.username}`}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-accent-tint transition-colors"
                   >
-                    <Avatar person={person} />
+                    <Avatar url={person.avatar_url} name={person.display_name} />
                     <div className="min-w-0">
                       <p className="font-medium text-text-primary truncate">{person.display_name}</p>
                       <p className="text-sm text-text-secondary truncate">@{person.username}</p>

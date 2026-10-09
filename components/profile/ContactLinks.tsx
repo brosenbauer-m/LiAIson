@@ -27,15 +27,37 @@ function detectPlatform(url: string): string {
   return 'other'
 }
 
+// Only web links (http/https, or a bare address like linkedin.com/in/anna) and
+// email addresses become links; anything else
+// stored in contact_links is skipped.
+function safeHref(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null
+  const value = raw.trim()
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      return new URL(value).toString()
+    } catch {
+      return null
+    }
+  }
+  const email = value.replace(/^mailto:/i, '')
+  if (/^[^\s@/:]+@[^\s@/:]+\.[^\s@/:]+$/.test(email)) return `mailto:${email}`
+  // A bare address like "linkedin.com/in/anna" → https.
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(value)) return `https://${value}`
+  return null
+}
+
 export default function ContactLinks({ links }: ContactLinksProps) {
   if (!links || links.length === 0) return null
 
   return (
     <div className="flex flex-wrap gap-2">
       {links.map((link, i) => {
-        const platformKey = detectPlatform(link.url)
-        const icon = platformIcons[link.platform?.toLowerCase() ?? ''] ?? platformIcons[platformKey] ?? '🔗'
-        const href = link.url.startsWith('http') ? link.url : `mailto:${link.url}`
+        const href = safeHref(link?.url)
+        if (!href) return null
+        const platform = typeof link.platform === 'string' ? link.platform : ''
+        const platformKey = detectPlatform(href)
+        const icon = platformIcons[platform.toLowerCase()] ?? platformIcons[platformKey] ?? '🔗'
 
         return (
           <a
@@ -44,7 +66,8 @@ export default function ContactLinks({ links }: ContactLinksProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="w-9 h-9 flex items-center justify-center rounded-lg bg-card border border-border hover:border-accent/50 transition-colors text-lg"
-            title={link.platform}
+            title={platform || undefined}
+            aria-label={platform || 'Contact link'}
           >
             {icon}
           </a>

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { CustomCircle } from '@/lib/circles'
+import Avatar from '@/components/ui/Avatar'
 
 interface ConnectionUser {
   id: string
@@ -244,13 +245,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                         aria-label={`Select ${fromUser?.display_name ?? 'connection'}`}
                         className="h-4 w-4 accent-accent flex-shrink-0"
                       />
-                      <div className="w-11 h-11 rounded-full bg-accent flex items-center justify-center text-white font-bold text-lg shadow-soft overflow-hidden">
-                        {fromUser?.avatar_url ? (
-                          <img src={fromUser.avatar_url} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          fromUser?.display_name?.[0]?.toUpperCase() ?? '?'
-                        )}
-                      </div>
+                      <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />
                       <div>
                         <p className="font-semibold text-text-primary">{fromUser?.display_name ?? 'Unknown'}</p>
                         <p className="text-xs text-text-secondary">@{fromUser?.username ?? ''}</p>

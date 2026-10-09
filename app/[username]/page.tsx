@@ -9,6 +9,7 @@ import ContactLinks from '@/components/profile/ContactLinks'
 import TagChip from '@/components/ui/TagChip'
 import type { User, VaultSection } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
+import { isOwnAvatarUrl } from '@/components/ui/Avatar'
 import SimilarityCard from '@/components/similarity/SimilarityCard'
 import { getPlanLimits } from '@/lib/billing/plan'
 
@@ -33,14 +34,14 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     openGraph: {
       title: `${user.display_name}'s LiAIson`,
       description: user.short_bio ?? `Talk to ${user.display_name}'s AI representative`,
-      images: user.avatar_url ? [user.avatar_url] : [],
+      images: isOwnAvatarUrl(user.avatar_url) ? [user.avatar_url] : [],
       type: 'profile',
     },
     twitter: {
       card: 'summary_large_image',
       title: `${user.display_name}'s LiAIson`,
       description: user.short_bio ?? `Talk to ${user.display_name}'s AI representative`,
-      images: user.avatar_url ? [user.avatar_url] : [],
+      images: isOwnAvatarUrl(user.avatar_url) ? [user.avatar_url] : [],
     },
   }
 }

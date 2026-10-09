@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import Avatar from '@/components/ui/Avatar'
 
 interface RequestUser {
   id: string
@@ -93,13 +94,7 @@ export default function ConnectionRequests({ requests: initialRequests, innerAll
             <div key={request.id} className="bg-card border border-border rounded-xl p-5 shadow-soft space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-full bg-accent flex items-center justify-center text-white font-bold text-lg shadow-soft overflow-hidden flex-shrink-0">
-                    {fromUser?.avatar_url ? (
-                      <img src={fromUser.avatar_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      fromUser?.display_name?.[0]?.toUpperCase() ?? '?'
-                    )}
-                  </div>
+                  <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />
                   <div className="min-w-0">
                     <p className="font-semibold text-text-primary truncate">{fromUser?.display_name ?? 'Unknown'}</p>
                     {fromUser && (

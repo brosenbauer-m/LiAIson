@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import TagChip from './TagChip'
 import type { User } from '@/types'
+import Avatar from './Avatar'
 
 interface ProfileCardProps {
   user: User
@@ -11,17 +12,7 @@ export default function ProfileCard({ user, tags = [] }: ProfileCardProps) {
   return (
     <div className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-accent/40 transition-colors">
       <div className="flex items-center gap-3">
-        {user.avatar_url ? (
-          <img
-            src={user.avatar_url}
-            alt={user.display_name}
-            className="w-12 h-12 rounded-full object-cover border-2 border-border"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-accent-subtle flex items-center justify-center text-accent-light font-bold text-lg">
-            {user.display_name?.[0]?.toUpperCase() ?? '?'}
-          </div>
-        )}
+        <Avatar url={user.avatar_url} name={user.display_name} size="md" />
         <div>
           <h3 className="font-semibold text-text-primary">{user.display_name}</h3>
           <p className="text-xs text-text-secondary">@{user.username}</p>

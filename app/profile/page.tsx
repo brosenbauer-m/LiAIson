@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User, ContactLink } from '@/types'
+import Avatar from '@/components/ui/Avatar'
 
 const PLATFORMS = ['Instagram', 'LinkedIn', 'WhatsApp', 'Twitter/X', 'GitHub', 'Email', 'Website', 'Other']
 
@@ -93,11 +94,7 @@ export default function ProfilePage() {
               className="w-24 h-24 rounded-full bg-accent-tint border-2 border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-accent transition-all shadow-soft"
               onClick={() => fileRef.current?.click()}
             >
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-accent text-4xl font-bold">{displayName?.[0]?.toUpperCase() ?? '?'}</span>
-              )}
+              <Avatar url={avatarUrl} name={displayName} size="lg" />
             </div>
             <div>
               <button
