@@ -12,20 +12,23 @@ Keep this file short: 1–3 lines per change, commit it with the work.
 - Billing (Mollie, TEST mode): card via €0 check, month-end bill (≥€5 else carried over), top-ups, receipts, plan fee pro-rated, VAT switch off (small business).
 - Echoes: weekly/monthly visitor-interest reports + email (insights cron).
 - Discover: name search + AI search by what people share (Outer Circle of Public+Discoverable only; 10/20 per month; reasons only, never Vault text).
-- Similarity (new session, 9957a16 + a85e6d7): LiAIson points out similarities in chat; Extrovert score + bubble map. Details/verification: add here.
+- Similarity (9957a16 + a85e6d7, owner-verified 2026-10-09): LiAIson points out similarities in chat (all plans, small note under the reply ≤1×/chat/day); Extrovert+ score (5 levels) + bubble map on profiles, 100/month, cached in similarity_results.
+- Social Butterfly (0103e6a, 35136ab, cc943f2, e3369b8, 1d580e6) — built, shown as "Coming soon" (`PLANS.butterfly.available = false`); exempt accounts have it (all sliders max) for testing:
+  - Sliders (Claude's proposal, owner to confirm): €6 base incl. 2 own circles / 20 AI searches / 100 comparisons; +€0.50 per extra circle (max 10), +€1 per +20 searches (max 100), +€1 per +100 comparisons (max 500) → €6–18. Vault stays 30k (bigger Vault = dearer messages for senders). Choices in plan_changes.options; more = now, less = next month; fee = max held in month.
+  - Own circles: created on Connections (members = accepted connections only), sections placed in Vault. Access re-checked in resolveCircles (accepted connection + owner plan has own circles); leaving Butterfly → those sections become drafts, circles kept. Privacy tested on local Postgres + PostgREST.
+  - Compare 2–4 people at once on /compare (group bubble map + score per person; each person = 1 comparison; cached in similarity_group_results).
 - Exempt accounts (never billed, Extrovert): @brosenbauerm, @adminuser.
 
 ## Not yet verified (needs test accounts)
 - Inner Circle visibility with two accounts.
 - AI search end-to-end (test account with Outer Circle text, search from another).
-- Similarity end-to-end.
+- Social Butterfly on the live site (exempt account): own circle + member sees its section, others don't; /compare with 2+ people; Plans sliders.
 - Trial limits / card lock on a non-exempt account (first trials end 2026-11-07).
 - Owner test bill (Settings → Monthly bill → Run test bill) and saved-card top-up.
 
 ## Next (agreed order)
-1. Finish/verify Similarity.
-2. Social Butterfly: custom extra circles + slider pricing.
-3. Redesign (cerebrium.ai-inspired, brown palette; landing first).
+1. Owner: test Social Butterfly, confirm slider prices → then set `available: true` in lib/plans.ts.
+2. Redesign (cerebrium.ai-inspired, brown palette; landing first).
 Later: cache identical searches/day, HNSW index at scale, chat retrieval for big vaults, ESLint cleanup, 16 unused Vercel env vars.
 
 ## Owner to-dos
