@@ -6,8 +6,8 @@ import { processUnverifiedAccounts, type UnverifiedSummary } from '@/lib/auth/un
 
 // Daily job (Vercel Cron, see vercel.json). Protected by CRON_SECRET.
 // On the 1st of the month (Vienna time) — or with ?run=month — bills the month
-// that just ended for everyone who sent messages in it or has an amount carried
-// over. Bills are unique per user and month, so re-running is safe.
+// that just ended for everyone who sent messages in it, has an amount carried
+// over or may owe a plan fee. Bills are unique per user and month, so re-running is safe.
 // Every day it also reminds and, after 30 days, deletes accounts whose email
 // was never confirmed (lib/auth/unverified.ts).
 
@@ -56,6 +56,23 @@ export async function GET(request: NextRequest) {
     .lt('period_start', period.start.toISOString())
     .limit(100000)
   for (const r of (carried as { user_id: string | null }[] | null) ?? []) if (r.user_id) userIds.add(r.user_id)
+
+  // Everyone who may owe a plan fee for the period: on a paid plan now, or with
+  // a plan change during it (planFeeFor decides the exact amount).
+  const { data: paidNow } = await supabase
+    .from('users')
+    .select('id')
+    .in('plan', ['ambivert', 'extrovert'])
+    .eq('billing_exempt', false)
+    .limit(100000)
+  for (const r of (paidNow as { id: string }[] | null) ?? []) userIds.add(r.id)
+  const { data: changed } = await supabase
+    .from('plan_changes')
+    .select('user_id')
+    .gte('effective_at', period.start.toISOString())
+    .lt('effective_at', period.end.toISOString())
+    .limit(100000)
+  for (const r of (changed as { user_id: string }[] | null) ?? []) userIds.add(r.user_id)
 
   const webhookUrl = `${request.nextUrl.origin}/api/billing/webhook`
   const summary: Partial<Record<BillResult | 'error', number>> = {}

@@ -5,9 +5,11 @@ import { getBalanceEur } from '@/lib/billing/topup'
 import { vatBreakdown, formatEur } from '@/lib/billing/vat'
 import { rawCostEur, isMeteredFeature, MARKUP } from '@/lib/usage/spend'
 import { sendMonthlyBillEmail } from '@/lib/billing/emails'
+import { planFeeFor } from '@/lib/billing/planFee'
 
 // Month-end billing (owner decisions 2026-10-09):
 // - The sender pays for their own messages: AI cost + 30%.
+// - Plus the monthly plan fee (lib/billing/planFee.ts), on the same bill.
 // - Messages sent during the free trial are free; billing_exempt accounts never pay.
 // - Prepaid credit is used first.
 // - Whatever is left is charged ONCE to the saved card, but only if it is €5 or
@@ -99,7 +101,10 @@ export async function billMonth(
     .maybeSingle<{ status: string; net_eur: number | string }>()
   const carriedIn = previous?.status === 'carried_over' ? round4(Number(previous.net_eur) || 0) : 0
 
-  const owed = round4(usage + carriedIn)
+  // Monthly plan fee (none during the free month or before a card was saved).
+  const fee = await planFeeFor(userId, period, { ignoreTrial: opts.ignoreExemptAndTrial })
+
+  const owed = round4(usage + carriedIn + fee.feeEur)
   if (owed <= 0) return 'nothing'
 
   const balance = await getBalanceEur(userId)
@@ -119,6 +124,8 @@ export async function billMonth(
       period_start: period.start.toISOString(),
       period_end: period.end.toISOString(),
       usage_eur: usage,
+      plan: fee.plan,
+      plan_fee_eur: fee.feeEur,
       carried_in_eur: carriedIn,
       prepaid_applied_eur: prepaid,
       net_eur: net,
@@ -170,7 +177,7 @@ export async function billMonth(
       customerId: account.mollie_customer_id,
       mandateId: account.mandate_id,
       amountEur: formatEur(vat.totalEur),
-      description: `LiAIson – usage ${period.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })}`,
+      description: `LiAIson – ${period.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })}`,
       webhookUrl: opts.webhookUrl,
       metadata: { userId, purpose: 'monthly', documentId: String(doc.id) },
     })

@@ -8,6 +8,8 @@ export type Receipt = {
   periodStart: string | null
   periodEnd: string | null
   usageEur: number
+  plan: string | null
+  planFeeEur: number
   carriedInEur: number
   prepaidAppliedEur: number
   netEur: number
@@ -27,6 +29,8 @@ type Row = {
   period_start: string | null
   period_end: string | null
   usage_eur: number | string
+  plan: string | null
+  plan_fee_eur: number | string
   carried_in_eur: number | string
   prepaid_applied_eur: number | string
   net_eur: number | string
@@ -41,7 +45,7 @@ type Row = {
 }
 
 const COLUMNS =
-  'receipt_number, kind, period_start, period_end, usage_eur, carried_in_eur, prepaid_applied_eur, net_eur, vat_rate, vat_eur, total_eur, vat_exempt, country, customer_name, customer_email, paid_at'
+  'receipt_number, kind, period_start, period_end, usage_eur, plan, plan_fee_eur, carried_in_eur, prepaid_applied_eur, net_eur, vat_rate, vat_eur, total_eur, vat_exempt, country, customer_name, customer_email, paid_at'
 
 function toReceipt(r: Row): Receipt {
   return {
@@ -50,6 +54,8 @@ function toReceipt(r: Row): Receipt {
     periodStart: r.period_start,
     periodEnd: r.period_end,
     usageEur: Number(r.usage_eur),
+    plan: r.plan,
+    planFeeEur: Number(r.plan_fee_eur) || 0,
     carriedInEur: Number(r.carried_in_eur),
     prepaidAppliedEur: Number(r.prepaid_applied_eur),
     netEur: Number(r.net_eur),

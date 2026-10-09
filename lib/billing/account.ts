@@ -48,6 +48,12 @@ async function storeValidMandate(account: BillingAccount, mandateId: string, car
     card_label: cardLabel,
     ...(cardCountry ? { card_country: cardCountry } : {}),
   })
+  // First time a card became valid: the plan fee can start from here.
+  await createServiceClient()
+    .from('billing_accounts')
+    .update({ mandate_since: new Date().toISOString() })
+    .eq('user_id', account.user_id)
+    .is('mandate_since', null)
   if (previous && previous !== mandateId && account.mollie_customer_id) {
     await revokeMandate(account.mollie_customer_id, previous).catch(() => {/* already gone */})
   }

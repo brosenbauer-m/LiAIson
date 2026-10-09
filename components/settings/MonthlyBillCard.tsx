@@ -5,6 +5,8 @@ import Link from 'next/link'
 
 type Summary = {
   monthToDateEur: number
+  planFeeEur: number
+  planName: string | null
   chargeDate: string
   minChargeEur: number
   exempt: boolean
@@ -133,9 +135,15 @@ export default function MonthlyBillCard() {
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-4">
-                <p className="text-sm text-text-secondary">This month so far</p>
+                <p className="text-sm text-text-secondary">Messages you sent this month</p>
                 <p className="text-2xl font-semibold text-text-primary tabular-nums">{euros(summary.monthToDateEur)}</p>
               </div>
+              {summary.planFeeEur > 0 && (
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="text-sm text-text-secondary">{summary.planName} plan this month</p>
+                  <p className="text-sm font-medium text-text-primary tabular-nums">{euros(summary.planFeeEur)}</p>
+                </div>
+              )}
               <p className="text-xs text-text-secondary leading-relaxed">
                 Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your prepaid credit); smaller amounts carry over.
                 {summary.inTrial ? ' During your free month, you can send up to 5 free messages a day.' : ''}

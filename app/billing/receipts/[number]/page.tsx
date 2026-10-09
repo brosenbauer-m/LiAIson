@@ -90,6 +90,14 @@ export default async function ReceiptPage(props: { params: Promise<{ number: str
                   <td className="py-2 text-text-primary">AI usage{period ? ` — ${period}` : ''}</td>
                   <td className="py-2 text-right tabular-nums text-text-primary">{euros(r.usageEur)}</td>
                 </tr>
+                {r.planFeeEur > 0 && (
+                  <tr className="border-b border-border">
+                    <td className="py-2 text-text-primary">
+                      {r.plan ? `${r.plan.charAt(0).toUpperCase()}${r.plan.slice(1)} plan` : 'Plan'}{period ? ` — ${period}` : ''}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-text-primary">{euros(r.planFeeEur)}</td>
+                  </tr>
+                )}
                 {r.carriedInEur > 0 && (
                   <tr className="border-b border-border">
                     <td className="py-2 text-text-primary">Carried over from earlier months</td>
