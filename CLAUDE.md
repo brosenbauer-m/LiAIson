@@ -1,6 +1,7 @@
 # LiAIson — agent guide
 
 Production app (www.my-liaison.app). Owner is non-technical. Every push to `main` deploys.
+State, next steps and how to ship: `claude/roadmap.md`, `claude/handover.md`, `claude/pricing.md` (keep them short and updated).
 
 ## Workflow
 - Work directly on `main` (`git pull` first). No branches, no PRs.
