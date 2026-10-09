@@ -171,11 +171,11 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
 
   // Free trial limits for the sender (exempt accounts have none):
   // 3 messages per day to each LiAIson and 15 per day in total during the free
-  // month; after it, no messages until a payment method is added.
+  // month; after it, only with a saved card ('paying', billed at month end).
   const plan = await getSenderPlan(visitor.id)
   if (plan.kind === 'trial_ended') {
     return NextResponse.json(
-      { error: 'Your free month has ended. Adding a payment method will be possible soon.', trialLimit: true },
+      { error: 'Your free month has ended. Add a payment method in Settings to keep chatting.', trialLimit: true, paused: true },
       { status: 429 }
     )
   }

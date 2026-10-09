@@ -50,7 +50,7 @@ Protect database integrity, access rules, the AI prompt, rate limiting and deplo
 - Vault privacy: no user may read another user's vault content beyond what the access rules allow (`lib/access/resolveScope.ts`),
   via any route — including profile pages, Discover, suggested prompts and summaries.
 - Rate limiting: the key format `chat:${ip}:${userId}` in `lib/ratelimit/index.ts` must never change without a plan.
-  Chat requires sign-in (the sender pays). Free-trial limits for senders live in `lib/ratelimit/trial.ts` (`trialchat:` keys).
+  Chat requires sign-in (the sender pays). Free-trial limits for senders live in `lib/ratelimit/trial.ts` (`trialchat:` keys); after the free month only senders with a valid saved card (or billing_exempt) can chat.
 - Notification cron `/api/cron/notifications` is protected by `CRON_SECRET`. Never remove that check.
 - `connection_interests` is server-only (RLS on, no policies); access it only through the `/api/connections/*` routes.
 

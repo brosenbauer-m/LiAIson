@@ -31,6 +31,7 @@ export async function GET() {
         minChargeEur: MIN_CHARGE_EUR,
         exempt: !!profile?.billing_exempt,
         inTrial: trialEnd.getTime() > Date.now(),
+        trialEndsAt: profile?.trial_ends_at ?? null,
         unpaid,
         testRunAvailable: isTestMode() && !!profile?.billing_exempt,
       },

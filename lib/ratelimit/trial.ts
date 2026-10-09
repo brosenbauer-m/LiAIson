@@ -5,8 +5,8 @@ import { createServiceClient } from '@/lib/supabase/service'
 // message pays for it, so these limits apply to the SENDER:
 // - during the free month: max 3 messages per day to each LiAIson and max 15
 //   messages per day in total (calendar day, Europe/Vienna);
-// - after the free month: no messages until a payment method is added
-//   (payments are not built yet).
+// - after the free month: messages only with a saved card (valid Mollie
+//   mandate); usage is then billed at month end (lib/billing/monthly.ts).
 // Accounts marked billing_exempt have no trial limits.
 // Uses its own key prefix ("trialchat:") and does NOT touch the existing
 // `chat:${ip}:${userId}` keys in lib/ratelimit/index.ts.
@@ -35,10 +35,13 @@ function viennaDay(now = new Date()): string {
 export type SenderPlan =
   | { kind: 'exempt' }
   | { kind: 'trial'; trialEndsAt: string }
+  | { kind: 'paying' }
   | { kind: 'trial_ended' }
 
 // Reads the sender's billing status. If it can't be read, the sender is treated
-// as being in the trial (limits apply), never as exempt.
+// as being in the trial (limits apply), never as exempt. After the free month
+// the sender may keep chatting ('paying') only with a valid saved card; if the
+// card status can't be read they are treated as 'trial_ended' (blocked).
 export async function getSenderPlan(senderId: string): Promise<SenderPlan> {
   try {
     const supabase = createServiceClient()
@@ -50,10 +53,27 @@ export async function getSenderPlan(senderId: string): Promise<SenderPlan> {
     if (error || !data) return { kind: 'trial', trialEndsAt: '' }
     if (data.billing_exempt === true) return { kind: 'exempt' }
     const ends = new Date(data.trial_ends_at)
-    if (!Number.isNaN(ends.getTime()) && ends.getTime() <= Date.now()) return { kind: 'trial_ended' }
+    if (!Number.isNaN(ends.getTime()) && ends.getTime() <= Date.now()) {
+      return (await hasValidSavedCard(senderId)) ? { kind: 'paying' } : { kind: 'trial_ended' }
+    }
     return { kind: 'trial', trialEndsAt: data.trial_ends_at }
   } catch {
     return { kind: 'trial', trialEndsAt: '' }
+  }
+}
+
+async function hasValidSavedCard(userId: string): Promise<boolean> {
+  try {
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from('billing_accounts')
+      .select('mandate_status, mandate_id')
+      .eq('user_id', userId)
+      .maybeSingle<{ mandate_status: string; mandate_id: string | null }>()
+    if (error || !data) return false
+    return data.mandate_status === 'valid' && !!data.mandate_id
+  } catch {
+    return false
   }
 }
 

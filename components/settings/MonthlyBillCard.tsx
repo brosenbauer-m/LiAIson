@@ -9,6 +9,7 @@ type Summary = {
   minChargeEur: number
   exempt: boolean
   inTrial: boolean
+  trialEndsAt: string | null
   unpaid: { id: number; totalEur: number } | null
   testRunAvailable: boolean
 }
@@ -139,6 +140,11 @@ export default function MonthlyBillCard() {
                 Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your prepaid credit); smaller amounts carry over.
                 {summary.inTrial ? ' Messages during your free month are not billed.' : ''}
               </p>
+              {summary.inTrial && summary.trialEndsAt && (
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Your free month ends on {new Date(summary.trialEndsAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })}. After that, you need a saved payment method (below) to keep sending messages.
+                </p>
+              )}
             </>
           )}
 
