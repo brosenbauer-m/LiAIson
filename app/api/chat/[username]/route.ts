@@ -18,6 +18,26 @@ import { echoAllowed } from '@/lib/plans'
 import { COMMON_SIGNAL } from '@/lib/chat/signals'
 import type { ChatMessage, User } from '@/types'
 
+// Chat history from the browser is untrusted: only user/assistant turns, the
+// last MAX_TURNS, each cut to a sane length, and it must end with the user.
+// (Never lets a request add its own system instructions.)
+const MAX_TURNS = 20
+const MAX_USER_CHARS = 2000
+const MAX_ASSISTANT_CHARS = 4000
+
+function cleanHistory(raw: unknown): ChatMessage[] | null {
+  if (!Array.isArray(raw)) return null
+  const turns: ChatMessage[] = []
+  for (const m of raw.slice(-MAX_TURNS)) {
+    if (!m || typeof m !== 'object') continue
+    const { role, content } = m as { role?: unknown; content?: unknown }
+    if ((role !== 'user' && role !== 'assistant') || typeof content !== 'string') continue
+    const text = content.trim().slice(0, role === 'user' ? MAX_USER_CHARS : MAX_ASSISTANT_CHARS)
+    if (text) turns.push({ role, content: text })
+  }
+  return turns.length > 0 && turns[turns.length - 1].role === 'user' ? turns : null
+}
+
 // The AI's similarity marker [[common]] (lib/chat/signals.ts), also with stray spaces.
 const COMMON_MARKER_PATTERN = /\[\[\s*common\s*\]\]/gi
 const MARKER_HOLD = 16
@@ -105,13 +125,9 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     request.headers.get('x-real-ip') ??
     '127.0.0.1'
 
-  const body = await request.json()
-  const { messages } = body as {
-    messages: ChatMessage[]
-    visitorId: string
-  }
-
-  if (!messages || !Array.isArray(messages)) {
+  const body = await request.json().catch(() => null) as { messages?: unknown } | null
+  const messages = cleanHistory(body?.messages)
+  if (!messages) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 

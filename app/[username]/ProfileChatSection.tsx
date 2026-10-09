@@ -372,6 +372,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
               }}
               placeholder={`Ask about ${displayName}...`}
               rows={1}
+              maxLength={2000}
               disabled={loading}
               className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none disabled:opacity-60 transition-all"
             />
