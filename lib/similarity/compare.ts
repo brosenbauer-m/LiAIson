@@ -54,7 +54,7 @@ export async function getSimilarityQuota(userId: string): Promise<SimilarityQuot
 
 // 'own' = the viewer's own text: everything except drafts. Anyone else: what
 // their scope allows the viewer to see.
-async function sectionsText(userId: string, scope: VisibleScope | 'own'): Promise<string> {
+export async function sectionsText(userId: string, scope: VisibleScope | 'own', maxChars = MAX_TEXT_CHARS): Promise<string> {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('vault_sections')
@@ -67,7 +67,7 @@ async function sectionsText(userId: string, scope: VisibleScope | 'own'): Promis
     .filter(s => s.content && s.content.trim().length > 0)
     .map(s => `${(s.label ?? '').toUpperCase()}:\n${s.content}`)
     .join('\n\n')
-    .slice(0, MAX_TEXT_CHARS)
+    .slice(0, maxChars)
 }
 
 type Inputs = { viewerText: string; targetText: string; hash: string }
@@ -111,7 +111,7 @@ export async function getCachedSimilarity(viewerId: string, targetId: string, ta
   }
 }
 
-function textOf(content: unknown): string {
+export function textOf(content: unknown): string {
   if (typeof content === 'string') return content
   if (!Array.isArray(content)) return ''
   return content
@@ -119,11 +119,11 @@ function textOf(content: unknown): string {
     .join('')
 }
 
-function cleanLabel(value: unknown): string {
+export function cleanLabel(value: unknown): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim().slice(0, 32) : ''
 }
 
-function cleanStrength(value: unknown): 1 | 2 | 3 {
+export function cleanStrength(value: unknown): 1 | 2 | 3 {
   const n = Math.round(Number(value))
   return n >= 3 ? 3 : n <= 1 ? 1 : 2
 }

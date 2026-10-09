@@ -4,7 +4,7 @@ import { needsCard } from '@/lib/billing/access'
 
 const protectedRoutes = ['/dashboard', '/vault', '/profile', '/settings']
 // Pages that need a saved card once the free month is over (see lib/billing/access.ts).
-const cardRequiredRoutes = ['/dashboard', '/vault', '/profile', '/settings', '/connections', '/discover', '/insights']
+const cardRequiredRoutes = ['/dashboard', '/vault', '/profile', '/settings', '/connections', '/discover', '/insights', '/compare']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({

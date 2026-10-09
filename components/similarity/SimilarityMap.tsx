@@ -13,7 +13,8 @@ import type { SimilarityInterest } from '@/lib/similarity/types'
 export type MapPerson = { key: string; name: string }
 
 const W = 360
-const H = 260
+// Taller for groups, so more bubbles fit around the middle.
+const heightFor = (people: number) => (people > 2 ? 340 : 260)
 const FONT = 11
 const CHAR_W = 6.3
 const PAD = 3
@@ -46,7 +47,7 @@ function splitLabel(label: string): string[] {
   return best
 }
 
-function anchors(count: number): { x: number; y: number }[] {
+function anchors(count: number, H: number): { x: number; y: number }[] {
   if (count === 1) return [{ x: W / 2, y: H / 2 }]
   if (count === 2) return [{ x: W * 0.2, y: H / 2 }, { x: W * 0.8, y: H / 2 }]
   const radius = Math.min(W, H) * 0.36
@@ -58,8 +59,10 @@ function anchors(count: number): { x: number; y: number }[] {
 
 // Deterministic layout: start near the target point, then pull towards it
 // and push overlapping bubbles apart.
-function layout(people: MapPerson[], interests: SimilarityInterest[]): Bubble[] {
-  const points = anchors(people.length)
+function layout(people: MapPerson[], interests: SimilarityInterest[], H: number): Bubble[] {
+  const points = anchors(people.length, H)
+  // Smaller bubbles when there are many.
+  const scale = interests.length > 12 ? 0.82 : 1
   const index = new Map(people.map((p, i) => [p.key, i]))
   const bubbles: Bubble[] = interests.map((interest, i) => {
     const members = interest.people.map(k => index.get(k)).filter((n): n is number => n !== undefined)
@@ -68,7 +71,7 @@ function layout(people: MapPerson[], interests: SimilarityInterest[]): Bubble[] 
     const lines = splitLabel(interest.label)
     const longest = Math.max(...lines.map(l => l.length))
     const base = interest.strength === 3 ? 30 : interest.strength === 2 ? 25 : 20
-    const r = Math.min(48, Math.max(base, (longest * CHAR_W) / 2 + 7, lines.length > 1 ? 24 : 0))
+    const r = Math.min(48, Math.max(base * scale, (longest * CHAR_W) / 2 + 7, lines.length > 1 ? 24 : 0))
     const angle = i * 2.399963
     const style: Bubble['style'] = members.length >= people.length && people.length > 1 ? 'all' : members.length > 1 ? 'some' : members[0] ?? 0
     return { interest, lines, r, x: tx + Math.cos(angle) * 8, y: ty + Math.sin(angle) * 8, tx, ty, style }
@@ -104,18 +107,32 @@ function layout(people: MapPerson[], interests: SimilarityInterest[]): Bubble[] 
   return bubbles
 }
 
-// Monochrome, like the rest of the app. One-person bubbles: first person
-// light grey, second outlined, others dashed.
+// Monochrome, like the rest of the app. One-person bubbles: the viewer light
+// grey; the others outlined, each with its own line style.
+const PERSON_STYLES: { fill: string; stroke: string; dash?: string; text: string }[] = [
+  { fill: '#F2F2F2', stroke: '#E5E5E5', text: '#111111' },
+  { fill: '#FFFFFF', stroke: '#111111', text: '#111111' },
+  { fill: '#FFFFFF', stroke: '#111111', dash: '5 3', text: '#111111' },
+  { fill: '#FFFFFF', stroke: '#111111', dash: '1.5 3', text: '#111111' },
+  { fill: '#FFFFFF', stroke: '#555555', dash: '7 3 1.5 3', text: '#111111' },
+  { fill: '#E5E5E5', stroke: '#555555', text: '#111111' },
+]
+
 function bubbleStyle(style: Bubble['style']): { fill: string; stroke: string; dash?: string; text: string } {
   if (style === 'all') return { fill: '#111111', stroke: '#111111', text: '#FFFFFF' }
   if (style === 'some') return { fill: '#555555', stroke: '#555555', text: '#FFFFFF' }
-  if (style === 0) return { fill: '#F2F2F2', stroke: '#E5E5E5', text: '#111111' }
-  if (style === 1) return { fill: '#FFFFFF', stroke: '#111111', text: '#111111' }
-  return { fill: '#FFFFFF', stroke: '#555555', dash: '4 3', text: '#111111' }
+  return PERSON_STYLES[style] ?? PERSON_STYLES[PERSON_STYLES.length - 1]
+}
+
+// "you", "you and Anna", "you, Anna and Ben"
+function namesOf(keys: string[], people: MapPerson[]): string {
+  const names = keys.map(k => people.find(p => p.key === k)?.name ?? '').filter(Boolean).map(n => (n === 'You' ? 'you' : n))
+  return names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
 
 export default function SimilarityMap({ people, interests }: { people: MapPerson[]; interests: SimilarityInterest[] }) {
-  const bubbles = useMemo(() => layout(people, interests), [people, interests])
+  const H = heightFor(people.length)
+  const bubbles = useMemo(() => layout(people, interests, H), [people, interests, H])
   const [selected, setSelected] = useState<string | null>(null)
   const shared = interests.filter(i => i.people.length > 1)
   const chosen = shared.find(i => i.label === selected)
@@ -168,6 +185,9 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-text-secondary">
         <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-accent" />{people.length === 2 ? 'Both of you' : 'Everyone'}</span>
+        {people.length > 2 && (
+          <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-text-secondary" />Some of you</span>
+        )}
         {people.map((p, i) => {
           const c = bubbleStyle(i)
           return (
@@ -185,7 +205,10 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
       {shared.length > 0 && (
         <p className="mt-3 text-sm text-text-secondary min-h-[1.25rem]" aria-live="polite">
           {chosen ? (
-            <><span className="font-medium text-text-primary">{chosen.label}:</span> {chosen.reason || 'You both share this.'}</>
+            <>
+              <span className="font-medium text-text-primary">{chosen.label}:</span> {chosen.reason || 'You share this.'}
+              {people.length > 2 && <span className="text-text-muted"> ({namesOf(chosen.people, people)})</span>}
+            </>
           ) : (
             'Tap a dark bubble to see why it matches.'
           )}
@@ -195,7 +218,7 @@ export default function SimilarityMap({ people, interests }: { people: MapPerson
       <ul className="sr-only">
         {interests.map(i => (
           <li key={i.label}>
-            {i.label}: {i.people.length > 1 ? `shared${i.reason ? `. ${i.reason}` : ''}` : `only ${people.find(p => p.key === i.people[0])?.name ?? ''}`}
+            {i.label}: {i.people.length > 1 ? `shared by ${namesOf(i.people, people)}${i.reason ? `. ${i.reason}` : ''}` : `only ${namesOf(i.people, people)}`}
           </li>
         ))}
       </ul>

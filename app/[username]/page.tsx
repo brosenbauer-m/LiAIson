@@ -10,8 +10,7 @@ import TagChip from '@/components/ui/TagChip'
 import type { User, VaultSection } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import SimilarityCard from '@/components/similarity/SimilarityCard'
-import { getPlanAt } from '@/lib/billing/plan'
-import { PLANS } from '@/lib/plans'
+import { getPlanLimits } from '@/lib/billing/plan'
 
 interface Props {
   params: Promise<{ username: string }>
@@ -67,7 +66,10 @@ export default async function ProfilePage(props: Props) {
   // Similarity: score + map on Extrovert; on other plans the chat sometimes
   // points to it (ProfileChatSection). Never for the owner's own profile.
   const otherVisitor = !!visitor && visitor.id !== user.id && scope
-  const canCompare = otherVisitor && PLANS[await getPlanAt(visitor!.id)].similarity === 'score_visual'
+  const visitorLimits = otherVisitor ? await getPlanLimits(visitor!.id) : null
+  const canCompare = visitorLimits?.similarity === 'score_visual'
+  // Social Butterfly: compare with several people at once (/compare).
+  const canGroup = (visitorLimits?.groupCompare ?? 0) >= 2
 
   // Only load vault sections the visitor is allowed to see (their circles).
   let publicSections: VaultSection[] = []
@@ -107,7 +109,7 @@ export default async function ProfilePage(props: Props) {
             />
 
             {canCompare && (
-              <SimilarityCard username={user.username} displayName={user.display_name} />
+              <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
             )}
 
             {/* Contact links */}

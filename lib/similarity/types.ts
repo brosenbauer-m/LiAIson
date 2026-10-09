@@ -13,7 +13,7 @@ export const LEVEL_LABEL: Record<SimilarityLevel, string> = {
 
 export type SimilarityInterest = {
   label: string
-  // Person keys: 'A' = the viewer, 'B' = the other person.
+  // Person keys: 'A' = the viewer, 'B' (and 'C', 'D', ... in a group) = the others.
   people: string[]
   strength: 1 | 2 | 3
   // Only for interests shared by more than one person.
@@ -21,6 +21,9 @@ export type SimilarityInterest = {
 }
 
 export type SimilarityResult = {
+  // One-to-one: the score. Several people: the highest of `levels`.
   level: SimilarityLevel
+  // Several people (Social Butterfly): the score with the viewer per person key.
+  levels?: Record<string, SimilarityLevel>
   interests: SimilarityInterest[]
 }

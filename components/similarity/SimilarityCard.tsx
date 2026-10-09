@@ -11,7 +11,7 @@ import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 
 type State = { quota: number; used: number; result: SimilarityResult | null }
 
-export default function SimilarityCard({ username, displayName }: { username: string; displayName: string }) {
+export default function SimilarityCard({ username, displayName, groupCompare }: { username: string; displayName: string; groupCompare: boolean }) {
   const [state, setState] = useState<State | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<{ text: string; link?: { href: string; label: string } } | null>(null)
@@ -73,6 +73,11 @@ export default function SimilarityCard({ username, displayName }: { username: st
           <p className="mt-4 text-xs text-text-muted">
             Based on what you both shared, using only what {displayName} lets you see. Only you see this; {displayName} is not told.
           </p>
+          {groupCompare && (
+            <Link href={`/compare?u=${encodeURIComponent(username)}`} className="mt-2 inline-block text-sm text-accent hover:underline">
+              Compare with more people →
+            </Link>
+          )}
         </>
       ) : (
         <>
