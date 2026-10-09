@@ -548,13 +548,13 @@ isOneToOne: false
                   ]
                 },"billing_accounts": {
                   Row: {
-                    "billing_country": string | null,"card_country": string | null,"card_label": string | null,"created_at": string,"ip_country": string | null,"mandate_id": string | null,"mandate_status": string,"mollie_customer_id": string | null,"updated_at": string,"user_id": string
+                    "billing_country": string | null,"card_country": string | null,"card_label": string | null,"created_at": string,"ip_country": string | null,"mandate_id": string | null,"mandate_since": string | null,"mandate_status": string,"mollie_customer_id": string | null,"updated_at": string,"user_id": string
                   }
                   Insert: {
-                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id": string
+                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_since"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                    "billing_country"?: string | null,"card_country"?: string | null,"card_label"?: string | null,"created_at"?: string,"ip_country"?: string | null,"mandate_id"?: string | null,"mandate_since"?: string | null,"mandate_status"?: string,"mollie_customer_id"?: string | null,"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -592,13 +592,13 @@ isOneToOne: false
                   ]
                 },"billing_documents": {
                   Row: {
-                    "carried_in_eur": number,"country": string | null,"created_at": string,"customer_email": string | null,"customer_name": string | null,"id": number,"kind": string,"mollie_payment_id": string | null,"net_eur": number,"paid_at": string | null,"period_end": string | null,"period_start": string | null,"prepaid_applied_eur": number,"receipt_number": string | null,"status": string,"total_eur": number,"usage_eur": number,"user_id": string | null,"vat_eur": number,"vat_exempt": boolean,"vat_rate": number
+                    "carried_in_eur": number,"country": string | null,"created_at": string,"customer_email": string | null,"customer_name": string | null,"id": number,"kind": string,"mollie_payment_id": string | null,"net_eur": number,"paid_at": string | null,"period_end": string | null,"period_start": string | null,"plan": string | null,"plan_fee_eur": number,"prepaid_applied_eur": number,"receipt_number": string | null,"status": string,"total_eur": number,"usage_eur": number,"user_id": string | null,"vat_eur": number,"vat_exempt": boolean,"vat_rate": number
                   }
                   Insert: {
-                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind": string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind": string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
                   }
                   Update: {
-                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind"?: string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind"?: string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -653,6 +653,25 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"plan_changes": {
+                  Row: {
+                    "created_at": string,"effective_at": string,"from_plan": string | null,"id": number,"to_plan": string,"user_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"to_plan": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"to_plan"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "plan_changes_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"uploaded_files": {
                   Row: {
                     "created_at": string | null,"extracted_text": string | null,"extraction_confirmed": boolean | null,"file_name": string,"file_url": string,"id": string,"user_id": string
@@ -674,13 +693,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"pending_plan": string | null,"plan": string,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
