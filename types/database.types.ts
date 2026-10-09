@@ -611,13 +611,13 @@ isOneToOne: false
                   ]
                 },"connection_interests": {
                   Row: {
-                    "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"status": string,"to_user_id": string
+                    "allowed_scope": string,"compatibility_summary": string | null,"created_at": string | null,"from_user_id": string,"id": string,"in_inner_circle": boolean,"status": string,"to_user_id": string
                   }
                   Insert: {
-                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id": string,"id"?: string,"status"?: string,"to_user_id": string
+                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id": string,"id"?: string,"in_inner_circle"?: boolean,"status"?: string,"to_user_id": string
                   }
                   Update: {
-                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id"?: string,"id"?: string,"status"?: string,"to_user_id"?: string
+                    "allowed_scope"?: string,"compatibility_summary"?: string | null,"created_at"?: string | null,"from_user_id"?: string,"id"?: string,"in_inner_circle"?: boolean,"status"?: string,"to_user_id"?: string
                   }
                   Relationships: [
                     {
@@ -725,13 +725,13 @@ isOneToOne: false
                   ]
                 },"vault_sections": {
                   Row: {
-                    "content": string | null,"domain": string,"folder_id": string | null,"id": string,"is_personal": boolean,"is_professional": boolean,"label": string,"last_confirmed_at": string | null,"section_type": string,"source": string | null,"updated_at": string | null,"user_id": string
+                    "circle": string,"content": string | null,"domain": string,"folder_id": string | null,"id": string,"is_personal": boolean,"is_professional": boolean,"label": string,"last_confirmed_at": string | null,"section_type": string,"source": string | null,"updated_at": string | null,"user_id": string
                   }
                   Insert: {
-                    "content"?: string | null,"domain": string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label": string,"last_confirmed_at"?: string | null,"section_type": string,"source"?: string | null,"updated_at"?: string | null,"user_id": string
+                    "circle"?: string,"content"?: string | null,"domain": string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label": string,"last_confirmed_at"?: string | null,"section_type": string,"source"?: string | null,"updated_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "content"?: string | null,"domain"?: string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label"?: string,"last_confirmed_at"?: string | null,"section_type"?: string,"source"?: string | null,"updated_at"?: string | null,"user_id"?: string
+                    "circle"?: string,"content"?: string | null,"domain"?: string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label"?: string,"last_confirmed_at"?: string | null,"section_type"?: string,"source"?: string | null,"updated_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
