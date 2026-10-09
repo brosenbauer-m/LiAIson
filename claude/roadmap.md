@@ -18,6 +18,10 @@ Keep this file short: 1–3 lines per change, commit it with the work.
   - Own circles: created on Connections (members = accepted connections only), sections placed in Vault. Access re-checked in resolveCircles (accepted connection + owner plan has own circles); leaving Butterfly → those sections become drafts, circles kept. Privacy tested on local Postgres + PostgREST.
   - Compare 2–4 people at once on /compare (group bubble map + score per person; each person = 1 comparison; cached in similarity_group_results).
 - Exempt accounts (never billed, Social Butterfly with max sliders): @brosenbauerm, @adminuser.
+- Review 2026-10-09 (02265ce…9f97c0e): open redirect on login fixed; notifications cron fails closed (it sends emails); chat history validated (no injected system turns, 20 turns, length caps); profile fields checked in DB when users change them (migration 27); one Avatar component (own storage only), safe contact links; security headers; connection requests rate-limited; parallel checks in chat; one Redis client (lib/redis.ts) + `underLimit`, one `messageText` helper.
+- Remove a connection (855c1cd): owner removes = declined (no new request, leaves own circles); visitor can disconnect on the profile.
+- Same AI search same day reused (7396411): per-user Redis cache, people re-checked Public+Discoverable, not counted.
+- UI polish (9f97c0e): press/focus/motion styles in globals.css, page fade (app/template.tsx), frosted pill header, dashboard Copy link + quick tiles.
 - Redesign step 1: warm brown palette app-wide (tokens in tailwind.config.ts + globals.css, contrast-checked), Fraunces (headlines) + Inter self-hosted via next/font, new landing page (hero with chat + Similarity visuals, facts strip, how it works, feature grid, plans teaser from lib/plans.ts, CTA). cerebrium.ai is blocked from cloud sessions, so the look is from the brief, not a copy.
 
 ## Not yet verified (needs test accounts)

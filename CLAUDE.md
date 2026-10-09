@@ -23,8 +23,9 @@ State, next steps and how to ship: `claude/roadmap.md`, `claude/handover.md`, `c
 Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgres, Auth, Storage `avatars`) · Mistral EU (`lib/mistral/client.ts`: medium = chat, small = fast tasks, mistral-embed = search) · Upstash Redis · Scaleway email (`lib/email/scaleway.ts`) · Mollie payments · Vercel fra1 (2 crons in `vercel.json`).
 
 ## Code map
+- Shared: `lib/redis.ts` (one client + `underLimit`), `lib/safeRedirect.ts`, `lib/mistral/client.ts` (`messageText`), `components/ui/Avatar.tsx` (only own-storage pictures)
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
-- `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access
+- `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access/remove
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
 - `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert+: score + bubble map, cached in similarity_results); `/compare` + `app/api/compare` several people (Butterfly, `group.ts`); chat similarity marker/note → `lib/chat/signals.ts`
 - Own circles (Social Butterfly): `app/api/circles` (+`/members`), `app/connections/CustomCircles.tsx`, sections via `circle='custom'` + `custom_circle_id` (`lib/circles.ts` placements)
