@@ -16,6 +16,17 @@ interface Props {
   displayName: string
 }
 
+type TrialStatus = {
+  plan: 'exempt' | 'trial' | 'paying' | 'trial_ended'
+  trialEndsAt: string | null
+  dailyLimit: number
+  messagesLeftToday: number | null
+}
+
+function formatDay(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })
+}
+
 // Generate a simple visitor ID for session tracking
 function getVisitorId(): string {
   let id = sessionStorage.getItem('liaison_visitor_id')
@@ -40,10 +51,27 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
   const [authChecked, setAuthChecked] = useState(false)
   const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
   const [connectMessage, setConnectMessage] = useState('')
+  const [trial, setTrial] = useState<TrialStatus | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   // Chat needs an account: the person who sends a message pays for it.
   const signedOut = authChecked && !isLoggedIn
+
+  // Free-month status of the signed-in sender (shown under the chat).
+  const loadTrial = useCallback(() => {
+    fetch('/api/billing/trial-status', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then((d: TrialStatus | null) => {
+        if (!d) return
+        setTrial(d)
+        if (d.plan === 'trial_ended') {
+          const ended = d.trialEndsAt ? ` on ${formatDay(d.trialEndsAt)}` : ''
+          setLimitMessage(`Your free month ended${ended}. Add a payment method in Settings to keep chatting.`)
+          setPaused(true)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     // Fetch suggested prompts
@@ -62,8 +90,9 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user)
       setAuthChecked(true)
+      if (user) loadTrial()
     })
-  }, [username])
+  }, [username, loadTrial])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -102,6 +131,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
         else setRateLimited(true)
         setMessages(prev => [...prev, { role: 'assistant', content: text }])
         setLoading(false)
+        loadTrial()
         return
       }
 
@@ -129,6 +159,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
 
       setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
       setStreamingContent('')
+      loadTrial()
     } catch {
       setMessages(prev => [
         ...prev,
@@ -137,7 +168,7 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
     } finally {
       setLoading(false)
     }
-  }, [messages, loading, rateLimited, paused, isLoggedIn, username])
+  }, [messages, loading, rateLimited, paused, isLoggedIn, username, loadTrial])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -316,6 +347,13 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
               Send
             </button>
           </form>
+        )}
+        {isLoggedIn && trial?.plan === 'trial' && (
+          <p className="mt-3 text-center text-xs text-text-secondary">
+            Free month{trial.messagesLeftToday !== null ? `: ${trial.messagesLeftToday} of ${trial.dailyLimit} free messages left today` : ` (${trial.dailyLimit} free messages per day)`}
+            {trial.trialEndsAt ? ` · ends on ${formatDay(trial.trialEndsAt)}` : ''}. After that, you&apos;ll need a{' '}
+            <Link href="/settings" className="text-accent hover:underline">saved payment method</Link> to keep chatting.
+          </p>
         )}
         <p className="mt-3 text-center text-xs text-text-muted">
           You&apos;re chatting with an AI. It answers only from what {displayName} has shared and can make mistakes.
