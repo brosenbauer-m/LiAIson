@@ -27,6 +27,9 @@ export default function SignupPage() {
   const [confirming, setConfirming] = useState(false)
   const [resending, setResending] = useState(false)
   const [resendCooldown, setResendCooldown] = useState(0)
+  // The account just created and waiting for email confirmation, so "Use a
+  // different email" can undo it and keep everything else that was filled in.
+  const [pending, setPending] = useState<{ userId: string; nonce: string } | null>(null)
 
   // Plan chosen on the plans page (/signup?plan=…).
   useEffect(() => {
@@ -152,11 +155,12 @@ export default function SignupPage() {
       setSignedInEmail('')
     }
 
+    const nonce = crypto.randomUUID()
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan },
+        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan, signup_nonce: nonce },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -177,6 +181,7 @@ export default function SignupPage() {
       router.push('/vault?welcome=1')
       router.refresh()
     } else if (data.user) {
+      setPending({ userId: data.user.id, nonce })
       setCheckingEmail(true)
     }
     setLoading(false)
@@ -221,17 +226,25 @@ export default function SignupPage() {
     setResending(false)
   }
 
-  const handleDifferentEmail = () => {
-    setCheckingEmail(false)
-    setEmail('')
-    setPassword('')
-    setDisplayName('')
-    setUsername('')
-    setUsernameStatus('idle')
-    setAgeConfirmed(false)
-    setPrivacyAccepted(false)
-    setResendCooldown(0)
+  // Go back to the form with everything still filled in. The unconfirmed
+  // account is removed first, so the username is free to use again.
+  const handleDifferentEmail = async () => {
     setError('')
+    if (pending) {
+      try {
+        await fetch('/api/auth/discard-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pending),
+        })
+      } catch {
+        // If this fails, the unconfirmed account is removed automatically later.
+      }
+      setPending(null)
+    }
+    setCheckingEmail(false)
+    setResendCooldown(0)
+    void checkUsername(username)
   }
 
   const usernameIndicator = () => {
