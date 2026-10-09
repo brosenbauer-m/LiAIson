@@ -3,12 +3,16 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { previousPeriod, viennaDateParts, type Period } from '@/lib/insights/periods'
 import { buildAndStoreReport } from '@/lib/insights/reports'
 import { emailPendingReports } from '@/lib/insights/email'
+import { getPlanAt } from '@/lib/billing/plan'
+import { echoAllowed } from '@/lib/plans'
 
 // Daily job (Vercel Cron, see vercel.json). Protected by CRON_SECRET.
 // - Every Monday (Vienna time): weekly report for the week that just ended (Mon–Sun).
 // - Every 1st of the month (Vienna time): monthly report for the calendar month that just ended.
 // - Every day: email reports that have not been emailed yet (owners can opt out in Settings).
 // - Every day: delete anonymous visitor_insights older than 35 days.
+// - Echoes by plan (plan held at the end of the period): Introvert none,
+//   Ambivert monthly only, Extrovert weekly + monthly.
 // Reports are unique per owner and period, so re-running is safe.
 
 export const maxDuration = 60
@@ -32,10 +36,10 @@ export async function GET(request: NextRequest) {
   if (today.weekday === 0 || manual === 'week') periods.push(previousPeriod('week', now))
   if (today.day === 1 || manual === 'month') periods.push(previousPeriod('month', now))
 
-  const summary: Record<string, { created: number; exists: number; empty: number; failed: number }> = {}
+  const summary: Record<string, { created: number; exists: number; empty: number; failed: number; notInPlan: number }> = {}
 
   for (const period of periods) {
-    const stats = { created: 0, exists: 0, empty: 0, failed: 0 }
+    const stats = { created: 0, exists: 0, empty: 0, failed: 0, notInPlan: 0 }
 
     const { data: owners } = await supabase
       .from('visitor_insights')
@@ -48,6 +52,11 @@ export async function GET(request: NextRequest) {
 
     for (const ownerId of ownerIds) {
       try {
+        const plan = await getPlanAt(ownerId, new Date(period.end.getTime() - 1))
+        if (!echoAllowed(plan, period.type)) {
+          stats.notInPlan += 1
+          continue
+        }
         const result = await buildAndStoreReport(ownerId, period)
         stats[result] += 1
       } catch (err) {

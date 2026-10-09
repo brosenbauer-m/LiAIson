@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import EchoesLocked from '@/components/plans/EchoesLocked'
 
 type Category = { category: string; count: number; examples: string[] }
-type Data = { total: number; categories: Category[] }
+type Echoes = 'none' | 'monthly' | 'weekly_monthly'
+type Data = { total: number; categories: Category[]; locked?: Echoes }
 
 export default function VisitorInsights() {
   const [period, setPeriod] = useState<'week' | 'month'>('week')
@@ -25,7 +27,7 @@ export default function VisitorInsights() {
           setError('Could not load insights right now.')
           setData(null)
         } else {
-          setData({ total: body.total ?? 0, categories: body.categories ?? [] })
+          setData({ total: body.total ?? 0, categories: body.categories ?? [], locked: body.locked ? body.echoes : undefined })
         }
       })
       .catch(() => { if (!cancelled) setError('Could not load insights right now.') })
@@ -64,6 +66,8 @@ export default function VisitorInsights() {
         <p className="text-sm text-text-secondary">Loading...</p>
       ) : error ? (
         <p className="text-sm text-error" role="alert">{error}</p>
+      ) : data?.locked ? (
+        <EchoesLocked period={period} echoes={data.locked} />
       ) : !data || data.total === 0 ? (
         <p className="text-sm text-text-secondary">
           No questions yet {period === 'week' ? 'this week' : 'this month'}. Share your LiAIson link to get people asking.

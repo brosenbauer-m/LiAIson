@@ -36,6 +36,23 @@ export async function getVaultChars(userId: string): Promise<number> {
   return ((data as { content: string | null }[] | null) ?? []).reduce((n, r) => n + Array.from(r.content ?? '').length, 0)
 }
 
+// The plan a user had at a given moment (default: now), from plan_changes.
+export async function getPlanAt(userId: string, at: Date = new Date()): Promise<PlanId> {
+  const supabase = createServiceClient()
+  const { data } = await supabase
+    .from('plan_changes')
+    .select('to_plan')
+    .eq('user_id', userId)
+    .lte('effective_at', at.toISOString())
+    .order('effective_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ to_plan: string }>()
+  if (data && isPlanId(data.to_plan)) return data.to_plan
+  const { data: user } = await supabase.from('users').select('plan').eq('id', userId).maybeSingle<{ plan: string }>()
+  return user && isPlanId(user.plan) ? user.plan : 'introvert'
+}
+
 export async function getPlanState(userId: string): Promise<PlanState> {
   const supabase = createServiceClient()
   const now = new Date()

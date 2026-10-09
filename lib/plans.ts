@@ -94,6 +94,13 @@ export function planRank(id: PlanId): number {
   return PLAN_IDS.indexOf(id)
 }
 
+// Echoes by plan: Introvert none, Ambivert monthly, Extrovert weekly + monthly.
+export function echoAllowed(plan: PlanId, period: 'week' | 'month'): boolean {
+  const level = PLANS[plan].echoes
+  if (level === 'none') return false
+  return period === 'month' || level === 'weekly_monthly'
+}
+
 export function formatChars(n: number): string {
   return n.toLocaleString('en-GB')
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import EchoesLocked from '@/components/plans/EchoesLocked'
 
 type ReportCategory = { category: string; count: number; examples: string[]; change: number | null }
 type ReportContent = {
@@ -123,6 +124,7 @@ export default function InsightsPage() {
   const [tab, setTab] = useState<'week' | 'month'>('week')
   const [reports, setReports] = useState<Report[] | null>(null)
   const [status, setStatus] = useState<'loading' | 'ok' | 'signed-out' | 'error'>('loading')
+  const [echoes, setEchoes] = useState<'none' | 'monthly' | 'weekly_monthly'>('weekly_monthly')
 
   useEffect(() => {
     fetch('/api/insights/reports', { cache: 'no-store' })
@@ -131,12 +133,14 @@ export default function InsightsPage() {
         const body = await res.json().catch(() => null)
         if (!res.ok || !body) { setStatus('error'); return }
         setReports(body.reports ?? [])
+        if (body.echoes) setEchoes(body.echoes)
         setStatus('ok')
       })
       .catch(() => setStatus('error'))
   }, [])
 
   const visible = (reports ?? []).filter(r => r.period_type === tab)
+  const tabLocked = echoes === 'none' || (tab === 'week' && echoes === 'monthly')
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,7 +174,8 @@ export default function InsightsPage() {
           </p>
         )}
         {status === 'error' && <p className="text-error" role="alert">Could not load your Echoes right now.</p>}
-        {status === 'ok' && visible.length === 0 && (
+        {status === 'ok' && tabLocked && <EchoesLocked period={tab} echoes={echoes} />}
+        {status === 'ok' && !tabLocked && visible.length === 0 && (
           <div className="bg-card border border-border rounded-xl p-8 text-center shadow-soft">
             <p className="text-text-primary font-medium">No {tab === 'week' ? 'weekly' : 'monthly'} Echoes yet.</p>
             <p className="text-sm text-text-secondary mt-1">

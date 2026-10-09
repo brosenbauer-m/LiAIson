@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { currentPeriod } from '@/lib/insights/periods'
+import { getPlanAt } from '@/lib/billing/plan'
+import { echoAllowed, PLANS } from '@/lib/plans'
 
 // Owner-only: live counts of what visitors want to know, for the current
 // calendar week (Mon–Sun, Vienna time) or current calendar month.
@@ -17,6 +19,15 @@ export async function GET(request: NextRequest) {
 
   const type = request.nextUrl.searchParams.get('period') === 'month' ? 'month' : 'week'
   const period = currentPeriod(type)
+
+  // Echoes by plan: Introvert none, Ambivert monthly, Extrovert weekly + monthly.
+  const plan = await getPlanAt(user.id)
+  if (!echoAllowed(plan, type)) {
+    return NextResponse.json(
+      { locked: true, echoes: PLANS[plan].echoes, period: { type, label: period.label } },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
 
   const service = createServiceClient()
   const { data, error } = await service

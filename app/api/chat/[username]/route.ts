@@ -13,6 +13,8 @@ import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
 import { isOverSpendLimit } from '@/lib/usage/spend'
 import { getUnpaidBill } from '@/lib/billing/monthly'
+import { getPlanAt } from '@/lib/billing/plan'
+import { echoAllowed } from '@/lib/plans'
 import type { ChatMessage, User } from '@/types'
 
 // Post-process response to strip any leaked prompt structure
@@ -241,9 +243,15 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
       // response has been sent. Errors are ignored.
       const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
       // Anonymous "what visitors want to know" statement for the owner's insights.
-      // Skipped when the owner chats with their own LiAIson.
+      // Skipped when the owner chats with their own LiAIson, and when the owner's
+      // plan has no Echoes (Introvert), so no AI is spent on it.
       if (lastUserMessage && visitor.id !== user.id) {
-        waitUntil(captureVisitorInsight(user.id, lastUserMessage.content, actor).catch(() => {/* ignore */}))
+        waitUntil(
+          (async () => {
+            if (!echoAllowed(await getPlanAt(user.id), 'month')) return
+            await captureVisitorInsight(user.id, lastUserMessage.content, actor)
+          })().catch(() => {/* ignore */})
+        )
       }
     },
   })

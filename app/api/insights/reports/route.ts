@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
+import { getPlanAt } from '@/lib/billing/plan'
+import { PLANS } from '@/lib/plans'
 
 // Owner-only: the signed-in user's saved weekly and monthly reports (newest first).
 
@@ -23,5 +25,6 @@ export async function GET() {
     return NextResponse.json({ error: 'Could not load reports' }, { status: 500 })
   }
 
-  return NextResponse.json({ reports: data ?? [] }, { headers: { 'Cache-Control': 'no-store' } })
+  const plan = await getPlanAt(user.id)
+  return NextResponse.json({ reports: data ?? [], echoes: PLANS[plan].echoes }, { headers: { 'Cache-Control': 'no-store' } })
 }
