@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { previousPeriod, viennaDateParts } from '@/lib/insights/periods'
 import { billMonth, type BillResult } from '@/lib/billing/monthly'
+import { processUnverifiedAccounts, type UnverifiedSummary } from '@/lib/auth/unverified'
 
 // Daily job (Vercel Cron, see vercel.json). Protected by CRON_SECRET.
 // On the 1st of the month (Vienna time) — or with ?run=month — bills the month
 // that just ended for everyone who sent messages in it or has an amount carried
 // over. Bills are unique per user and month, so re-running is safe.
+// Every day it also reminds and, after 30 days, deletes accounts whose email
+// was never confirmed (lib/auth/unverified.ts).
 
 export const maxDuration = 60
 
@@ -18,9 +21,18 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date()
+
+  let unverified: UnverifiedSummary | { error: string }
+  try {
+    unverified = await processUnverifiedAccounts('https://www.my-liaison.app', now)
+  } catch (err) {
+    console.error('UNVERIFIED_ACCOUNTS_ERROR', err)
+    unverified = { error: 'failed' }
+  }
+
   const manual = request.nextUrl.searchParams.get('run') === 'month'
   if (viennaDateParts(now).day !== 1 && !manual) {
-    return NextResponse.json({ ok: true, skipped: 'not the 1st' })
+    return NextResponse.json({ ok: true, unverified, skipped: 'not the 1st' })
   }
 
   const period = previousPeriod('month', now)
@@ -57,5 +69,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, period: { start: period.start, end: period.end }, users: userIds.size, summary })
+  return NextResponse.json({ ok: true, unverified, period: { start: period.start, end: period.end }, users: userIds.size, summary })
 }
