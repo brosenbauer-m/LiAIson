@@ -45,7 +45,7 @@ export default async function DashboardPage() {
       <div className="max-w-6xl mx-auto px-4 py-12 space-y-8">
         {/* Welcome */}
         <div className="mb-2">
-          <h1 className="text-4xl font-bold text-text-primary">
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">
             Welcome back, {profile?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
           <p className="text-text-secondary text-lg mt-2">Here&apos;s what&apos;s been happening with your LiAIson</p>

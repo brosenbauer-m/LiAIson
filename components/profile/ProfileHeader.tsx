@@ -30,7 +30,7 @@ export default function ProfileHeader({ avatarUrl, displayName, shortBio }: Prof
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">{displayName}</h1>
+          <h1 className="text-3xl font-display font-medium tracking-tight text-text-primary mb-2">{displayName}</h1>
           {shortBio && (
             <p className="text-text-secondary text-base leading-relaxed">{shortBio}</p>
           )}

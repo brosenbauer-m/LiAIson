@@ -8,7 +8,7 @@ export default function PrivacyPage() {
           ← LiAIson
         </Link>
 
-        <h1 className="text-4xl font-bold text-text-primary mb-2">Privacy Policy</h1>
+        <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary mb-2">Privacy Policy</h1>
         <p className="text-text-secondary mb-10">Last updated: September 2026</p>
 
         <div className="space-y-8 text-text-secondary leading-relaxed">

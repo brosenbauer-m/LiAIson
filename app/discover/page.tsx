@@ -117,7 +117,7 @@ export default function DiscoverPage() {
     <div className="min-h-screen bg-background">
 
       <div className="max-w-xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold text-text-primary mb-3 text-center">Discover</h1>
+        <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary mb-3 text-center">Discover</h1>
         <p className="text-text-secondary text-center mb-8">
           {mode === 'name'
             ? <>Find someone&apos;s LiAIson by name or username.</>

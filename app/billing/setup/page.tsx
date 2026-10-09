@@ -67,7 +67,7 @@ export default function BillingSetupPage() {
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary">
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">
             {done ? 'You’re all set' : 'Your free month has ended'}
           </h1>
           <p className="text-text-secondary mt-3 leading-relaxed">

@@ -179,7 +179,7 @@ export default function PlansPage() {
   return (
     <div className="min-h-screen bg-background px-4 py-12">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold text-text-primary mb-3">Plans</h1>
+        <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary mb-3">Plans</h1>
         <p className="text-text-secondary mb-2 max-w-2xl">
           Every plan starts with a free month. After that, your plan continues automatically and you&apos;ll need to save a card.
           On every plan, you also pay for the messages you send, usually between half a cent and two cents each.

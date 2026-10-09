@@ -146,7 +146,7 @@ export default function InsightsPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-8">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary">Your Echoes</h1>
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Your Echoes</h1>
           <p className="text-text-secondary text-lg mt-2">
             What your LiAIson heard: a new weekly Echo every Monday and a monthly Echo on the 1st — what visitors wanted to know, in anonymous form.
           </p>

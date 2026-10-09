@@ -28,7 +28,7 @@ export default async function ReceiptsPage() {
     <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
       <div className="space-y-2">
         <Link href="/settings" className="text-sm text-text-secondary hover:text-accent">← Settings</Link>
-        <h1 className="text-3xl font-bold text-text-primary">Receipts</h1>
+        <h1 className="text-3xl font-display font-medium tracking-tight text-text-primary">Receipts</h1>
         <p className="text-sm text-text-secondary">All payments for your LiAIson account. Open a receipt to print it or save it as a PDF.</p>
         {isTestMode() && (
           <p className="text-xs text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">Test mode — these are test payments, no real money was charged.</p>

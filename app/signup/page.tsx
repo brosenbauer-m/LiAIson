@@ -259,8 +259,8 @@ export default function SignupPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-2xl text-accent-light">LiAIson</Link>
-          <h1 className="text-2xl font-bold text-text-primary mt-4">{checkingEmail ? 'Check your email' : 'Create your LiAIson'}</h1>
+          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">{checkingEmail ? 'Check your email' : 'Create your LiAIson'}</h1>
           <p className="text-text-secondary mt-2">{checkingEmail ? 'Confirm your email to activate your account' : 'Set up your personal AI representative'}</p>
         </div>
 

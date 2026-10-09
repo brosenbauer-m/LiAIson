@@ -277,7 +277,7 @@ export default function VaultPage() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-text-primary">My Vault</h1>
+            <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">My Vault</h1>
             <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
           </div>
           <div className="flex flex-col items-end">

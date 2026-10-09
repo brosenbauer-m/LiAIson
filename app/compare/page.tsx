@@ -132,7 +132,7 @@ export default function ComparePage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary">Compare</h1>
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Compare</h1>
           <p className="text-text-secondary text-lg mt-2">See what you have in common with several people at once.</p>
         </div>
 

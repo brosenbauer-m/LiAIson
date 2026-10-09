@@ -59,8 +59,8 @@ export default function ConfirmPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-bold text-2xl text-accent-light">LiAIson</Link>
-          <h1 className="text-2xl font-bold text-text-primary mt-4">{title}</h1>
+          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">{title}</h1>
         </div>
         <div className="bg-card border border-border rounded-2xl p-8 space-y-5">
           {invalid ? (

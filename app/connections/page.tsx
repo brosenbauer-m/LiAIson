@@ -59,7 +59,7 @@ export default async function ConnectionsPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <div>
-          <h1 className="text-4xl font-bold text-text-primary">Connections</h1>
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Connections</h1>
           <p className="text-text-secondary text-lg mt-2">{innerAllowed ? 'Choose who is in your Inner Circle.' : 'People who can talk to your LiAIson.'}</p>
           {limits.groupCompare >= 2 && (
             <Link href="/compare" className="mt-3 inline-block text-sm text-accent hover:underline font-medium">
