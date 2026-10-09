@@ -2,8 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { mistral, FAST_MODEL } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
-import { getPlanAt } from '@/lib/billing/plan'
-import { PLANS } from '@/lib/plans'
+import { getPlanLimits } from '@/lib/billing/plan'
 import { resolveCircles } from '@/lib/access/resolveScope'
 import { md5 } from '@/lib/search/indexer'
 import type { SimilarityInterest, SimilarityLevel, SimilarityResult } from '@/lib/similarity/types'
@@ -17,7 +16,7 @@ import type { SimilarityInterest, SimilarityLevel, SimilarityResult } from '@/li
 //   not matter.
 // - The result is kept in similarity_results until either text changes
 //   (input hash), so opening it again costs nothing and does not count.
-// - Monthly limit per plan (PLANS[plan].similaritiesPerMonth); included in
+// - Monthly limit per plan (similaritiesPerMonth, a slider on Social Butterfly); included in
 //   the plan, not billed.
 // The result shape works for several people (Social Butterfly later):
 // every interest lists the people who have it.
@@ -39,8 +38,8 @@ export class SimilarityError extends Error {
 
 export async function getSimilarityQuota(userId: string): Promise<SimilarityQuota> {
   const supabase = createServiceClient()
-  const plan = await getPlanAt(userId)
-  const quota = PLANS[plan].similarity === 'score_visual' ? PLANS[plan].similaritiesPerMonth : 0
+  const limits = await getPlanLimits(userId)
+  const quota = limits.similarity === 'score_visual' ? limits.similaritiesPerMonth : 0
   if (quota <= 0) return { quota: 0, used: 0 }
   const { start } = currentPeriod('month')
   const { count, error } = await supabase

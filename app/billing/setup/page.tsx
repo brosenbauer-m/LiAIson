@@ -4,14 +4,25 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import PlanFeatures from '@/components/plans/PlanFeatures'
-import { PLANS, PLAN_IDS, type PlanId } from '@/lib/plans'
+import { PLANS, PLAN_IDS, formatEur, type PlanId } from '@/lib/plans'
 
 type PlanState = {
   plan: PlanId
+  feeEur: number
   exempt: boolean
   inTrial: boolean
   hasCard: boolean
   vaultChars: number
+}
+
+// Plans that can be chosen here (plus the current one, e.g. Social Butterfly
+// before it is open to everyone). Slider choices are changed on the Plans page.
+function choices(state: PlanState): PlanId[] {
+  return PLAN_IDS.filter(id => PLANS[id].available || id === state.plan)
+}
+
+function feeOf(state: PlanState, id: PlanId): number {
+  return id === state.plan ? state.feeEur : PLANS[id].feeEur
 }
 
 // After the free month: the person adds a card to keep using LiAIson, and can
@@ -80,8 +91,8 @@ export default function BillingSetupPage() {
         {state && !state.exempt && (
           <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
             <h2 className="font-semibold text-text-primary text-lg">Your plan</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {PLAN_IDS.map(id => (
+            <div className={`grid gap-2 ${choices(state).length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+              {choices(state).map(id => (
                 <button
                   key={id}
                   type="button"
@@ -94,7 +105,7 @@ export default function BillingSetupPage() {
                 >
                   <span className="block text-sm font-medium text-text-primary">{PLANS[id].name}</span>
                   <span className="block text-xs text-text-secondary">
-                    {busy === id ? 'Please wait…' : PLANS[id].feeEur === 0 ? 'Free' : `€${PLANS[id].feeEur}/month`}
+                    {busy === id ? 'Please wait…' : feeOf(state, id) === 0 ? 'Free' : `${formatEur(feeOf(state, id))}/month`}
                   </span>
                 </button>
               ))}

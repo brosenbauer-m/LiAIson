@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { PLANS, formatChars, type PlanId } from '@/lib/plans'
+import { PLANS, BUTTERFLY_SLIDERS, SLIDER_KEYS, formatChars, formatEur, type PlanId, type PlanOptions } from '@/lib/plans'
 
 type PlanState = {
   plan: PlanId
+  options: PlanOptions | null
+  feeEur: number
   pendingPlan: PlanId | null
   pendingFrom: string | null
   exempt: boolean
@@ -48,9 +50,20 @@ export default function PlanCard() {
           <div className="flex items-baseline justify-between gap-4">
             <p className="text-2xl font-semibold text-text-primary">{plan.name}</p>
             <p className="text-sm text-text-secondary">
-              {state.exempt ? 'Not billed' : plan.feeEur === 0 ? 'Free' : `€${plan.feeEur} / month`}
+              {state.exempt ? 'Not billed' : state.feeEur === 0 ? 'Free' : `${formatEur(state.feeEur)} / month`}
             </p>
           </div>
+
+          {state.options && (
+            <ul className="text-sm text-text-secondary space-y-0.5">
+              {SLIDER_KEYS.map(key => (
+                <li key={key} className="flex justify-between gap-4">
+                  <span>{BUTTERFLY_SLIDERS[key].label}</span>
+                  <span className="tabular-nums text-text-primary">{state.options![key]}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs text-text-secondary">
@@ -64,12 +77,14 @@ export default function PlanCard() {
 
           {state.pendingPlan && state.pendingFrom && (
             <p className="text-sm text-text-secondary">
-              You&apos;ll move to {PLANS[state.pendingPlan].name} on {formatDay(state.pendingFrom)}.
+              {state.pendingPlan === state.plan
+                ? `Your new ${plan.name} choices start on ${formatDay(state.pendingFrom)}.`
+                : `You'll move to ${PLANS[state.pendingPlan].name} on ${formatDay(state.pendingFrom)}.`}
             </p>
           )}
           {!state.exempt && state.inTrial && (
             <p className="text-xs text-text-secondary leading-relaxed">
-              Free until {formatDay(state.trialEndsAt)}. After that, {plan.feeEur > 0 ? `€${plan.feeEur} per month is charged at the end of each month with your messages, and ` : ''}you need a saved card (below) to keep using LiAIson.
+              Free until {formatDay(state.trialEndsAt)}. After that, {state.feeEur > 0 ? `${formatEur(state.feeEur)} per month is charged at the end of each month with your messages, and ` : ''}you need a saved card (below) to keep using LiAIson.
             </p>
           )}
         </>

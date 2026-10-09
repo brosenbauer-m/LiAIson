@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
 import Toggle from '@/components/ui/Toggle'
-import { PLANS, PLAN_IDS, isPlanId, type PlanId } from '@/lib/plans'
+import { PLANS, SIGNUP_PLAN_IDS, isPlanId, type PlanId } from '@/lib/plans'
 import PlanFeatures from '@/components/plans/PlanFeatures'
 
 export default function SignupPage() {
@@ -35,7 +35,7 @@ export default function SignupPage() {
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('plan')
     const timer = setTimeout(() => {
-      if (isPlanId(fromUrl)) setPlan(fromUrl)
+      if (isPlanId(fromUrl) && SIGNUP_PLAN_IDS.includes(fromUrl)) setPlan(fromUrl)
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -367,7 +367,7 @@ export default function SignupPage() {
             <fieldset>
               <legend className="block text-sm font-medium text-text-primary mb-1.5">Plan</legend>
               <div className="grid grid-cols-3 gap-2">
-                {PLAN_IDS.map(id => (
+                {SIGNUP_PLAN_IDS.map(id => (
                   <label
                     key={id}
                     className={`cursor-pointer rounded-lg border px-3 py-2.5 text-center transition-all ${

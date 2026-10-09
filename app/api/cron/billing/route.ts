@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   const { data: paidNow } = await supabase
     .from('users')
     .select('id')
-    .in('plan', ['ambivert', 'extrovert'])
+    .neq('plan', 'introvert')
     .eq('billing_exempt', false)
     .limit(100000)
   for (const r of (paidNow as { id: string }[] | null) ?? []) userIds.add(r.id)

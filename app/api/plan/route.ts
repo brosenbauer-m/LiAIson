@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { changePlan, getPlanState } from '@/lib/billing/plan'
 import { isPlanId } from '@/lib/plans'
 
-// GET → the signed-in user's plan state. POST { plan } → change plan
+// GET → the signed-in user's plan state. POST { plan, options? } → change plan
+// (options = Social Butterfly slider choices)
 // (rules in lib/billing/plan.ts).
 
 export async function GET() {
@@ -24,11 +25,11 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
-  const plan = (body as { plan?: unknown }).plan
+  const { plan, options } = body as { plan?: unknown; options?: unknown }
   if (!isPlanId(plan)) return NextResponse.json({ error: 'Unknown plan' }, { status: 400 })
 
   try {
-    const result = await changePlan(user.id, plan)
+    const result = await changePlan(user.id, plan, options)
     if (!result.ok) return NextResponse.json({ error: result.error, needsCard: result.needsCard ?? false }, { status: result.status })
     return NextResponse.json({ message: result.message, state: result.state })
   } catch (err) {

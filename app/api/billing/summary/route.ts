@@ -26,7 +26,7 @@ export async function GET() {
     const from = new Date(Math.max(period.start.getTime(), trialEnd.getTime()))
     const monthToDateEur = profile?.billing_exempt ? 0 : await billableUsageEur(user.id, from, new Date())
     // Plan fee expected for this whole month (charged with the bill on the 1st).
-    const fee = profile?.billing_exempt ? { plan: null, feeEur: 0 } : await planFeeFor(user.id, period)
+    const fee = profile?.billing_exempt ? { plan: null, options: null, feeEur: 0 } : await planFeeFor(user.id, period)
     const unpaid = await getUnpaidBill(user.id)
     return NextResponse.json(
       {

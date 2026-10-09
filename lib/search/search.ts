@@ -2,8 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { mistral, FAST_MODEL } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
 import { currentPeriod } from '@/lib/insights/periods'
-import { getPlanAt } from '@/lib/billing/plan'
-import { PLANS } from '@/lib/plans'
+import { getPlanLimits } from '@/lib/billing/plan'
 import { EMBED_MODEL, embedTexts } from '@/lib/search/indexer'
 
 // Discover AI search: "find people by what they share" (owner decisions 2026-10-09).
@@ -11,7 +10,7 @@ import { EMBED_MODEL, embedTexts } from '@/lib/search/indexer'
 //   (enforced again in the database by search_match_chunks).
 // - Results show name, username, photo and a one-line reason written by the
 //   AI. Never the raw Vault text.
-// - Monthly quota per plan (PLANS[plan].aiSearchesPerMonth); a search counts
+// - Monthly quota per plan (aiSearchesPerMonth, a slider on Social Butterfly); a search counts
 //   once the AI has checked the matches. Included in the plan, not billed.
 
 const MATCH_PASSAGES = 40
@@ -32,8 +31,7 @@ export type SearchQuota = { quota: number; used: number }
 // Searches used this month (Vienna calendar month) and the plan's quota.
 export async function getSearchQuota(userId: string): Promise<SearchQuota> {
   const supabase = createServiceClient()
-  const plan = await getPlanAt(userId)
-  const quota = PLANS[plan].aiSearchesPerMonth
+  const quota = (await getPlanLimits(userId)).aiSearchesPerMonth
   const { start } = currentPeriod('month')
   const { count, error } = await supabase
     .from('ai_usage')

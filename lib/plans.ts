@@ -4,15 +4,21 @@
 //   markup, see lib/usage/spend.ts; the markup is not shown in the UI).
 // - Fees are a monthly platform fee, charged at month end with usage.
 // - The plan is chosen at sign-up; the free month gives that plan's features.
-// Circles: Introvert 1; Ambivert and Extrovert have Inner + Outer. Custom extra
-// circles belong to the future Social Butterfly plan.
+// Circles: Introvert 1; Ambivert and Extrovert have Inner + Outer; Social
+// Butterfly adds its own named circles.
 // Similarity: on every plan the LiAIson points out what the reader has in
-// common with the person in chat. Score + bubble map only on Extrovert
-// (comparing several people at once comes with Social Butterfly).
+// common with the person in chat. Score + bubble map on Extrovert and Social
+// Butterfly; Social Butterfly also compares several people at once.
+// Social Butterfly: the fee follows sliders (own circles, AI searches,
+// Similarity comparisons); see BUTTERFLY_SLIDERS. Shown as "Coming soon" until
+// `available` is true (the exempt accounts have it for testing).
 
-export type PlanId = 'introvert' | 'ambivert' | 'extrovert'
+export type PlanId = 'introvert' | 'ambivert' | 'extrovert' | 'butterfly'
 
-export const PLAN_IDS: PlanId[] = ['introvert', 'ambivert', 'extrovert']
+export const PLAN_IDS: PlanId[] = ['introvert', 'ambivert', 'extrovert', 'butterfly']
+
+// Plans offered at sign-up. Social Butterfly is chosen later on the Plans page.
+export const SIGNUP_PLAN_IDS: PlanId[] = ['introvert', 'ambivert', 'extrovert']
 
 export type EchoLevel = 'none' | 'monthly' | 'weekly_monthly'
 
@@ -27,6 +33,12 @@ export type Plan = {
   similarity: 'none' | 'score_visual'
   similaritiesPerMonth: number
   circles: 1 | 2
+  // Own named circles on top of Inner + Outer (Social Butterfly: slider).
+  extraCircles: number
+  // How many other people can be compared at once (Similarity).
+  groupCompare: number
+  // false: shown as "Coming soon" and can't be chosen.
+  available: boolean
   // What the plan includes, in plain sentences. `help` points to the matching
   // "Learn more" text in FEATURE_HELP; `highlight` shows it in bold.
   features: { text: string; help: string; highlight?: boolean }[]
@@ -44,6 +56,9 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'none',
     similaritiesPerMonth: 0,
     circles: 1,
+    extraCircles: 0,
+    groupCompare: 0,
+    available: true,
     features: [
       { text: 'Your Vault can hold up to 3,000 characters.', help: 'vault' },
       { text: 'Everyone who visits your profile sees the same information.', help: 'circles' },
@@ -63,6 +78,9 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'none',
     similaritiesPerMonth: 0,
     circles: 2,
+    extraCircles: 0,
+    groupCompare: 0,
+    available: true,
     features: [
       { text: 'Your Vault can hold up to 15,000 characters.', help: 'vault' },
       { text: 'You get an Echo every month.', help: 'echoes' },
@@ -83,6 +101,9 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'score_visual',
     similaritiesPerMonth: 100,
     circles: 2,
+    extraCircles: 0,
+    groupCompare: 1,
+    available: true,
     features: [
       { text: 'See how much you have in common with someone, with a map of your shared interests.', help: 'similarity', highlight: true },
       { text: 'Your Vault can hold up to 30,000 characters.', help: 'vault' },
@@ -92,6 +113,100 @@ export const PLANS: Record<PlanId, Plan> = {
       { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
   },
+  butterfly: {
+    id: 'butterfly',
+    name: 'Social Butterfly',
+    feeEur: 6,
+    tagline: 'Your own circles, compare several people at once, and choose how much you need.',
+    vaultChars: 30000,
+    echoes: 'weekly_monthly',
+    aiSearchesPerMonth: 20,
+    similarity: 'score_visual',
+    similaritiesPerMonth: 100,
+    circles: 2,
+    extraCircles: 2,
+    groupCompare: 4,
+    available: false,
+    features: [
+      { text: 'Make your own circles, such as Family or Climbing club, and choose what each one sees.', help: 'circles', highlight: true },
+      { text: 'Compare yourself with up to 4 people at once on one map.', help: 'similarity', highlight: true },
+      { text: 'Choose how many circles, searches and comparisons you need. The price follows.', help: 'butterfly' },
+      { text: 'Everything in Extrovert: weekly and monthly Echoes and a 30,000-character Vault.', help: 'echoes' },
+      { text: 'You pay only for the messages you send.', help: 'messages' },
+    ],
+  },
+}
+
+// Social Butterfly sliders (Claude's proposal 2026-10-09, owner to confirm).
+// Price = base fee + eurPerStep for every step above the minimum. The
+// minimums are what the base fee includes. The Vault stays at 30,000
+// characters: a bigger Vault makes every message to it cost more for the sender.
+export type PlanOptions = { extraCircles: number; aiSearches: number; similarities: number }
+export type SliderKey = keyof PlanOptions
+
+export const BUTTERFLY_SLIDERS: Record<SliderKey, { label: string; min: number; max: number; step: number; eurPerStep: number }> = {
+  extraCircles: { label: 'Your own circles', min: 2, max: 10, step: 1, eurPerStep: 0.5 },
+  aiSearches: { label: 'AI searches per month', min: 20, max: 100, step: 20, eurPerStep: 1 },
+  similarities: { label: 'Similarity comparisons per month', min: 100, max: 500, step: 100, eurPerStep: 1 },
+}
+
+export const SLIDER_KEYS: SliderKey[] = ['extraCircles', 'aiSearches', 'similarities']
+
+export const DEFAULT_PLAN_OPTIONS: PlanOptions = { extraCircles: 2, aiSearches: 20, similarities: 100 }
+export const MAX_PLAN_OPTIONS: PlanOptions = { extraCircles: 10, aiSearches: 100, similarities: 500 }
+
+// Any input → valid slider positions (clamped, on a step).
+export function normalizePlanOptions(raw: unknown, fallback: PlanOptions = DEFAULT_PLAN_OPTIONS): PlanOptions {
+  const source = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {}
+  const out = { ...fallback }
+  for (const key of SLIDER_KEYS) {
+    const s = BUTTERFLY_SLIDERS[key]
+    const n = Number(source[key] ?? fallback[key])
+    if (!Number.isFinite(n)) continue
+    const stepped = s.min + Math.round((n - s.min) / s.step) * s.step
+    out[key] = Math.min(s.max, Math.max(s.min, stepped))
+  }
+  return out
+}
+
+export function samePlanOptions(a: PlanOptions | null, b: PlanOptions | null): boolean {
+  if (!a || !b) return a === b
+  return SLIDER_KEYS.every(k => a[k] === b[k])
+}
+
+export function butterflyFeeEur(options: PlanOptions): number {
+  let fee = PLANS.butterfly.feeEur
+  for (const key of SLIDER_KEYS) {
+    const s = BUTTERFLY_SLIDERS[key]
+    fee += ((options[key] - s.min) / s.step) * s.eurPerStep
+  }
+  return Math.round(fee * 100) / 100
+}
+
+// A plan's limits and fee, with the slider choices for Social Butterfly.
+export type PlanLimits = Omit<Plan, 'features' | 'tagline'> & { options: PlanOptions | null }
+
+export function planLimits(plan: PlanId, rawOptions?: unknown): PlanLimits {
+  const p = PLANS[plan]
+  const base = {
+    id: p.id, name: p.name, feeEur: p.feeEur, vaultChars: p.vaultChars, echoes: p.echoes,
+    aiSearchesPerMonth: p.aiSearchesPerMonth, similarity: p.similarity, similaritiesPerMonth: p.similaritiesPerMonth,
+    circles: p.circles, extraCircles: p.extraCircles, groupCompare: p.groupCompare, available: p.available,
+  }
+  if (plan !== 'butterfly') return { ...base, options: null }
+  const options = normalizePlanOptions(rawOptions)
+  return {
+    ...base,
+    feeEur: butterflyFeeEur(options),
+    extraCircles: options.extraCircles,
+    aiSearchesPerMonth: options.aiSearches,
+    similaritiesPerMonth: options.similarities,
+    options,
+  }
+}
+
+export function formatEur(n: number): string {
+  return Number.isInteger(n) ? `€${n}` : `€${n.toFixed(2)}`
 }
 
 export function isPlanId(value: unknown): value is PlanId {
@@ -102,7 +217,7 @@ export function planRank(id: PlanId): number {
   return PLAN_IDS.indexOf(id)
 }
 
-// Echoes by plan: Introvert none, Ambivert monthly, Extrovert weekly + monthly.
+// Echoes by plan: Introvert none, Ambivert monthly, Extrovert and Social Butterfly weekly + monthly.
 export function echoAllowed(plan: PlanId, period: 'week' | 'month'): boolean {
   const level = PLANS[plan].echoes
   if (level === 'none') return false
@@ -144,11 +259,16 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'similarity',
     title: 'Similarity',
-    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. You can turn this off in Settings (Use my Vault when I chat). With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can compare yourself with up to 100 people a month. The other person is not told.',
+    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. You can turn this off in Settings (Use my Vault when I chat). With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can compare yourself with up to 100 people a month. With Social Butterfly you can compare yourself with up to 4 people at once on one map. The other person is not told.',
   },
   {
     key: 'circles',
     title: 'Circles',
-    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. With Introvert there is one circle, so everyone sees the same information.',
+    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. With Introvert there is one circle, so everyone sees the same information. With Social Butterfly you can also make your own circles, such as Family or Climbing club, and put each part of your Vault in the circle that should see it.',
+  },
+  {
+    key: 'butterfly',
+    title: 'Social Butterfly',
+    text: 'Social Butterfly lets you choose how much you need. Move the sliders to pick how many of your own circles, AI searches and Similarity comparisons you want each month, and the monthly price changes with them. You can change them at any time: more takes effect right away, less from the start of next month.',
   },
 ]

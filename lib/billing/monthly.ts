@@ -126,6 +126,7 @@ export async function billMonth(
       usage_eur: usage,
       plan: fee.plan,
       plan_fee_eur: fee.feeEur,
+      plan_options: fee.options,
       carried_in_eur: carriedIn,
       prepaid_applied_eur: prepaid,
       net_eur: net,
