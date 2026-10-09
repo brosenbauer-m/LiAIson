@@ -15,7 +15,12 @@ import { isOverSpendLimit } from '@/lib/usage/spend'
 import { getUnpaidBill } from '@/lib/billing/monthly'
 import { getPlanAt } from '@/lib/billing/plan'
 import { echoAllowed } from '@/lib/plans'
+import { COMMON_SIGNAL } from '@/lib/chat/signals'
 import type { ChatMessage, User } from '@/types'
+
+// The AI's similarity marker [[common]] (lib/chat/signals.ts), also with stray spaces.
+const COMMON_MARKER_PATTERN = /\[\[\s*common\s*\]\]/gi
+const MARKER_HOLD = 16
 
 // Post-process response to strip any leaked prompt structure
 function sanitizeResponse(text: string): string {
@@ -220,15 +225,33 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
           ],
         })
 
+        // The similarity marker is removed from the text (lib/chat/signals.ts).
+        // A possible start of it is held back until the next chunk shows
+        // whether it is the marker.
         let usage: { promptTokens?: number; completionTokens?: number } | undefined
+        let pending = ''
+        let common = false
+        const flush = (final: boolean) => {
+          pending = pending.replace(COMMON_MARKER_PATTERN, () => {
+            common = true
+            return ''
+          })
+          const bracket = pending.indexOf('[', Math.max(0, pending.length - MARKER_HOLD))
+          const cut = final || bracket === -1 ? pending.length : bracket
+          const out = pending.slice(0, cut)
+          pending = pending.slice(cut)
+          if (out) controller.enqueue(encoder.encode(sanitizeResponse(out)))
+        }
         for await (const event of mistralStream) {
           if (event.data?.usage) usage = event.data.usage
           const text = extractTextContent(event.data?.choices[0]?.delta.content)
           if (text) {
-            const sanitized = sanitizeResponse(text)
-            controller.enqueue(encoder.encode(sanitized))
+            pending += text
+            flush(false)
           }
         }
+        flush(true)
+        if (common) controller.enqueue(encoder.encode(COMMON_SIGNAL))
 
         // Billed to the sender.
         await logAiUsage({ userId: visitor.id, feature: 'chat', model: CHAT_MODEL, actor, usage })

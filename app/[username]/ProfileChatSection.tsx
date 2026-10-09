@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import ChatBubble from '@/components/chat/ChatBubble'
 import SuggestedPromptChip from '@/components/ui/SuggestedPromptChip'
+import { readChatSignals } from '@/lib/chat/signals'
 import type { ChatMessage } from '@/types'
 
 interface Props {
@@ -154,10 +155,11 @@ export default function ProfileChatSection({ ownerId, username, displayName }: P
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         accumulated += chunk
-        setStreamingContent(accumulated)
+        setStreamingContent(readChatSignals(accumulated).text)
       }
 
-      setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
+      const reply = readChatSignals(accumulated)
+      setMessages(prev => [...prev, { role: 'assistant', content: reply.text }])
       setStreamingContent('')
       loadTrial()
     } catch {
