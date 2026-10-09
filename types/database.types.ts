@@ -592,13 +592,13 @@ isOneToOne: false
                   ]
                 },"billing_documents": {
                   Row: {
-                    "carried_in_eur": number,"country": string | null,"created_at": string,"customer_email": string | null,"customer_name": string | null,"id": number,"kind": string,"mollie_payment_id": string | null,"net_eur": number,"paid_at": string | null,"period_end": string | null,"period_start": string | null,"plan": string | null,"plan_fee_eur": number,"prepaid_applied_eur": number,"receipt_number": string | null,"status": string,"total_eur": number,"usage_eur": number,"user_id": string | null,"vat_eur": number,"vat_exempt": boolean,"vat_rate": number
+                    "carried_in_eur": number,"country": string | null,"created_at": string,"customer_email": string | null,"customer_name": string | null,"id": number,"kind": string,"mollie_payment_id": string | null,"net_eur": number,"paid_at": string | null,"period_end": string | null,"period_start": string | null,"plan": string | null,"plan_fee_eur": number,"plan_options": Json | null,"prepaid_applied_eur": number,"receipt_number": string | null,"status": string,"total_eur": number,"usage_eur": number,"user_id": string | null,"vat_eur": number,"vat_exempt": boolean,"vat_rate": number
                   }
                   Insert: {
-                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind": string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind": string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"plan_options"?: Json | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
                   }
                   Update: {
-                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind"?: string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
+                    "carried_in_eur"?: number,"country"?: string | null,"created_at"?: string,"customer_email"?: string | null,"customer_name"?: string | null,"id"?: never,"kind"?: string,"mollie_payment_id"?: string | null,"net_eur"?: number,"paid_at"?: string | null,"period_end"?: string | null,"period_start"?: string | null,"plan"?: string | null,"plan_fee_eur"?: number,"plan_options"?: Json | null,"prepaid_applied_eur"?: number,"receipt_number"?: string | null,"status"?: string,"total_eur"?: number,"usage_eur"?: number,"user_id"?: string | null,"vat_eur"?: number,"vat_exempt"?: boolean,"vat_rate"?: number
                   }
                   Relationships: [
                     {
@@ -634,6 +634,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"custom_circle_members": {
+                  Row: {
+                    "circle_id": string,"created_at": string,"member_id": string
+                  }
+                  Insert: {
+                    "circle_id": string,"created_at"?: string,"member_id": string
+                  }
+                  Update: {
+                    "circle_id"?: string,"created_at"?: string,"member_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "custom_circle_members_circle_id_fkey"
+      columns: ["circle_id"]
+isOneToOne: false
+      referencedRelation: "custom_circles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "custom_circle_members_member_id_fkey"
+      columns: ["member_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"custom_circles": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"owner_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"owner_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"owner_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "custom_circles_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"notifications": {
                   Row: {
                     "created_at": string | null,"id": string,"message": string,"metadata": Json | null,"read": boolean | null,"type": string,"user_id": string
@@ -655,13 +699,13 @@ isOneToOne: false
                   ]
                 },"plan_changes": {
                   Row: {
-                    "created_at": string,"effective_at": string,"from_plan": string | null,"id": number,"to_plan": string,"user_id": string
+                    "created_at": string,"effective_at": string,"from_plan": string | null,"id": number,"options": Json | null,"to_plan": string,"user_id": string
                   }
                   Insert: {
-                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"to_plan": string,"user_id": string
+                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"options"?: Json | null,"to_plan": string,"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"to_plan"?: string,"user_id"?: string
+                    "created_at"?: string,"effective_at"?: string,"from_plan"?: string | null,"id"?: never,"options"?: Json | null,"to_plan"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -692,6 +736,25 @@ isOneToOne: false
     },{
       foreignKeyName: "search_chunks_user_id_fkey"
       columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"similarity_group_results": {
+                  Row: {
+                    "created_at": string,"group_key": string,"input_hash": string,"result": NonNullable<Json>,"target_ids": (string)[],"viewer_id": string
+                  }
+                  Insert: {
+                    "created_at"?: string,"group_key": string,"input_hash": string,"result": NonNullable<Json>,"target_ids": (string)[],"viewer_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"group_key"?: string,"input_hash"?: string,"result"?: NonNullable<Json>,"target_ids"?: (string)[],"viewer_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "similarity_group_results_viewer_id_fkey"
+      columns: ["viewer_id"]
 isOneToOne: false
       referencedRelation: "users"
       referencedColumns: ["id"]
@@ -743,13 +806,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"pending_plan": string | null,"plan": string,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"pending_plan": string | null,"plan": string,"plan_options": Json | null,"public_scope": string,"report_emails": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
@@ -775,16 +838,22 @@ isOneToOne: false
                   ]
                 },"vault_sections": {
                   Row: {
-                    "circle": string,"content": string | null,"domain": string,"folder_id": string | null,"id": string,"is_personal": boolean,"is_professional": boolean,"label": string,"last_confirmed_at": string | null,"section_type": string,"source": string | null,"updated_at": string | null,"user_id": string
+                    "circle": string,"content": string | null,"custom_circle_id": string | null,"domain": string,"folder_id": string | null,"id": string,"is_personal": boolean,"is_professional": boolean,"label": string,"last_confirmed_at": string | null,"section_type": string,"source": string | null,"updated_at": string | null,"user_id": string
                   }
                   Insert: {
-                    "circle"?: string,"content"?: string | null,"domain": string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label": string,"last_confirmed_at"?: string | null,"section_type": string,"source"?: string | null,"updated_at"?: string | null,"user_id": string
+                    "circle"?: string,"content"?: string | null,"custom_circle_id"?: string | null,"domain": string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label": string,"last_confirmed_at"?: string | null,"section_type": string,"source"?: string | null,"updated_at"?: string | null,"user_id": string
                   }
                   Update: {
-                    "circle"?: string,"content"?: string | null,"domain"?: string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label"?: string,"last_confirmed_at"?: string | null,"section_type"?: string,"source"?: string | null,"updated_at"?: string | null,"user_id"?: string
+                    "circle"?: string,"content"?: string | null,"custom_circle_id"?: string | null,"domain"?: string,"folder_id"?: string | null,"id"?: string,"is_personal"?: boolean,"is_professional"?: boolean,"label"?: string,"last_confirmed_at"?: string | null,"section_type"?: string,"source"?: string | null,"updated_at"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "vault_sections_custom_circle_id_fkey"
+      columns: ["custom_circle_id"]
+isOneToOne: false
+      referencedRelation: "custom_circles"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "vault_sections_folder_id_fkey"
       columns: ["folder_id"]
 isOneToOne: false
