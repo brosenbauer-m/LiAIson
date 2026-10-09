@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { PLANS, PLAN_IDS, FEATURE_HELP, type PlanId } from '@/lib/plans'
+import PlanFeatures from '@/components/plans/PlanFeatures'
 
 type PlanState = {
   plan: PlanId
@@ -199,11 +200,9 @@ export default function PlansPage() {
                   <span className="text-sm font-normal text-text-secondary">{plan.feeEur === 0 ? '' : ' / month'}</span>
                   <span className="block text-xs font-normal text-text-secondary mt-1">plus the messages you send</span>
                 </p>
-                <ul className="space-y-2 text-sm text-text-secondary flex-1 list-disc pl-5">
-                  {plan.features.map(f => (
-                    <li key={f}>{f}</li>
-                  ))}
-                </ul>
+                <div className="flex-1">
+                  <PlanFeatures plan={plan} />
+                </div>
                 {buttonFor(id)}
               </div>
             )

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
 import Toggle from '@/components/ui/Toggle'
 import { PLANS, PLAN_IDS, isPlanId, type PlanId } from '@/lib/plans'
+import PlanFeatures from '@/components/plans/PlanFeatures'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -373,10 +374,19 @@ export default function SignupPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-text-secondary mt-1.5">
-                {PLANS[plan].tagline} Your first month is free. After that, your plan continues automatically and you&apos;ll need to save a card.{' '}
-                <Link href="/plans" className="text-accent-light hover:underline" target="_blank">Compare plans</Link>
-              </p>
+              <div className="mt-3 rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-text-primary">
+                    {PLANS[plan].name}: {PLANS[plan].feeEur === 0 ? 'free' : `€${PLANS[plan].feeEur} per month`}
+                  </p>
+                  <p className="text-xs text-text-secondary mt-0.5">{PLANS[plan].tagline}</p>
+                </div>
+                <PlanFeatures plan={PLANS[plan]} />
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Tap a line to learn more. Your first month is free. After that, your plan continues automatically and you&apos;ll need to save a card. You can change your plan at any time.{' '}
+                  <Link href="/plans" className="text-accent-light hover:underline" target="_blank">Compare all plans</Link>
+                </p>
+              </div>
             </fieldset>
 
             <div className="flex items-center justify-between gap-4 py-1">

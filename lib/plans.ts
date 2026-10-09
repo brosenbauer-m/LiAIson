@@ -23,8 +23,9 @@ export type Plan = {
   aiSearchesPerMonth: number
   similarity: 'none' | 'score' | 'score_visual'
   circles: 1 | 2
-  // What the plan includes, in plain sentences (plans page).
-  features: string[]
+  // What the plan includes, in plain sentences. `help` points to the matching
+  // "Learn more" text in FEATURE_HELP.
+  features: { text: string; help: string }[]
 }
 
 export const PLANS: Record<PlanId, Plan> = {
@@ -39,9 +40,10 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'none',
     circles: 1,
     features: [
-      'Your Vault can hold up to 3,000 characters.',
-      'Everyone who visits your profile sees the same information.',
-      'You can find people on LiAIson by their name.',
+      { text: 'Your Vault can hold up to 3,000 characters.', help: 'vault' },
+      { text: 'Everyone who visits your profile sees the same information.', help: 'circles' },
+      { text: 'You can find people on LiAIson by their name.', help: 'search' },
+      { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
   },
   ambivert: {
@@ -55,11 +57,12 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'score',
     circles: 2,
     features: [
-      'Your Vault can hold up to 15,000 characters.',
-      'You get an Echo every month.',
-      'You can share some things with everyone and other things only with people you choose.',
-      'You can find people by what they share, up to 10 times a month.',
-      'You can see how much you have in common with someone.',
+      { text: 'Your Vault can hold up to 15,000 characters.', help: 'vault' },
+      { text: 'You get an Echo every month.', help: 'echoes' },
+      { text: 'You can share some things with everyone and other things only with people you choose.', help: 'circles' },
+      { text: 'You can find people by what they share, up to 10 times a month.', help: 'search' },
+      { text: 'You can see how much you have in common with someone.', help: 'similarity' },
+      { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
   },
   extrovert: {
@@ -73,11 +76,12 @@ export const PLANS: Record<PlanId, Plan> = {
     similarity: 'score_visual',
     circles: 2,
     features: [
-      'Your Vault can hold up to 30,000 characters.',
-      'You get an Echo every week and every month.',
-      'You can share some things with everyone and other things only with people you choose.',
-      'You can find people by what they share, up to 20 times a month.',
-      'You can see how much you have in common with someone, shown as a visual map of your shared interests.',
+      { text: 'Your Vault can hold up to 30,000 characters.', help: 'vault' },
+      { text: 'You get an Echo every week and every month.', help: 'echoes' },
+      { text: 'You can share some things with everyone and other things only with people you choose.', help: 'circles' },
+      { text: 'You can find people by what they share, up to 20 times a month.', help: 'search' },
+      { text: 'You can see how much you have in common with someone, shown as a visual map of your shared interests.', help: 'similarity' },
+      { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
   },
 }
