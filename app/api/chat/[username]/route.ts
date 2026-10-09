@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server'
 import { buildSystemPrompt, type ReaderContext } from '@/lib/prompts/buildSystemPrompt'
 import { resolveScope } from '@/lib/access/resolveScope'
 import { checkRateLimit } from '@/lib/ratelimit'
-import { getSenderPlan, checkTrialMessageLimit } from '@/lib/ratelimit/trial'
+import { getSenderPlan, checkTrialMessageLimit, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
 import { mistral, CHAT_MODEL } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
@@ -170,8 +170,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   }
 
   // Free trial limits for the sender (exempt accounts have none):
-  // 3 messages per day to each LiAIson and 15 per day in total during the free
-  // month; after it, only with a saved card ('paying', billed at month end).
+  // 5 messages per day in total (to any LiAIson) during the free month; after
+  // it, only with a saved card ('paying', billed at month end).
   const plan = await getSenderPlan(visitor.id)
   if (plan.kind === 'trial_ended') {
     return NextResponse.json(
@@ -180,12 +180,12 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     )
   }
   if (plan.kind === 'trial') {
-    const trial = await checkTrialMessageLimit(visitor.id, user.id)
+    const trial = await checkTrialMessageLimit(visitor.id)
     if (!trial.allowed) {
-      const error = trial.reason === 'total'
-        ? "You've used today's 15 free-trial messages. You can chat again tomorrow."
-        : `You've used today's 3 free-trial messages with ${user.display_name}'s LiAIson. You can chat again tomorrow.`
-      return NextResponse.json({ error, trialLimit: true }, { status: 429 })
+      return NextResponse.json(
+        { error: `You've used today's ${TRIAL_TOTAL_DAILY} free messages. You can chat again tomorrow.`, trialLimit: true },
+        { status: 429 }
+      )
     }
   }
 
