@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -7,6 +8,12 @@ import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
 import type { VaultSection, VaultFolder } from '@/types'
+
+const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
+
+function limitMessage(limit: number): string {
+  return `This doesn't fit in your Vault. Your plan allows up to ${limit.toLocaleString('en-GB')} characters in total. Shorten some text, or get more space with a higher plan.`
+}
 
 const SECTION_HINTS: Record<string, string> = {
   skills: "Try describing not just what tools you know, but what problems you're best at solving.",
@@ -32,6 +39,8 @@ export default function VaultPage() {
   const [showWelcome, setShowWelcome] = useState(welcome)
   const [userId, setUserId] = useState<string | null>(null)
   const [folders, setFolders] = useState<VaultFolder[]>([])
+  const [vaultLimit, setVaultLimit] = useState<number | null>(null)
+  const [limitHit, setLimitHit] = useState(false)
 
   const supabase = createClient()
 
@@ -61,6 +70,12 @@ export default function VaultPage() {
         .order('created_at', { ascending: true })
       setFolders(folderData as VaultFolder[] ?? [])
 
+      const planRes = await fetch('/api/plan', { cache: 'no-store' }).catch(() => null)
+      if (planRes?.ok) {
+        const plan = await planRes.json() as { vaultLimit?: number }
+        if (typeof plan.vaultLimit === 'number') setVaultLimit(plan.vaultLimit)
+      }
+
       setLoading(false)
     }
     load()
@@ -68,6 +83,7 @@ export default function VaultPage() {
 
   const updateSection = useCallback(async (id: string, updates: Partial<VaultSection>) => {
     setErrorMessage(null)
+    setLimitHit(false)
     const { data, error } = await supabase
       .from('vault_sections')
       .update({ ...updates, updated_at: new Date().toISOString() })
@@ -76,7 +92,13 @@ export default function VaultPage() {
       .single()
 
     if (error) {
-      setErrorMessage("Couldn't save this section — please try again")
+      const limit = /VAULT_LIMIT:(\d+)/.exec(error.message ?? '')
+      if (limit) {
+        setLimitHit(true)
+        setErrorMessage(limitMessage(Number(limit[1])))
+      } else {
+        setErrorMessage("Couldn't save this section — please try again")
+      }
       throw error
     }
 
@@ -165,8 +187,8 @@ export default function VaultPage() {
   }
 
 
-  const saveImportedSection = async (label: string, content: string, target: ImportTarget): Promise<boolean> => {
-    if (!userId) return false
+  const saveImportedSection = async (label: string, content: string, target: ImportTarget): Promise<true | string> => {
+    if (!userId) return "Couldn't save this section — please try again."
     setErrorMessage(null)
     const { data, error } = await supabase
       .from('vault_sections')
@@ -183,11 +205,17 @@ export default function VaultPage() {
       .select()
       .single()
 
-    if (error || !data) return false
+    if (error || !data) {
+      const limit = /VAULT_LIMIT:(\d+)/.exec(error?.message ?? '')
+      return limit ? limitMessage(Number(limit[1])) : "Couldn't save this section — please try again."
+    }
     setSections(prev => [...prev, data as VaultSection])
     setActiveTab(target === 'both' ? 'professional' : target)
     return true
   }
+
+  const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
+  const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
 
   const filtered = sections.filter(section => {
     if (activeTab === 'professional') return section.is_professional
@@ -237,9 +265,32 @@ export default function VaultPage() {
           </div>
         </div>
 
+        {vaultLimit !== null && (
+          <div className="mb-6 space-y-1.5">
+            <div className="flex justify-between gap-4 text-xs text-text-secondary">
+              <span>Vault space</span>
+              <span className="tabular-nums">
+                {totalChars.toLocaleString('en-GB')} of {vaultLimit.toLocaleString('en-GB')} characters used
+              </span>
+            </div>
+            <div className="h-2 bg-surface rounded-full overflow-hidden" aria-hidden="true">
+              <div className={`h-full ${usedPct >= 100 ? 'bg-error' : 'bg-accent'}`} style={{ width: `${usedPct}%` }} />
+            </div>
+            {usedPct >= 90 && (
+              <p className="text-xs text-text-secondary">
+                {totalChars > vaultLimit
+                  ? 'Your Vault is over the limit of your plan. You can shorten text, but not add more.'
+                  : 'Your Vault is almost full.'}{' '}
+                <Link href="/plans" className="text-accent hover:underline">Get more space with a higher plan</Link>
+              </p>
+            )}
+          </div>
+        )}
+
         {errorMessage && (
           <p role="alert" className="mb-5 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
             {errorMessage}
+            {limitHit && <> <Link href="/plans" className="underline font-medium">See plans</Link></>}
           </p>
         )}
 
@@ -271,6 +322,7 @@ export default function VaultPage() {
               onUpdate={updateSection}
               onDelete={deleteSection}
               hint={SECTION_HINTS[section.section_type]}
+              roomLeft={vaultLimit === null ? undefined : vaultLimit - (totalChars - countChars(section.content))}
             />
           ))}
         </div>

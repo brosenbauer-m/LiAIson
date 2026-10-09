@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
 
@@ -8,9 +9,14 @@ interface VaultSectionCardProps {
   onUpdate: (id: string, data: Partial<VaultSection>) => Promise<void>
   onDelete: (id: string) => Promise<void>
   hint?: string
+  // Characters this section may hold without going over the Vault limit
+  // (limit minus everything saved in the other sections). Undefined = unknown.
+  roomLeft?: number
 }
 
-export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: VaultSectionCardProps) {
+const countChars = (text: string) => Array.from(text).length
+
+export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [isProfessional, setIsProfessional] = useState(section.is_professional)
   const [isPersonal, setIsPersonal] = useState(section.is_personal)
@@ -66,6 +72,11 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
     return () => document.removeEventListener('pointerdown', handlePointerDown)
   }, [confirmingDelete])
 
+  const length = countChars(content)
+  const overBy = roomLeft === undefined ? 0 : length - roomLeft
+  // Only block saving when the text grows past the limit; shortening is always fine.
+  const blocked = overBy > 0 && length > countChars(section.content ?? '')
+
   const lastConfirmed = section.last_confirmed_at
     ? new Date(section.last_confirmed_at).toLocaleDateString()
     : 'Never confirmed'
@@ -85,6 +96,11 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
         rows={4}
         className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all"
       />
+      <p className={`-mt-2 text-xs ${blocked ? 'text-error' : 'text-text-muted'}`}>
+        {blocked
+          ? <>This is {overBy.toLocaleString('en-GB')} characters more than fits in your Vault. Shorten it, or <Link href="/plans" className="underline">get more space with a higher plan</Link>.</>
+          : `${length.toLocaleString('en-GB')} characters`}
+      </p>
 
       <div className="space-y-2">
         <label className="flex items-center gap-2 text-sm text-text-secondary">
@@ -121,7 +137,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint }: 
         <div className="flex gap-2">
           <button
             onClick={handleSave}
-            disabled={saving || (
+            disabled={saving || blocked || (
               content === section.content &&
               isProfessional === section.is_professional &&
               isPersonal === section.is_personal

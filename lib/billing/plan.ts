@@ -21,6 +21,9 @@ export type PlanState = {
   trialEndsAt: string
   hasCard: boolean
   vaultChars: number
+  // Vault size allowed now: the plan's limit, or the smaller one of a scheduled
+  // downgrade (same rule as the database trigger enforce_vault_char_limit).
+  vaultLimit: number
 }
 
 type ChangeRow = { id: number; to_plan: string; effective_at: string }
@@ -29,7 +32,8 @@ export async function getVaultChars(userId: string): Promise<number> {
   const supabase = createServiceClient()
   const { data, error } = await supabase.from('vault_sections').select('content').eq('user_id', userId)
   if (error) throw new Error(error.message)
-  return ((data as { content: string | null }[] | null) ?? []).reduce((n, r) => n + (r.content?.length ?? 0), 0)
+  // Counted like the database (characters, not UTF-16 units).
+  return ((data as { content: string | null }[] | null) ?? []).reduce((n, r) => n + Array.from(r.content ?? '').length, 0)
 }
 
 export async function getPlanState(userId: string): Promise<PlanState> {
@@ -77,6 +81,7 @@ export async function getPlanState(userId: string): Promise<PlanState> {
     trialEndsAt: user.trial_ends_at,
     hasCard: account?.mandate_status === 'valid' && !!account.mandate_id,
     vaultChars: await getVaultChars(userId),
+    vaultLimit: Math.min(PLANS[plan].vaultChars, pendingPlan ? PLANS[pendingPlan].vaultChars : Infinity),
   }
 }
 

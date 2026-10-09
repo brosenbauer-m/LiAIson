@@ -6,7 +6,8 @@ export type ImportTarget = 'professional' | 'personal' | 'both' | 'draft'
 
 interface Props {
   defaultTarget: ImportTarget
-  onSave: (label: string, content: string, target: ImportTarget) => Promise<boolean>
+  // true when saved, or an error message to show
+  onSave: (label: string, content: string, target: ImportTarget) => Promise<true | string>
 }
 
 const TARGETS: { value: ImportTarget; label: string }[] = [
@@ -59,10 +60,10 @@ export default function FileImport({ defaultTarget, onSave }: Props) {
     }
     setSaving(true)
     setError('')
-    const ok = await onSave(label, text, target)
+    const result = await onSave(label, text, target)
     setSaving(false)
-    if (ok) setReview(null)
-    else setError("Couldn't save this section — please try again.")
+    if (result === true) setReview(null)
+    else setError(result)
   }
 
   return (
