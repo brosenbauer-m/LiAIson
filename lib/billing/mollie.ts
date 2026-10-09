@@ -103,6 +103,27 @@ export function createOneOffPayment(input: {
   })
 }
 
+// Payment with the customer's saved card (mandate), without a checkout page.
+// Only started by the user themselves (e.g. "Pay €10 with Mastercard •••• 1129").
+export function createSavedCardPayment(input: {
+  customerId: string
+  mandateId: string
+  amountEur: string
+  description: string
+  webhookUrl: string
+  metadata: Record<string, string>
+}) {
+  return mollie<MolliePayment>('POST', '/payments', {
+    amount: { currency: 'EUR', value: input.amountEur },
+    description: input.description,
+    sequenceType: 'recurring',
+    customerId: input.customerId,
+    mandateId: input.mandateId,
+    webhookUrl: input.webhookUrl,
+    metadata: input.metadata,
+  })
+}
+
 export function getPayment(paymentId: string) {
   return mollie<MolliePayment>('GET', `/payments/${encodeURIComponent(paymentId)}`)
 }

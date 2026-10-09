@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
-import { createOneOffPayment, MollieError } from '@/lib/billing/mollie'
+import { handleMolliePayment } from '@/lib/billing/payments'
+import { createOneOffPayment, createSavedCardPayment, MollieError } from '@/lib/billing/mollie'
 import { ensureMollieCustomer, getBillingAccount, saveBillingAccount } from '@/lib/billing/account'
 import { isEuCountry, toCountryCode } from '@/lib/billing/countries'
 import { vatBreakdown, formatEur } from '@/lib/billing/vat'
@@ -15,8 +16,9 @@ import {
 } from '@/lib/billing/topup'
 
 // Prepaid balance of the signed-in user.
-// GET  → { balanceEur, amounts, receipts, billingCountry }
-// POST { amount: 5|10|20, country? } → { checkoutUrl } (Mollie checkout)
+// GET  → { balanceEur, amounts, receipts, billingCountry, savedCard }
+// POST { amount: 5|10|20, country?, useSavedCard? }
+//      → { checkoutUrl } (Mollie checkout) or, with useSavedCard, { status } (charged to the saved card)
 
 async function getSignedInUser() {
   const supabase = await createClient()
@@ -34,7 +36,13 @@ export async function GET() {
       getBillingAccount(user.id),
     ])
     return NextResponse.json(
-      { balanceEur, amounts: TOPUP_AMOUNTS_EUR, receipts, billingCountry: account?.billing_country ?? null },
+      {
+        balanceEur,
+        amounts: TOPUP_AMOUNTS_EUR,
+        receipts,
+        billingCountry: account?.billing_country ?? null,
+        savedCard: account?.mandate_status === 'valid' && account.mandate_id ? account.card_label : null,
+      },
       { headers: { 'Cache-Control': 'no-store' } }
     )
   } catch (err) {
@@ -53,7 +61,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
-  const { amount, country: requestedCountry } = (body ?? {}) as { amount?: unknown; country?: unknown }
+  const { amount, country: requestedCountry, useSavedCard } = (body ?? {}) as { amount?: unknown; country?: unknown; useSavedCard?: unknown }
   if (!isTopUpAmount(amount)) {
     return NextResponse.json({ error: 'Please choose €5, €10 or €20.' }, { status: 400 })
   }
@@ -81,16 +89,9 @@ export async function POST(request: NextRequest) {
     const vat = vatBreakdown(amount, country)
 
     const origin = request.nextUrl.origin
-    const payment = await createOneOffPayment({
-      customerId,
-      amountEur: formatEur(vat.totalEur),
-      description: `LiAIson – prepaid credit €${formatEur(amount)}`,
-      redirectUrl: `${origin}/settings?topup=return`,
-      webhookUrl: `${origin}/api/billing/webhook`,
-      metadata: { userId: user.id, purpose: 'topup' },
-    })
-    const checkoutUrl = payment._links?.checkout?.href
-    if (!checkoutUrl) throw new Error('Mollie returned no checkout link')
+    const webhookUrl = `${origin}/api/billing/webhook`
+    const description = `LiAIson – prepaid credit €${formatEur(amount)}`
+    const metadata = { userId: user.id, purpose: 'topup' }
 
     const supabase = createServiceClient()
     const { data: profile } = await supabase
@@ -98,10 +99,8 @@ export async function POST(request: NextRequest) {
       .select('display_name')
       .eq('id', user.id)
       .single<{ display_name: string }>()
-
-    await recordPendingTopUp({
+    const pending = {
       userId: user.id,
-      paymentId: payment.id,
       creditEur: amount,
       vatRate: vat.vatRate,
       vatEur: vat.vatEur,
@@ -110,7 +109,45 @@ export async function POST(request: NextRequest) {
       country,
       customerName: profile?.display_name ?? null,
       customerEmail: user.email ?? null,
+    }
+
+    // Pay with the saved card: no checkout page; Mollie confirms via the webhook.
+    if (useSavedCard === true) {
+      const fresh = await getBillingAccount(user.id)
+      if (fresh?.mandate_status !== 'valid' || !fresh.mandate_id) {
+        return NextResponse.json({ error: 'No saved card. Please add a card first.' }, { status: 400 })
+      }
+      const payment = await createSavedCardPayment({
+        customerId,
+        mandateId: fresh.mandate_id,
+        amountEur: formatEur(vat.totalEur),
+        description,
+        webhookUrl,
+        metadata,
+      })
+      await recordPendingTopUp({ ...pending, paymentId: payment.id })
+      // Card payments are often confirmed instantly; handle that right away
+      // (the webhook does the same later; crediting happens only once).
+      if (payment.status === 'paid') await handleMolliePayment(payment.id)
+      if (payment.status === 'failed' || payment.status === 'canceled' || payment.status === 'expired') {
+        await handleMolliePayment(payment.id)
+        return NextResponse.json({ error: 'Your saved card was declined. Please use another payment method.' }, { status: 402 })
+      }
+      return NextResponse.json({ status: payment.status })
+    }
+
+    const payment = await createOneOffPayment({
+      customerId,
+      amountEur: formatEur(vat.totalEur),
+      description,
+      redirectUrl: `${origin}/settings?topup=return`,
+      webhookUrl,
+      metadata,
     })
+    const checkoutUrl = payment._links?.checkout?.href
+    if (!checkoutUrl) throw new Error('Mollie returned no checkout link')
+
+    await recordPendingTopUp({ ...pending, paymentId: payment.id })
 
     return NextResponse.json({ checkoutUrl })
   } catch (err) {

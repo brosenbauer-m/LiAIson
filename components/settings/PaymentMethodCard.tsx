@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { EU_COUNTRIES } from '@/lib/billing/countries'
 
 type CardState = {
@@ -116,7 +117,10 @@ export default function PaymentMethodCard() {
 
   return (
     <div className="bg-card border border-border rounded-xl p-8 space-y-5 shadow-soft">
-      <h2 className="font-semibold text-text-primary text-lg">Payment method</h2>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="font-semibold text-text-primary text-lg">Payment method</h2>
+        <Link href="/billing/receipts" className="text-sm text-accent hover:underline">View receipts →</Link>
+      </div>
 
       {!card && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}
       {loadError && !card && <p className="text-sm text-error" role="alert">Could not load your payment method right now.</p>}

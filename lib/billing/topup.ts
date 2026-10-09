@@ -117,7 +117,10 @@ export async function handleTopUpPayment(payment: MolliePayment): Promise<void> 
       .eq('kind', 'topup')
       .maybeSingle<{ id: number; net_eur: number | string; status: string; receipt_number: string | null; paid_at: string | null }>()
     if (docError) throw new Error(docError.message)
-    if (!doc || doc.status !== 'paid') return
+    // The webhook can arrive a moment before the top-up was recorded: fail so
+    // Mollie retries the webhook later, by which time the record exists.
+    if (!doc) throw new Error(`Top-up record not found yet for ${payment.id}`)
+    if (doc.status !== 'paid') return
 
     // Repair path for a retried webhook whose earlier attempt failed half-way
     // (paid, but no credit yet). Waits 60 s so it never races the first attempt.

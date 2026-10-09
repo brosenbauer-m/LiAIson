@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
 import { EU_COUNTRIES } from '@/lib/billing/countries'
 
 type Receipt = { receiptNumber: string; kind: 'topup' | 'monthly'; totalEur: number; paidAt: string }
@@ -9,21 +10,25 @@ type BalanceState = {
   amounts: number[]
   receipts: Receipt[]
   billingCountry: string | null
+  savedCard: string | null
 }
 
 function euros(n: number): string {
   return `€${n.toFixed(2)}`
 }
 
-// Settings card: prepaid credit. Top-ups are paid on Mollie's checkout page and
-// used first when the monthly bill is made.
+// Settings card: prepaid credit. Top-ups are paid with the saved card (after a
+// confirmation prompt) or on Mollie's checkout page, and are used first when
+// the monthly bill is made.
 export default function PrepaidBalanceCard() {
   const [state, setState] = useState<BalanceState | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [country, setCountry] = useState('')
-  const [busyAmount, setBusyAmount] = useState<number | null>(null)
+  const [confirmAmount, setConfirmAmount] = useState<number | null>(null)
+  const [busy, setBusy] = useState(false)
   const [checking, setChecking] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const stoppedRef = useRef(false)
 
   const load = useCallback(async (): Promise<BalanceState | null> => {
     try {
@@ -39,64 +44,94 @@ export default function PrepaidBalanceCard() {
     }
   }, [])
 
-  useEffect(() => {
-    const returning = new URLSearchParams(window.location.search).get('topup') === 'return'
-    let stopped = false
+  // Polls until a top-up receipt from the last `lookbackMs` shows up (max ~16 s).
+  const waitForTopUp = useCallback((lookbackMs: number) => {
     let tries = 0
-    // Back from Mollie: poll until the new credit shows up (max ~16 s).
+    let since = 0
+    setChecking(true)
     const tick = async () => {
-      if (stopped) return
+      if (stoppedRef.current) return
       tries += 1
-      if (tries === 1) setChecking(true)
       const data = await load()
-      if (stopped) return
+      if (stoppedRef.current) return
       const latest = data?.receipts[0]
-      const fresh = latest && latest.kind === 'topup' && Date.now() - new Date(latest.paidAt).getTime() < 10 * 60 * 1000
-      if (data && tries > 1 && fresh) {
+      const arrived = latest && latest.kind === 'topup' && new Date(latest.paidAt).getTime() >= since
+      if (data && arrived) {
         setChecking(false)
         setMessage({ type: 'success', text: `Top-up received ✓ Your balance is ${euros(data.balanceEur)}.` })
-        window.history.replaceState(null, '', '/settings')
         return
       }
       if (tries >= 8) {
         setChecking(false)
         setMessage({ type: 'error', text: 'We haven’t received this top-up yet. If you paid, it will show up shortly.' })
-        window.history.replaceState(null, '', '/settings')
         return
       }
       setTimeout(tick, 2000)
     }
-    const timer = setTimeout(returning ? tick : load, 0)
-    return () => {
-      stopped = true
-      clearTimeout(timer)
-    }
+    setTimeout(() => {
+      since = Date.now() - lookbackMs
+      tick()
+    }, 1000)
   }, [load])
 
-  const handleTopUp = async (amount: number) => {
+  useEffect(() => {
+    stoppedRef.current = false
+    const returning = new URLSearchParams(window.location.search).get('topup') === 'return'
+    const timer = setTimeout(() => {
+      if (returning) {
+        window.history.replaceState(null, '', '/settings')
+        waitForTopUp(10 * 60 * 1000)
+      } else {
+        load()
+      }
+    }, 0)
+    return () => {
+      stoppedRef.current = true
+      clearTimeout(timer)
+    }
+  }, [load, waitForTopUp])
+
+  const startTopUp = async (amount: number, useSavedCard: boolean) => {
     setMessage(null)
     if (!state?.billingCountry && !country) {
       setMessage({ type: 'error', text: 'Please choose your country first.' })
       return
     }
-    setBusyAmount(amount)
+    setBusy(true)
     try {
       const res = await fetch('/api/billing/topup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount, country: state?.billingCountry ? undefined : country }),
+        body: JSON.stringify({ amount, useSavedCard, country: state?.billingCountry ? undefined : country }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data.checkoutUrl) {
+      if (!res.ok) {
         setMessage({ type: 'error', text: data.error ?? 'Could not start the top-up.' })
-        setBusyAmount(null)
+        setBusy(false)
+        return
+      }
+      if (useSavedCard) {
+        setConfirmAmount(null)
+        setBusy(false)
+        waitForTopUp(15_000)
+        return
+      }
+      if (!data.checkoutUrl) {
+        setMessage({ type: 'error', text: 'Could not start the top-up.' })
+        setBusy(false)
         return
       }
       window.location.assign(data.checkoutUrl)
     } catch {
       setMessage({ type: 'error', text: 'Could not start the top-up.' })
-      setBusyAmount(null)
+      setBusy(false)
     }
+  }
+
+  const handleAmount = (amount: number) => {
+    setMessage(null)
+    if (state?.savedCard) setConfirmAmount(amount)
+    else startTopUp(amount, false)
   }
 
   return (
@@ -132,33 +167,75 @@ export default function PrepaidBalanceCard() {
             </div>
           )}
 
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-text-primary">Add credit</p>
-            <div className="flex flex-wrap gap-3">
-              {state.amounts.map(a => (
+          {confirmAmount !== null && state.savedCard ? (
+            <div className="space-y-3 bg-surface border border-border rounded-lg p-4" role="dialog" aria-label="Confirm top-up">
+              <p className="text-sm text-text-primary">
+                Pay <span className="font-semibold">{euros(confirmAmount)}</span> with <span className="font-semibold">{state.savedCard}</span>?
+              </p>
+              <div className="flex flex-wrap gap-3">
                 <button
-                  key={a}
                   type="button"
-                  onClick={() => handleTopUp(a)}
-                  disabled={busyAmount !== null}
+                  onClick={() => startTopUp(confirmAmount, true)}
+                  disabled={busy}
+                  className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+                >
+                  {busy ? 'Paying…' : `Pay ${euros(confirmAmount)}`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startTopUp(confirmAmount, false)}
+                  disabled={busy}
                   className="px-5 py-2 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all disabled:opacity-50"
                 >
-                  {busyAmount === a ? 'Please wait…' : `+ ${euros(a)}`}
+                  Use another payment method
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setConfirmAmount(null)}
+                  disabled={busy}
+                  className="px-3 py-2 text-sm text-text-secondary hover:text-text-primary disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-text-primary">Add credit</p>
+              <div className="flex flex-wrap gap-3">
+                {state.amounts.map(a => (
+                  <button
+                    key={a}
+                    type="button"
+                    onClick={() => handleAmount(a)}
+                    disabled={busy}
+                    className="px-5 py-2 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+                  >
+                    {`+ ${euros(a)}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {state.receipts.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-text-primary">Recent receipts</p>
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-medium text-text-primary">Recent receipts</p>
+                <Link href="/billing/receipts" className="text-sm text-accent hover:underline">All receipts →</Link>
+              </div>
               <ul className="divide-y divide-border border border-border rounded-lg">
                 {state.receipts.map(r => (
-                  <li key={r.receiptNumber} className="flex items-center justify-between gap-4 px-4 py-2 text-sm">
-                    <span className="text-text-secondary">
-                      {new Date(r.paidAt).toLocaleDateString()} · {r.kind === 'topup' ? 'Top-up' : 'Monthly bill'} · {r.receiptNumber}
-                    </span>
-                    <span className="text-text-primary tabular-nums">{euros(r.totalEur)}</span>
+                  <li key={r.receiptNumber}>
+                    <Link
+                      href={`/billing/receipts/${r.receiptNumber}`}
+                      className="flex items-center justify-between gap-4 px-4 py-2 text-sm hover:bg-surface/60 transition-colors"
+                    >
+                      <span className="text-text-secondary">
+                        {new Date(r.paidAt).toLocaleDateString()} · {r.kind === 'topup' ? 'Top-up' : 'Monthly bill'} · {r.receiptNumber}
+                      </span>
+                      <span className="text-text-primary tabular-nums">{euros(r.totalEur)}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -174,7 +251,7 @@ export default function PrepaidBalanceCard() {
       )}
 
       <p className="text-xs text-text-secondary leading-relaxed">
-        Prepaid credit is used first for your monthly usage. You pay on Mollie&apos;s secure page (Netherlands, EU).
+        Prepaid credit is used first for your monthly usage. Payments are handled by Mollie (Netherlands, EU).
         Payments are in test mode for now.
       </p>
     </div>
