@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { EU_COUNTRIES } from '@/lib/billing/countries'
 
@@ -12,7 +12,11 @@ type CardState = {
 
 // Settings card: the saved card used for monthly usage charges (Mollie).
 // Adding a card runs a €0 check on Mollie's secure page; nothing is charged.
-export default function PaymentMethodCard() {
+// returnPath: the page Mollie sends the person back to after the card check.
+// onSaved: called once the card is confirmed.
+export default function PaymentMethodCard({ returnPath = '/settings', onSaved }: { returnPath?: '/settings' | '/billing/setup'; onSaved?: () => void } = {}) {
+  const onSavedRef = useRef(onSaved)
+  useEffect(() => { onSavedRef.current = onSaved }, [onSaved])
   const [card, setCard] = useState<CardState | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [country, setCountry] = useState('')
@@ -48,14 +52,16 @@ export default function PaymentMethodCard() {
       if (stopped) return
       if (data && data.status !== 'pending' && tries > 1) {
         setChecking(false)
-        if (data.status === 'valid') setMessage({ type: 'success', text: 'Your card is saved ✓' })
-        else setMessage({ type: 'error', text: 'The card check didn’t go through. You can try again.' })
-        window.history.replaceState(null, '', '/settings')
+        if (data.status === 'valid') {
+          setMessage({ type: 'success', text: 'Your card is saved ✓' })
+          onSavedRef.current?.()
+        } else setMessage({ type: 'error', text: 'The card check didn’t go through. You can try again.' })
+        window.history.replaceState(null, '', returnPath)
         return
       }
       if (tries >= 8) {
         setChecking(false)
-        window.history.replaceState(null, '', '/settings')
+        window.history.replaceState(null, '', returnPath)
         return
       }
       setTimeout(tick, 2000)
@@ -65,7 +71,7 @@ export default function PaymentMethodCard() {
       stopped = true
       clearTimeout(timer)
     }
-  }, [load])
+  }, [load, returnPath])
 
   const handleAdd = async () => {
     setMessage(null)
@@ -78,7 +84,7 @@ export default function PaymentMethodCard() {
       const res = await fetch('/api/billing/card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ country }),
+        body: JSON.stringify({ country, returnTo: returnPath }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || !data.checkoutUrl) {

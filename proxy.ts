@@ -1,7 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { needsCard } from '@/lib/billing/access'
 
 const protectedRoutes = ['/dashboard', '/vault', '/profile', '/settings']
+// Pages that need a saved card once the free month is over (see lib/billing/access.ts).
+const cardRequiredRoutes = ['/dashboard', '/vault', '/profile', '/settings', '/connections', '/discover', '/insights']
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -41,6 +44,17 @@ export async function proxy(request: NextRequest) {
     url.pathname = '/login'
     url.searchParams.set('redirect', path)
     return NextResponse.redirect(url)
+  }
+
+  if (user && cardRequiredRoutes.some(r => path === r || path.startsWith(`${r}/`))) {
+    if (await needsCard(user.id).catch(() => false)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/billing/setup'
+      url.search = ''
+      const redirect = NextResponse.redirect(url)
+      supabaseResponse.cookies.getAll().forEach(c => redirect.cookies.set(c))
+      return redirect
+    }
   }
 
   return supabaseResponse

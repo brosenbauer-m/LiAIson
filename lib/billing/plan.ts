@@ -9,7 +9,8 @@ import { PLANS, isPlanId, planRank, type PlanId } from '@/lib/plans'
 // - Upgrades apply at once. Downgrades apply at the start of next month, or at
 //   once during the free month. A downgrade is refused while the Vault is
 //   bigger than the new plan allows.
-// - After the free month, a paid plan needs a valid saved card.
+// - During the free month, and while no card is saved (account locked to
+//   /billing/setup, no fee yet), every change applies at once.
 // - billing_exempt accounts keep every feature and can't change plan.
 
 export type PlanState = {
@@ -132,9 +133,6 @@ export async function changePlan(userId: string, target: PlanId): Promise<Change
 
   // Upgrade: right away.
   if (planRank(target) > planRank(state.plan)) {
-    if (!state.inTrial && PLANS[target].feeEur > 0 && !state.hasCard) {
-      return { ok: false, status: 402, error: 'Please add a payment method first.', needsCard: true }
-    }
     await removeScheduled()
     await addChange(state.plan, target, now)
     return { ok: true, message: `You're now on ${PLANS[target].name}.`, state: await getPlanState(userId) }
@@ -150,7 +148,7 @@ export async function changePlan(userId: string, target: PlanId): Promise<Change
     }
   }
   await removeScheduled()
-  if (state.inTrial) {
+  if (state.inTrial || !state.hasCard) {
     await addChange(state.plan, target, now)
     return { ok: true, message: `You're now on ${PLANS[target].name}.`, state: await getPlanState(userId) }
   }

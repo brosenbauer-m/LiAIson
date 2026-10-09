@@ -47,6 +47,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
   const country = (body as { country?: unknown })?.country
+  // Where to come back after the card check (only known pages).
+  const returnTo = (body as { returnTo?: unknown })?.returnTo === '/billing/setup' ? '/billing/setup' : '/settings'
   if (!isEuCountry(country)) {
     return NextResponse.json({ error: 'Please choose your country (EU only for now).' }, { status: 400 })
   }
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
     const payment = await createCardSetupPayment({
       customerId,
       userId: user.id,
-      redirectUrl: `${origin}/settings?card=return`,
+      redirectUrl: `${origin}${returnTo}?card=return`,
       webhookUrl: `${origin}/api/billing/webhook`,
     })
     const checkoutUrl = payment._links?.checkout?.href
