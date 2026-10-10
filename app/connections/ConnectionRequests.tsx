@@ -4,11 +4,13 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
+import TierMark from '@/components/ui/TierMark'
 
 interface RequestUser {
   id: string
   username: string
   display_name: string
+  plan?: string | null
   avatar_url: string | null
 }
 
@@ -96,7 +98,7 @@ export default function ConnectionRequests({ requests: initialRequests, innerAll
                 <div className="flex items-center gap-3 min-w-0">
                   <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />
                   <div className="min-w-0">
-                    <p className="font-semibold text-text-primary truncate">{fromUser?.display_name ?? 'Unknown'}</p>
+                    <p className="font-semibold text-text-primary truncate">{fromUser?.display_name ?? 'Unknown'} <TierMark plan={fromUser?.plan} /></p>
                     {fromUser && (
                       <Link href={`/${fromUser.username}`} className="text-xs text-accent hover:underline">
                         @{fromUser.username}

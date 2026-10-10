@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Avatar from '@/components/ui/Avatar'
+import TierMark from '@/components/ui/TierMark'
 
 // Introvert's list of connections (one circle: no circle tags). Sorting and
 // removing a connection (they lose access and can't send a new request).
@@ -12,6 +13,7 @@ interface ConnectionUser {
   username: string
   display_name: string
   avatar_url: string | null
+  plan?: string | null
 }
 
 interface ConnectionRow {
@@ -90,7 +92,7 @@ export default function ConnectionsList({ initialConnections }: { initialConnect
               <div className="flex items-center gap-3">
                 <Avatar url={user?.avatar_url} name={user?.display_name} size="md" />
                 <div className="flex-1 min-w-0">
-                  <Link href={`/${user?.username ?? ''}`} className="block font-semibold text-text-primary truncate hover:underline">{user?.display_name ?? 'Unknown'}</Link>
+                  <Link href={`/${user?.username ?? ''}`} className="block font-semibold text-text-primary truncate hover:underline">{user?.display_name ?? 'Unknown'}</Link> <TierMark plan={user?.plan} />
                   <p className="text-xs text-text-secondary">@{user?.username ?? ''}</p>
                 </div>
                 {confirmRemove === connection.id ? (

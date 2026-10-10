@@ -27,13 +27,13 @@ export default async function CirclesPage() {
   const [{ data: requests }, { data: connections }, { data: circleRows }, { data: sectionRows }] = await Promise.all([
     service
       .from('connection_interests')
-      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url)')
+      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url, plan)')
       .eq('to_user_id', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
     service
       .from('connection_interests')
-      .select('id, in_inner_circle, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url)')
+      .select('id, in_inner_circle, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url, plan)')
       .eq('to_user_id', user.id)
       .eq('status', 'accepted')
       .order('created_at', { ascending: false }),
@@ -51,7 +51,7 @@ export default async function CirclesPage() {
     memberships.set(m.member_id, [...(memberships.get(m.member_id) ?? []), m.circle_id])
   }
 
-  type UserRow = { id: string; username: string; display_name: string; avatar_url: string | null }
+  type UserRow = { id: string; username: string; display_name: string; avatar_url: string | null; plan: string | null }
   type ConnectionRow = { id: string; in_inner_circle: boolean; from_user: UserRow | UserRow[] | null }
   const people: WorkspacePerson[] = ((connections as ConnectionRow[] | null) ?? []).flatMap(c => {
     const u = Array.isArray(c.from_user) ? c.from_user[0] : c.from_user
@@ -61,6 +61,7 @@ export default async function CirclesPage() {
       username: u.username,
       name: u.display_name,
       avatarUrl: u.avatar_url,
+      plan: u.plan,
       inInner: c.in_inner_circle,
       circles: memberships.get(u.id) ?? [],
     }] : []

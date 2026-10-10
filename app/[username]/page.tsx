@@ -52,9 +52,9 @@ export default async function ProfilePage(props: Props) {
 
   const { data: user } = await supabase
     .from('users')
-    .select('id, username, display_name, avatar_url, short_bio, contact_links')
+    .select('id, username, display_name, avatar_url, short_bio, contact_links, plan')
     .eq('username', params.username)
-    .single<Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio' | 'contact_links'>>()
+    .single<Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio' | 'contact_links'> & { plan: string | null }>()
 
   if (!user) notFound()
 
@@ -107,6 +107,7 @@ export default async function ProfilePage(props: Props) {
               avatarUrl={user.avatar_url}
               displayName={user.display_name}
               shortBio={user.short_bio}
+              plan={user.plan}
             />
 
             {canCompare && (

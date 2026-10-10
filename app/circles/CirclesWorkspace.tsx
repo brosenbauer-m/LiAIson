@@ -8,6 +8,7 @@ import type { StudioCircle } from '@/components/circles/layout'
 import { play } from '@/components/circles/sound'
 import { circleChain } from '@/lib/circles'
 import Avatar from '@/components/ui/Avatar'
+import TierMark from '@/components/ui/TierMark'
 
 // Circles page workspace: Connections (left), the circles (middle) and Vault
 // sections (right). Selecting a circle filters both panels: people who see that
@@ -22,6 +23,7 @@ export type WorkspacePerson = {
   username: string
   name: string
   avatarUrl: string | null
+  plan: string | null
   inInner: boolean
   circles: string[] // own circles they were put in
 }
@@ -429,7 +431,7 @@ export default function CirclesWorkspace({
               />
               <Avatar url={p.avatarUrl} name={p.name} size="sm" />
               <div className="min-w-0 flex-1">
-                <Link href={`/${p.username}`} className="inline-block max-w-full align-top text-sm font-medium text-text-primary truncate hover:underline">{p.name}</Link>
+                <Link href={`/${p.username}`} className="inline-block max-w-full align-top text-sm font-medium text-text-primary truncate hover:underline">{p.name}</Link> <TierMark plan={p.plan} />
                 <p className="text-[11px] text-text-muted truncate">{homeOf(p)}</p>
               </div>
             </li>

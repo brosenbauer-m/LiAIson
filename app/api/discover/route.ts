@@ -12,6 +12,7 @@ type SearchResult = {
   username: string
   display_name: string
   avatar_url: string | null
+  plan: string | null
 }
 
 // Escape characters that have a special meaning inside ILIKE patterns.
@@ -36,14 +37,14 @@ export async function GET(request: NextRequest) {
   const [{ data: byUsername, error: usernameError }, { data: byName, error: nameError }] = await Promise.all([
     supabase
       .from('users')
-      .select('username, display_name, avatar_url')
+      .select('username, display_name, avatar_url, plan')
       .eq('is_discoverable', true)
       .ilike('username', `${pattern}%`)
       .order('username', { ascending: true })
       .limit(MAX_RESULTS),
     supabase
       .from('users')
-      .select('username, display_name, avatar_url')
+      .select('username, display_name, avatar_url, plan')
       .eq('is_discoverable', true)
       .ilike('display_name', `%${pattern}%`)
       .order('display_name', { ascending: true })
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
       username: row.username,
       display_name: row.display_name,
       avatar_url: row.avatar_url,
+      plan: row.plan,
     })
     if (results.length >= MAX_RESULTS) break
   }

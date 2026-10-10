@@ -23,6 +23,7 @@ export type SearchResult = {
   username: string
   display_name: string
   avatar_url: string | null
+  plan?: string | null
   match: SearchMatch
   reason: string
 }
@@ -102,7 +103,7 @@ export function keywordsFrom(query: string): string[] {
 
 
 type MatchRow = { user_id: string; section_id: string; content: string; distance: number }
-type UserRow = { id: string; username: string; display_name: string; avatar_url: string | null }
+type UserRow = { id: string; username: string; display_name: string; avatar_url: string | null; plan: string | null }
 
 export async function searchPeople(searcherId: string, query: string): Promise<SearchResult[]> {
   const supabase = createServiceClient()
@@ -132,7 +133,7 @@ export async function searchPeople(searcherId: string, query: string): Promise<S
   // Same rule as everywhere: only Public + Discoverable profiles.
   const { data: userData, error: usersError } = await supabase
     .from('users')
-    .select('id, username, display_name, avatar_url')
+    .select('id, username, display_name, avatar_url, plan')
     .in('id', userIds)
     .eq('is_discoverable', true)
     .neq('public_scope', 'none')
@@ -193,6 +194,7 @@ export async function searchPeople(searcherId: string, query: string): Promise<S
       username: user.username,
       display_name: user.display_name,
       avatar_url: user.avatar_url,
+      plan: user.plan,
       match: verdict.match,
       reason: verdict.reason,
     })

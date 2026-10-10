@@ -25,13 +25,13 @@ export default async function ConnectionsPage() {
   const [{ data: requests }, { data: connections }] = await Promise.all([
     service
       .from('connection_interests')
-      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url)')
+      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url, plan)')
       .eq('to_user_id', user.id)
       .eq('status', 'pending')
       .order('created_at', { ascending: false }),
     service
       .from('connection_interests')
-      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url)')
+      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url, plan)')
       .eq('to_user_id', user.id)
       .eq('status', 'accepted')
       .order('created_at', { ascending: false }),

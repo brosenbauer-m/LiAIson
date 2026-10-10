@@ -3,11 +3,14 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import Avatar from '@/components/ui/Avatar'
+import TierMark from '@/components/ui/TierMark'
+import RisingCircles from '@/components/landing/RisingCircles'
 
 type SearchResult = {
   username: string
   display_name: string
   avatar_url: string | null
+  plan?: string | null
 }
 
 type ContentResult = SearchResult & { match: 'full' | 'partial'; reason: string }
@@ -106,13 +109,24 @@ export default function DiscoverPage() {
     }
   }, [query])
 
+  // The description box grows with what is typed.
+  const grow = (el: HTMLTextAreaElement) => {
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
+
   // Lower tiers (no AI searches) see the description search greyed out.
   const locked = !!quota && quota.quota <= 0
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-[calc(100dvh-4rem)] bg-background overflow-hidden">
+      {/* Same rising circles as the home page, along the bottom of the screen. */}
+      <div className="pointer-events-none fixed inset-0 top-16" aria-hidden="true">
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-grid [mask-image:linear-gradient(to_top,black,transparent)] opacity-60" />
+        <RisingCircles />
+      </div>
 
-      <div className="max-w-xl mx-auto px-4 py-12">
+      <div className="relative max-w-3xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary mb-3 text-center">Discover</h1>
         <p className="text-text-secondary text-center mb-8">
           {mode === 'name'
@@ -142,25 +156,26 @@ export default function DiscoverPage() {
             <div className="space-y-4">
               {/* Lower tiers see the same search, greyed; tapping it explains why. */}
               <form onSubmit={runContentSearch} className={`flex gap-2 ${locked ? 'opacity-50' : ''}`} onClick={() => { if (locked) setShowLocked(true) }}>
-                <input
-                  type="search"
+                <textarea
                   value={contentQuery}
-                  onChange={e => setContentQuery(e.target.value)}
+                  onChange={e => { setContentQuery(e.target.value); grow(e.currentTarget) }}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }}
                   onFocus={() => { if (locked) setShowLocked(true) }}
                   readOnly={locked}
+                  rows={1}
                   placeholder="e.g. find someone who plays tennis and studies psychology in Vienna"
                   maxLength={200}
                   autoComplete="off"
                   aria-label="Describe who you are looking for"
                   aria-disabled={locked}
-                  className={`flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft ${locked ? 'cursor-not-allowed' : ''}`}
+                  className={`flex-1 min-w-0 resize-none overflow-hidden leading-relaxed bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft ${locked ? 'cursor-not-allowed' : ''}`}
                 />
                 <button
                   type="submit"
                   disabled={locked || contentLoading || contentQuery.trim().length < 3 || quota.used >= quota.quota}
-                  className="px-5 rounded-xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50"
+                  className="self-end h-[58px] px-6 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50"
                 >
-                  Search
+                  Search<span aria-hidden="true">*</span>
                 </button>
               </form>
               {locked ? (
@@ -189,7 +204,7 @@ export default function DiscoverPage() {
                         <Avatar url={person.avatar_url} name={person.display_name} />
                         <div className="min-w-0">
                           <p className="font-medium text-text-primary truncate">
-                            {person.display_name}{' '}
+                            {person.display_name} <TierMark plan={person.plan} />{' '}
                             <span className="text-sm font-normal text-text-secondary">@{person.username}</span>
                           </p>
                           {person.reason && <p className="text-sm text-text-secondary">{person.reason}</p>}
@@ -205,7 +220,8 @@ export default function DiscoverPage() {
 
         {mode === 'name' && (
         <>
-        <div className="relative">
+        <form className="flex gap-2" onSubmit={e => { e.preventDefault(); (document.activeElement as HTMLElement | null)?.blur() }}>
+        <div className="relative flex-1 min-w-0">
           <svg
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -226,6 +242,10 @@ export default function DiscoverPage() {
             className="w-full bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft"
           />
         </div>
+        <button type="submit" disabled={!query.trim()} className="h-[58px] px-6 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50">
+          Search
+        </button>
+        </form>
 
         <div className="mt-4">
           {loading && (
@@ -246,7 +266,7 @@ export default function DiscoverPage() {
                   >
                     <Avatar url={person.avatar_url} name={person.display_name} />
                     <div className="min-w-0">
-                      <p className="font-medium text-text-primary truncate">{person.display_name}</p>
+                      <p className="font-medium text-text-primary truncate">{person.display_name} <TierMark plan={person.plan} /></p>
                       <p className="text-sm text-text-secondary truncate">@{person.username}</p>
                     </div>
                   </Link>

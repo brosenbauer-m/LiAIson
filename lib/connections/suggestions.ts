@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 // Suggested people for the Connections / Circles page: findable on Discover,
 // not you, not already connected either way. A Private profile's bio is not
 // shown.
-export type Suggestion = { id: string; username: string; display_name: string; avatar_url: string | null; short_bio: string | null }
+export type Suggestion = { id: string; username: string; display_name: string; avatar_url: string | null; short_bio: string | null; plan: string | null }
 
 export async function suggestedPeople(userId: string, connectedIds: string[]): Promise<Suggestion[]> {
   const service = createServiceClient()
@@ -11,7 +11,7 @@ export async function suggestedPeople(userId: string, connectedIds: string[]): P
     service.from('connection_interests').select('to_user_id').eq('from_user_id', userId),
     service
       .from('users')
-      .select('id, username, display_name, avatar_url, short_bio, public_scope')
+      .select('id, username, display_name, avatar_url, short_bio, public_scope, plan')
       .eq('is_discoverable', true)
       .limit(24),
   ])

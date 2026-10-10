@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
     const [limits, quota] = await Promise.all([getPlanLimits(user.id), getSimilarityQuota(user.id)])
     const { data: rows } = await createServiceClient()
       .from('connection_interests')
-      .select('to_user:users!connection_interests_to_user_id_fkey(username, display_name, avatar_url)')
+      .select('to_user:users!connection_interests_to_user_id_fkey(username, display_name, avatar_url, plan)')
       .eq('from_user_id', user.id)
       .eq('status', 'accepted')
       .limit(500)
-    type Candidate = { username: string; display_name: string; avatar_url: string | null }
+    type Candidate = { username: string; display_name: string; avatar_url: string | null; plan: string | null }
     const candidates = ((rows as { to_user: Candidate | Candidate[] | null }[] | null) ?? [])
       .map(r => (Array.isArray(r.to_user) ? r.to_user[0] : r.to_user))
       .filter((c): c is Candidate => !!c)

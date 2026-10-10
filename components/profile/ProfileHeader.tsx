@@ -3,14 +3,16 @@
 import { motion } from 'framer-motion'
 import { fadeInUp } from '@/lib/animations'
 import Avatar from '@/components/ui/Avatar'
+import TierMark from '@/components/ui/TierMark'
 
 interface ProfileHeaderProps {
   avatarUrl: string | null
   displayName: string
   shortBio: string | null
+  plan?: string | null
 }
 
-export default function ProfileHeader({ avatarUrl, displayName, shortBio }: ProfileHeaderProps) {
+export default function ProfileHeader({ avatarUrl, displayName, shortBio, plan }: ProfileHeaderProps) {
   return (
     <motion.div
       variants={fadeInUp}
@@ -21,7 +23,7 @@ export default function ProfileHeader({ avatarUrl, displayName, shortBio }: Prof
       <div className="flex flex-col lg:flex-row items-center lg:items-start gap-6">
         <Avatar url={avatarUrl} name={displayName} size="xl" className="shadow-soft" />
         <div className="flex-1">
-          <h1 className="text-3xl font-display font-medium tracking-tight text-text-primary mb-2">{displayName}</h1>
+          <h1 className="text-3xl font-display font-medium tracking-tight text-text-primary mb-2">{displayName} <TierMark plan={plan} className="ml-1 scale-125" /></h1>
           {shortBio && (
             <p className="text-text-secondary text-base leading-relaxed">{shortBio}</p>
           )}

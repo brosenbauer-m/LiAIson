@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import SimilarityMap from '@/components/similarity/SimilarityMap'
+import TierMark from '@/components/ui/TierMark'
 import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 
 // Similarities with several people at once (Social Butterfly). Find people
@@ -11,7 +12,7 @@ import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 // bubble map for everyone and how much each person has in common with you.
 // Only you see it; nobody is told.
 
-type Candidate = { username: string; display_name: string; avatar_url: string | null }
+type Candidate = { username: string; display_name: string; avatar_url: string | null; plan?: string | null }
 type Person = { key: string; username: string; name: string; avatarUrl: string | null }
 type Loaded = {
   groupCompare: number
@@ -200,7 +201,7 @@ export default function SimilaritiesPage() {
                         onClick={() => pick(c)}
                         className="w-full flex items-baseline gap-2 px-4 py-2.5 text-left hover:bg-accent-tint"
                       >
-                        <span className="text-sm font-medium text-text-primary">{c.display_name}</span>
+                        <span className="text-sm font-medium text-text-primary">{c.display_name} <TierMark plan={c.plan} /></span>
                         <span className="text-xs text-text-muted">@{c.username}</span>
                       </button>
                     </li>

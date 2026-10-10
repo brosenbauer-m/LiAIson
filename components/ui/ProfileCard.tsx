@@ -2,9 +2,10 @@ import Link from 'next/link'
 import TagChip from './TagChip'
 import type { User } from '@/types'
 import Avatar from './Avatar'
+import TierMark from './TierMark'
 
 interface ProfileCardProps {
-  user: Pick<User, 'username' | 'display_name' | 'avatar_url' | 'short_bio'>
+  user: Pick<User, 'username' | 'display_name' | 'avatar_url' | 'short_bio'> & { plan?: string | null }
   tags?: string[]
 }
 
@@ -14,7 +15,7 @@ export default function ProfileCard({ user, tags = [] }: ProfileCardProps) {
       <div className="flex items-center gap-3">
         <Avatar url={user.avatar_url} name={user.display_name} size="md" />
         <div>
-          <h3 className="font-semibold text-text-primary">{user.display_name}</h3>
+          <h3 className="font-semibold text-text-primary">{user.display_name} <TierMark plan={user.plan} /></h3>
           <p className="text-xs text-text-secondary">@{user.username}</p>
         </div>
       </div>
