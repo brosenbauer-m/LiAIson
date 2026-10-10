@@ -169,11 +169,16 @@ export async function compareWith(
   if (quota.quota <= 0) throw new SimilarityError('Similarity is part of Extrovert.', 403, { locked: true })
 
   const inputs = await loadInputs(viewerId, targetId, targetName)
-  const cached = await readCached(viewerId, targetId, inputs.hash)
-  if (cached) return { result: cached, quota }
-
   if (quota.used >= quota.quota) {
-    throw new SimilarityError(`You have compared yourself with ${quota.quota} people this month. You can compare again next month.`, 429, { quotaReached: true })
+    throw new SimilarityError(`You have used all ${quota.quota} Similarity checks this month. You can check again next month.`, 429, { quotaReached: true })
+  }
+
+  // A result that is still up to date is shown again without asking the AI,
+  // but it still counts as a Similarity check (owner decision 2026-10-10).
+  const cached = await readCached(viewerId, targetId, inputs.hash)
+  if (cached) {
+    await logAiUsage({ userId: viewerId, feature: 'similarity', model: FAST_MODEL, actor: 'member', usage: { promptTokens: 0, completionTokens: 0 } })
+    return { result: cached, quota: { ...quota, used: quota.used + 1 } }
   }
 
   const response = await mistral.chat.complete({

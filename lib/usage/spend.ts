@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import { currentPeriod } from '@/lib/insights/periods'
+import { getBalanceEur } from '@/lib/billing/topup'
 
 // Pay-as-you-go foundation: what a user's own messages cost this month, and
 // whether they have reached their monthly spending limit. The sender of a
@@ -94,13 +95,19 @@ export async function getSpendLimitCents(userId: string): Promise<number> {
   return data.monthly_spend_limit_cents
 }
 
-// True when this month's metered usage has reached the user's own limit.
+// True when this month's metered usage has reached the user's own limit and
+// their credit balance doesn't cover more (owner decision 2026-10-10: adding
+// credit lets people keep sending beyond the limit, up to the credit).
 // Fails open (returns false) if usage cannot be read, so a database problem
 // never takes every LiAIson offline.
 export async function isOverSpendLimit(userId: string): Promise<boolean> {
   try {
-    const [usage, limitCents] = await Promise.all([getMonthUsage(userId), getSpendLimitCents(userId)])
-    return usage.costCents >= limitCents
+    const [usage, limitCents, creditEur] = await Promise.all([
+      getMonthUsage(userId),
+      getSpendLimitCents(userId),
+      getBalanceEur(userId).catch(() => 0),
+    ])
+    return usage.costCents >= limitCents + Math.max(0, creditEur) * 100
   } catch (err) {
     console.error('SPEND_LIMIT_CHECK_ERROR', err)
     return false

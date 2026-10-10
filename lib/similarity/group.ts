@@ -139,9 +139,6 @@ export async function compareGroup(
 ): Promise<{ people: GroupPerson[]; result: SimilarityResult; quota: number; used: number }> {
   const loaded = await loadGroup(viewerId, usernames)
   const quota = await getSimilarityQuota(viewerId)
-  const cached = await readCached(viewerId, loaded)
-  if (cached) return { people: loaded.people, result: cached, quota: quota.quota, used: quota.used }
-
   const count = loaded.people.length
   if (quota.used + count > quota.quota) {
     const left = Math.max(0, quota.quota - quota.used)
@@ -150,6 +147,16 @@ export async function compareGroup(
       429,
       { quotaReached: true }
     )
+  }
+
+  // An up-to-date chart is shown again without asking the AI, but each person
+  // still counts as a Similarity check (owner decision 2026-10-10).
+  const cached = await readCached(viewerId, loaded)
+  if (cached) {
+    for (let i = 0; i < count; i++) {
+      await logAiUsage({ userId: viewerId, feature: 'similarity', model: FAST_MODEL, actor: 'member', usage: { promptTokens: 0, completionTokens: 0 } })
+    }
+    return { people: loaded.people, result: cached, quota: quota.quota, used: quota.used + count }
   }
 
   const keys = loaded.people.map(p => p.key)

@@ -220,7 +220,7 @@ export default function SimilaritiesPage() {
                 {busy ? 'Creating…' : 'Create Similarities Chart'}
               </button>
               <p className="mt-2 text-xs text-text-muted text-center">
-                Each person counts as one Similarity check. {left} of {data.quota} left this month. The same people again are free while nothing has changed.
+                Each person counts as one Similarity check. {left} of {data.quota} left this month.
               </p>
             </div>
 
