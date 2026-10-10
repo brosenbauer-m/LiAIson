@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
+import ProfileBioCard from '@/components/vault/ProfileBioCard'
 import type { VaultSection, VaultFolder } from '@/types'
 import { placementFields, placementHelp, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
@@ -235,7 +236,9 @@ export default function VaultPage() {
   const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
   const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
 
-  const filtered = sections.filter(section => placementOf(section) === activeTab)
+  // The Profile Bio is shown on its own above the tabs (always public).
+  const bioSection = sections.find(s => s.section_type === 'profile_bio')
+  const filtered = sections.filter(section => section.section_type !== 'profile_bio' && placementOf(section) === activeTab)
   const tabs: Tab[] = [
     'outer',
     ...(innerAllowed || sections.some(s => s.circle === 'inner') ? ['inner' as const] : []),
@@ -301,7 +304,7 @@ export default function VaultPage() {
                 {totalChars > vaultLimit
                   ? 'Your Vault is over the limit of your plan. You can shorten text, but not add more.'
                   : 'Your Vault is almost full.'}{' '}
-                <Link href="/plans" className="text-accent hover:underline">Get more space with a higher plan</Link>
+                <Link href="/settings#subscription" className="text-accent hover:underline">Get more space with a higher tier</Link>
               </p>
             )}
           </div>
@@ -310,8 +313,14 @@ export default function VaultPage() {
         {errorMessage && (
           <p role="alert" className="mb-5 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
             {errorMessage}
-            {limitHit && <> <Link href="/plans" className="underline font-medium">See plans</Link></>}
+            {limitHit && <> <Link href="/settings#subscription" className="underline font-medium">See tiers</Link></>}
           </p>
+        )}
+
+        {bioSection && (
+          <div className="mb-8">
+            <ProfileBioCard key={bioSection.id} section={bioSection} onUpdate={updateSection} />
+          </div>
         )}
 
         <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
@@ -335,7 +344,7 @@ export default function VaultPage() {
         <p className="mb-8 text-sm text-text-secondary">
           {placementHelp(activeTab, customCircles)}
           {!innerAllowed && activeTab === 'outer' && (
-            <> With Ambivert or Extrovert you can also share some things only with people you choose. <Link href="/plans#circles" className="text-accent hover:underline">Learn more</Link></>
+            <> With Ambivert or Extrovert you can also share some things only with people you choose. <Link href="/#how-it-works" className="text-accent hover:underline">Learn more</Link></>
           )}
         </p>
 

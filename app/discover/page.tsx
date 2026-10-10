@@ -118,7 +118,7 @@ export default function DiscoverPage() {
 
         {quota && (
           <div className="flex justify-center gap-1 mb-6 bg-surface border border-border rounded-lg p-1 w-fit mx-auto shadow-soft" role="group" aria-label="How to search">
-            {([['name', 'By name'], ['content', 'By what they share']] as [Mode, string][]).map(([value, label]) => (
+            {([['name', 'By name'], ['content', 'By Information']] as [Mode, string][]).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
@@ -138,7 +138,7 @@ export default function DiscoverPage() {
           quota.quota <= 0 ? (
             <div className="bg-card border border-border rounded-2xl p-6 shadow-soft text-sm text-text-secondary leading-relaxed">
               With Ambivert or Extrovert you can find people by what they share, not just by their name, for example someone who plays tennis in Vienna.{' '}
-              <Link href="/plans" className="text-accent hover:underline">See plans</Link>
+              <Link href="/settings#subscription" className="text-accent hover:underline">See tiers</Link>
             </div>
           ) : (
             <div className="space-y-4">
@@ -151,7 +151,7 @@ export default function DiscoverPage() {
                   maxLength={200}
                   autoComplete="off"
                   aria-label="Describe who you are looking for"
-                  className="flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
+                  className="flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft"
                 />
                 <button
                   type="submit"
@@ -213,7 +213,7 @@ export default function DiscoverPage() {
             autoFocus
             autoComplete="off"
             aria-label="Search people"
-            className="w-full bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60 shadow-soft"
+            className="w-full bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft"
           />
         </div>
 

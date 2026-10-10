@@ -46,9 +46,9 @@ export default function VisitorInsights() {
     <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-text-primary">What visitors want to know</h2>
+          <h2 className="text-xl font-semibold text-text-primary">Echoes</h2>
           <p className="text-sm text-text-secondary mt-1">
-            Updated with every question. Anonymous — never who asked or their exact words.
+            What visitors want to know, summarized. Anonymous: never who asked or their exact words.
           </p>
         </div>
         <div className="flex gap-1 bg-surface border border-border rounded-lg p-1">

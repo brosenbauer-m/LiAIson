@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import NotificationBell from '@/components/nav/NotificationBell'
 
 type AuthState = 'loading' | 'signed-in' | 'signed-out'
 
@@ -12,7 +13,6 @@ const SIGNED_IN_LINKS = [
   { href: '/vault', label: 'Vault' },
   { href: '/discover', label: 'Discover' },
   { href: '/connections', label: 'Connections' },
-  { href: '/profile', label: 'Profile' },
   { href: '/settings', label: 'Settings' },
 ]
 
@@ -66,6 +66,9 @@ export default function SiteHeader() {
                 </Link>
               ))}
             </nav>
+            <div className="ml-auto md:ml-2 mr-1 md:mr-0">
+              <NotificationBell />
+            </div>
             <button
               type="button"
               onClick={() => setMenuOpenOn(menuOpen ? null : pathname)}
@@ -86,8 +89,8 @@ export default function SiteHeader() {
 
         {auth === 'signed-out' && (
           <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
-            <Link href="/plans" className={`hidden sm:inline-block ${linkClass('/plans')}`}>
-              Plans
+            <Link href="/#how-it-works" className={`hidden sm:inline-block ${linkClass('/#how-it-works')}`}>
+              How it Works
             </Link>
             <Link href="/discover" className={linkClass('/discover')}>
               Discover

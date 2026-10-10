@@ -6,6 +6,7 @@ import { getPlanLimits } from '@/lib/billing/plan'
 import ConnectionsList from './ConnectionsList'
 import ConnectionRequests from './ConnectionRequests'
 import CustomCircles from './CustomCircles'
+import ProfileCard from '@/components/ui/ProfileCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -51,6 +52,25 @@ export default async function ConnectionsPage() {
     ? await serviceSupabase.from('custom_circle_members').select('circle_id, member_id').in('circle_id', circles.map(c => c.id))
     : { data: [] }
   const members = (memberRows as { circle_id: string; member_id: string }[] | null) ?? []
+
+  // Suggested people: findable on Discover, not you, not already connected
+  // either way. A Private profile's bio is not shown.
+  const { data: outgoing } = await serviceSupabase.from('connection_interests').select('to_user_id').eq('from_user_id', user.id)
+  const known = new Set<string>([
+    user.id,
+    ...((outgoing as { to_user_id: string }[] | null) ?? []).map(r => r.to_user_id),
+    ...(connections ?? []).map(c => (Array.isArray(c.from_user) ? c.from_user[0]?.id : (c.from_user as { id?: string } | null)?.id) ?? ''),
+  ])
+  const { data: candidates } = await serviceSupabase
+    .from('users')
+    .select('id, username, display_name, avatar_url, short_bio, public_scope')
+    .eq('is_discoverable', true)
+    .limit(24)
+  type Candidate = { id: string; username: string; display_name: string; avatar_url: string | null; short_bio: string | null; public_scope: string | null }
+  const suggestions = ((candidates as Candidate[] | null) ?? [])
+    .filter(u => !known.has(u.id))
+    .slice(0, 6)
+    .map(u => ({ ...u, short_bio: u.public_scope === 'none' ? null : u.short_bio }))
   const memberships: Record<string, string[]> = {}
   for (const m of members) memberships[m.member_id] = [...(memberships[m.member_id] ?? []), m.circle_id]
 
@@ -84,6 +104,15 @@ export default async function ConnectionsPage() {
           customCircles={circles}
           initialMemberships={memberships}
         />
+
+        {suggestions.length > 0 && (
+          <section className="space-y-4 pt-4">
+            <h2 className="text-xl font-semibold text-text-primary">Suggested connections</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {suggestions.map(u => <ProfileCard key={u.id} user={u} />)}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )
