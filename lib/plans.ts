@@ -259,7 +259,7 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'similarity',
     title: 'Similarity',
-    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. You can turn this off in Settings (Use my Vault when I chat). With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can compare yourself with up to 100 people a month. With Social Butterfly you can compare yourself with up to 4 people at once on one map. The other person is not told.',
+    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can compare yourself with up to 100 people a month. With Social Butterfly you can compare yourself with up to 4 people at once on one map. The other person is not told.',
   },
   {
     key: 'circles',

@@ -71,11 +71,12 @@ async function loadReaderContext(
   try {
     const { data: reader, error: readerError } = await supabase
       .from('users')
-      .select('display_name, use_own_vault_in_chats')
+      .select('display_name')
       .eq('id', visitorId)
-      .single<{ display_name: string; use_own_vault_in_chats: boolean }>()
+      .single<{ display_name: string }>()
 
-    if (readerError || !reader || reader.use_own_vault_in_chats !== true) return undefined
+    // Always on since 2026-10-10 (the "Use my Vault when I chat" switch was removed).
+    if (readerError || !reader) return undefined
 
     // Everything except drafts (own circles included: it is their own Vault).
     const { data: sections } = await supabase
