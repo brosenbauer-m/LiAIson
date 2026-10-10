@@ -47,10 +47,16 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(4px) scale(0.98)' },
           to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
+        // Diagram lines draw themselves (paths use pathLength=1).
+        draw: {
+          from: { strokeDasharray: '1', strokeDashoffset: '1' },
+          to: { strokeDasharray: '1', strokeDashoffset: '0' },
+        },
       },
       animation: {
         'page-in': 'page-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         'message-in': 'message-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        draw: 'draw 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
       },
       boxShadow: {
         'soft': '0 1px 3px rgba(43, 30, 22, 0.06), 0 1px 2px rgba(43, 30, 22, 0.04)',
