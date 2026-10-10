@@ -116,7 +116,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
           disabled={importing}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-text-secondary hover:border-accent hover:text-text-primary disabled:opacity-60"
         >
-          <span aria-hidden="true">↑</span> {importing ? 'Reading file…' : 'Import file'}
+          <span aria-hidden="true">↑</span> {importing ? 'Reading file…' : 'Import File'}
         </button>
         <input
           ref={fileRef}
@@ -207,7 +207,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
               disabled={deleting}
               className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all disabled:opacity-50"
             >
-              {deleting ? 'Deleting...' : 'Yes, delete'}
+              {deleting ? 'Deleting...' : 'Yes, Delete'}
             </button>
           </div>
         ) : (
@@ -216,7 +216,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
             onClick={() => setConfirmingDelete(true)}
             className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all"
           >
-            Delete section
+            Delete Section
           </button>
         )}
       </div>

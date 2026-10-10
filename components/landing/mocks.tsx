@@ -32,7 +32,7 @@ export function VaultMock() {
         <p className="mt-1 text-[12.5px] leading-snug">Senior product designer at a Vienna start-up; five years in agencies before that.</p>
       </div>
       <div className="absolute left-5 right-5 top-[372px] h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center text-[12.5px] text-text-secondary">
-        ↑ Import a file · PDF or Word
+        ↑ Import a File · PDF or Word
       </div>
     </div>
   )
@@ -117,7 +117,7 @@ export function DiscoverMock() {
     <div className={frame}>
       <p className="absolute left-5 top-4 font-display text-xl">Discover</p>
       <div className="absolute left-5 top-[54px] inline-flex rounded-full border border-border bg-background p-0.5 text-[11.5px]">
-        <span className="px-3 py-1 text-text-secondary">By name</span>
+        <span className="px-3 py-1 text-text-secondary">By Name</span>
         <span className="rounded-full bg-accent px-3 py-1 text-white">By Information</span>
       </div>
       <div className="absolute left-5 right-5 top-[96px] h-[42px] rounded-xl border border-border bg-background flex items-center px-4 text-[12.5px]">

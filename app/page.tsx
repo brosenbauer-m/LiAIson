@@ -85,7 +85,7 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center animate-page-in" style={{ animationDelay: '320ms' }}>
             <Link href={primaryHref} className="px-7 py-3.5 bg-accent hover:bg-accent-light text-white font-medium rounded-full shadow-card">
-              {signedIn ? 'Go to my LiAIson' : 'Create Your Own LiAIson'}
+              {signedIn ? 'Go to My LiAIson' : 'Create Your Own LiAIson'}
             </Link>
             <Link href="#how-it-works" className="px-7 py-3.5 bg-surface/80 backdrop-blur border border-border hover:border-accent text-text-primary font-medium rounded-full">
               How it Works
@@ -154,7 +154,7 @@ export default function HomePage() {
               href={primaryHref}
               className="mt-10 inline-block px-8 py-4 bg-accent hover:bg-accent-light text-white font-medium rounded-full shadow-card"
             >
-              {signedIn ? 'Go to my LiAIson' : 'Create Your LiAIson'}
+              {signedIn ? 'Go to My LiAIson' : 'Create Your LiAIson'}
             </Link>
           </div>
         </div>

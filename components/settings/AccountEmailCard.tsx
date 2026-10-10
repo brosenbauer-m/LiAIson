@@ -57,7 +57,7 @@ export default function AccountEmailCard({ bare = false }: { bare?: boolean } = 
 
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
-      <h2 className="font-semibold text-text-primary text-lg">Email address</h2>
+      <h2 className="font-semibold text-text-primary text-lg">Email Address</h2>
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-text-primary break-all">{email ?? 'Loading...'}</p>
         {!editing && email && (
@@ -91,7 +91,7 @@ export default function AccountEmailCard({ bare = false }: { bare?: boolean } = 
               disabled={busy}
               className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
             >
-              {busy ? 'Sending…' : 'Send confirmation link'}
+              {busy ? 'Sending…' : 'Send Confirmation Link'}
             </button>
             <button
               type="button"

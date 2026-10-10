@@ -122,7 +122,7 @@ export async function generateNotifications(userId: string): Promise<void> {
           from: { email: 'noreply@my-liaison.app', name: 'LiAIson' },
           to: userEmail,
           subject: 'Your LiAIson has some questions for you 👋',
-          html: `<h2>Hi ${escapeHtml(userData.display_name ?? '')}!</h2><p>Your LiAIson has ${count} update${plural} for you.</p><ul>${notifications.map(n => `<li>${escapeHtml(n.message)}</li>`).join('')}</ul><p><a href="${dashboardUrl}">View your dashboard</a></p>`,
+          html: `<h2>Hi ${escapeHtml(userData.display_name ?? '')}!</h2><p>Your LiAIson has ${count} update${plural} for you.</p><ul>${notifications.map(n => `<li>${escapeHtml(n.message)}</li>`).join('')}</ul><p><a href="${dashboardUrl}">View Your Dashboard</a></p>`,
           text: `Hi ${userData.display_name ?? ''}!\n\nYour LiAIson has ${count} update${plural} for you:\n\n${notifications.map(n => `- ${n.message}`).join('\n')}\n\nView your dashboard: ${dashboardUrl}`,
         })
       } catch (e) {

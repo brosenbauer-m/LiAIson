@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { circleChain, circleWhere, type CircleNode, type CustomCircle } from '@/lib/circles'
 import Avatar from '@/components/ui/Avatar'
@@ -265,7 +264,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                 onChange={event => handleSelectShown(event.target.checked, shownIds)}
                 className="h-4 w-4 accent-accent"
               />
-              Select All Shown
+              Select all shown
             </label>}
           </div>
 

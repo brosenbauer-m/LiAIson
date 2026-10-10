@@ -28,13 +28,13 @@ export default async function DashboardPage() {
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-8">
         <div>
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">
-            Welcome back, {profile?.display_name?.split(' ')[0] ?? 'there'}
+            Welcome Back, {profile?.display_name?.split(' ')[0] ?? 'there'}
           </h1>
           <p className="text-text-secondary text-lg mt-2">Here&apos;s what&apos;s been happening with your LiAIson.</p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted mb-3">Your link</p>
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted mb-3">Your Link</p>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex-1 bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-secondary font-mono truncate">
               {profileUrl}

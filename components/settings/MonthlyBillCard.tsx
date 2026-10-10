@@ -105,7 +105,7 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-semibold text-text-primary text-lg">Monthly bill</h2>
+        <h2 className="font-semibold text-text-primary text-lg">Monthly Bill</h2>
         <Link href="/billing/receipts" className="text-sm text-accent hover:underline">Receipts →</Link>
       </div>
 
@@ -125,7 +125,7 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
                 disabled={busy}
                 className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
               >
-                {busy ? 'Please wait…' : `Pay ${euros(summary.unpaid.totalEur)} now`}
+                {busy ? 'Please wait…' : `Pay ${euros(summary.unpaid.totalEur)} Now`}
               </button>
             </div>
           )}
@@ -177,7 +177,7 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
                   disabled={busy}
                   className="px-4 py-1.5 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all disabled:opacity-50"
                 >
-                  {busy ? 'Running…' : 'Run test bill'}
+                  {busy ? 'Running…' : 'Run Test Bill'}
                 </button>
               </div>
             </div>

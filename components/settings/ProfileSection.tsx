@@ -119,7 +119,7 @@ export default function ProfileSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-5">
-        <button type="button" onClick={() => fileRef.current?.click()} className="rounded-full" aria-label="Change photo">
+        <button type="button" onClick={() => fileRef.current?.click()} className="rounded-full" aria-label="Change Photo">
           <Avatar url={avatarUrl} name={displayName} size="lg" className="shadow-soft" />
         </button>
         <div>
@@ -128,7 +128,7 @@ export default function ProfileSection() {
             onClick={() => fileRef.current?.click()}
             className="px-4 py-2 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg"
           >
-            Change photo
+            Change Photo
           </button>
           <p className="text-xs text-text-muted mt-2">JPG, PNG or GIF, up to 5 MB</p>
         </div>
@@ -171,7 +171,7 @@ export default function ProfileSection() {
         <div className="flex items-center justify-between mb-3">
           <span className={labelClass + ' mb-0'}>Links</span>
           <button type="button" onClick={() => setContactLinks(prev => [...prev, { platform: 'Website', url: '' }])} className="text-sm text-accent hover:underline font-medium">
-            + Add link
+            + Add Link
           </button>
         </div>
         <div className="space-y-2">
@@ -193,7 +193,7 @@ export default function ProfileSection() {
                 aria-label="Link"
                 className="flex-1 min-w-0 bg-background border border-border rounded-lg px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
               />
-              <button type="button" onClick={() => setContactLinks(prev => prev.filter((_, idx) => idx !== i))} className="text-text-muted hover:text-error px-2" aria-label="Remove link">
+              <button type="button" onClick={() => setContactLinks(prev => prev.filter((_, idx) => idx !== i))} className="text-text-muted hover:text-error px-2" aria-label="Remove Link">
                 ✕
               </button>
             </div>
@@ -208,7 +208,7 @@ export default function ProfileSection() {
           disabled={saving || !displayName.trim()}
           className="px-6 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-lg shadow-soft disabled:opacity-50"
         >
-          {saving ? 'Saving…' : 'Save profile'}
+          {saving ? 'Saving…' : 'Save Profile'}
         </button>
         {status && (
           <p className={`text-sm ${status.type === 'error' ? 'text-error' : 'text-success'}`} role={status.type === 'error' ? 'alert' : 'status'}>

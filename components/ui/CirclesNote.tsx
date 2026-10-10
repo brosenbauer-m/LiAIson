@@ -6,7 +6,7 @@ export default function CirclesNote({ className = '' }: { className?: string }) 
   return (
     <p className={`text-sm text-text-muted ${className}`}>
       With a higher tier you can create circles to choose who sees which parts of your Vault.{' '}
-      <Link href="/#circles" className="text-accent hover:underline font-medium">Learn more</Link>
+      <Link href="/#circles" className="text-accent hover:underline font-medium">Learn More</Link>
     </p>
   )
 }

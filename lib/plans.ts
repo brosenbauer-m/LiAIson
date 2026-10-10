@@ -233,12 +233,12 @@ export function formatChars(n: number): string {
 export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'liaison',
-    title: 'What is a LiAIson?',
+    title: 'What Is a LiAIson?',
     text: 'A LiAIson is your personal AI. It answers questions about you when people visit your profile, using only what you have written in your Vault. It never makes things up from other sources.',
   },
   {
     key: 'messages',
-    title: 'What do messages cost?',
+    title: 'What Do Messages Cost?',
     text: 'When you send a message to someone’s LiAIson, you pay a small amount for the answer, usually between half a cent and two cents. You never pay when other people talk to your LiAIson. You can set a monthly spending limit, so you never pay more than you want to.',
   },
   {
@@ -264,7 +264,7 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'circles',
     title: 'Circles',
-    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. Circles sit inside each other, so whoever is in your Inner Circle also sees your Outer Circle, and you never have to write the same thing twice. With Introvert there is one circle, so everyone sees the same information. With Social Butterfly you can also make your own circles, such as Family or Climbing club, and place them anywhere: in your Outer Circle, inside your Inner Circle, or inside each other. Everyone in a circle sees it and every circle around it. You arrange them by dragging them into each other.',
+    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. Circles sit inside each other, so whoever is in your Inner Circle also sees your Outer Circle, and you never have to write the same thing twice. With Introvert there is one circle, so everyone sees the same information. With Social Butterfly you can also make your own circles, such as Family or Climbing club, and place them anywhere: in your Outer Circle, inside your Inner Circle, inside each other, or on their own outside the Outer Circle. Everyone in a circle sees it and every circle around it. You arrange them by dragging them into each other.',
   },
   {
     key: 'butterfly',

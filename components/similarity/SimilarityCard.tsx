@@ -31,7 +31,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         const link = data.emptyVault
-          ? { href: '/vault', label: 'Go to your Vault' }
+          ? { href: '/vault', label: 'Go to Your Vault' }
           : data.needsCard
             ? { href: '/settings', label: 'Go to Settings' }
             : undefined
@@ -52,7 +52,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
 
   return (
     <div id="similarity" className="bg-card border border-border rounded-2xl p-6 shadow-soft scroll-mt-6">
-      <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">What you have in common</p>
+      <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">What You Have in Common</p>
 
       {result ? (
         <>

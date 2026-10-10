@@ -71,7 +71,7 @@ export default function SiteHeader() {
               type="button"
               onClick={() => setMenuOpenOn(menuOpen ? null : pathname)}
               className="md:hidden p-2 -mr-2 text-text-primary"
-              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={menuOpen ? 'Close Menu' : 'Open Menu'}
               aria-expanded={menuOpen}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6" aria-hidden="true">
@@ -94,13 +94,13 @@ export default function SiteHeader() {
               Discover
             </Link>
             <Link href="/login" className={linkClass('/login')}>
-              Log in
+              Log In
             </Link>
             <Link
               href="/signup"
               className="ml-1 whitespace-nowrap px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-full shadow-soft"
             >
-              Sign up
+              Sign Up
             </Link>
           </nav>
         )}

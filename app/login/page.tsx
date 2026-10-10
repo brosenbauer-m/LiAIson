@@ -43,7 +43,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Welcome back</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Welcome Back</h1>
           <p className="text-text-secondary mt-2">Sign in to your account</p>
         </div>
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
             <div>
               <div className="flex items-baseline justify-between mb-1.5">
                 <label className="block text-sm font-medium text-text-primary">Password</label>
-                <Link href="/forgot-password" className="text-xs text-accent hover:underline">Forgot password?</Link>
+                <Link href="/forgot-password" className="text-xs text-accent hover:underline">Forgot Password?</Link>
               </div>
               <input
                 type="password"
@@ -106,7 +106,7 @@ export default function LoginPage() {
           <p className="text-center text-text-secondary text-sm mt-6">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-accent-light hover:underline">
-              Sign up
+              Sign Up
             </Link>
           </p>
         </div>

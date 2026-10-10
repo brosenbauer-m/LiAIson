@@ -261,7 +261,7 @@ export default function SignupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">{checkingEmail ? 'Check your email' : 'Create your LiAIson'}</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">{checkingEmail ? 'Check Your Email' : 'Create Your LiAIson'}</h1>
           <p className="text-text-secondary mt-2">{checkingEmail ? 'Confirm your email to activate your account' : 'Set up your personal AI representative'}</p>
         </div>
 
@@ -284,7 +284,7 @@ export default function SignupPage() {
                 disabled={confirming}
                 className="w-full py-3 bg-accent hover:bg-accent/90 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
               >
-                {confirming ? 'Checking...' : "I've confirmed — continue"}
+                {confirming ? 'Checking...' : "I've Confirmed — Continue"}
               </button>
 
               <button
@@ -293,7 +293,7 @@ export default function SignupPage() {
                 disabled={resending || resendCooldown > 0}
                 className="w-full py-3 border border-border text-text-primary font-semibold rounded-lg transition-colors disabled:opacity-50"
               >
-                {resending ? 'Sending...' : resendCooldown > 0 ? `Email sent (${resendCooldown}s)` : 'Resend email'}
+                {resending ? 'Sending...' : resendCooldown > 0 ? `Email sent (${resendCooldown}s)` : 'Resend Email'}
               </button>
 
               <button
@@ -301,7 +301,7 @@ export default function SignupPage() {
                 onClick={handleDifferentEmail}
                 className="w-full text-center text-accent-light hover:underline text-sm"
               >
-                Use a different email
+                Use a Different Email
               </button>
             </div>
           ) : (
@@ -313,7 +313,7 @@ export default function SignupPage() {
           )}
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1.5">Display Name</label>
+              <label className="block text-sm font-medium text-text-primary mb-1.5">Display name</label>
               <input
                 type="text"
                 value={displayName}
@@ -424,7 +424,7 @@ export default function SignupPage() {
 
           <p className="text-center text-text-secondary text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-accent-light hover:underline">Sign in</Link>
+            <Link href="/login" className="text-accent-light hover:underline">Sign In</Link>
           </p>
           </>
           )}

@@ -118,7 +118,7 @@ export default function DiscoverPage() {
 
         {quota && (
           <div className="flex justify-center gap-1 mb-6 bg-surface border border-border rounded-lg p-1 w-fit mx-auto shadow-soft" role="group" aria-label="How to search">
-            {([['name', 'By name'], ['content', 'By Information']] as [Mode, string][]).map(([value, label]) => (
+            {([['name', 'By Name'], ['content', 'By Information']] as [Mode, string][]).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
@@ -138,7 +138,7 @@ export default function DiscoverPage() {
           quota.quota <= 0 ? (
             <div className="bg-card border border-border rounded-2xl p-6 shadow-soft text-sm text-text-secondary leading-relaxed">
               With Ambivert or Extrovert you can find people by what they share, not just by their name, for example someone who plays tennis in Vienna.{' '}
-              <Link href="/settings#subscription" className="text-accent hover:underline">See tiers</Link>
+              <Link href="/settings#subscription" className="text-accent hover:underline">See Tiers</Link>
             </div>
           ) : (
             <div className="space-y-4">

@@ -79,7 +79,7 @@ export default function TierPicker({
       })}
       <p className="text-xs text-text-muted pt-1">
         Every tier starts with a free month. On every tier you also pay for the messages you send, usually between half a cent and two cents.{' '}
-        <Link href="/#how-it-works" className="text-accent hover:underline">How LiAIson works</Link>
+        <Link href="/#how-it-works" className="text-accent hover:underline">How LiAIson Works</Link>
       </p>
     </div>
   )

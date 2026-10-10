@@ -124,8 +124,8 @@ export default function PaymentMethodCard({ returnPath = '/settings', onSaved, b
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-semibold text-text-primary text-lg">Payment method</h2>
-        <Link href="/billing/receipts" className="text-sm text-accent hover:underline">View receipts →</Link>
+        <h2 className="font-semibold text-text-primary text-lg">Payment Method</h2>
+        <Link href="/billing/receipts" className="text-sm text-accent hover:underline">View Receipts →</Link>
       </div>
 
       {!card && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}
@@ -173,7 +173,7 @@ export default function PaymentMethodCard({ returnPath = '/settings', onSaved, b
                 disabled={busy}
                 className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
               >
-                {busy ? 'Please wait…' : hasCard ? 'Replace card' : 'Add a card'}
+                {busy ? 'Please wait…' : hasCard ? 'Replace Card' : 'Add a Card'}
               </button>
             </div>
           </div>

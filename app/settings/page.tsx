@@ -111,7 +111,7 @@ export default function SettingsPage() {
               <p className="text-sm text-text-secondary mt-1">Every bill and top-up, with a printable receipt.</p>
             </div>
             <Link href="/billing/receipts" className="px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg whitespace-nowrap">
-              View invoices
+              View Invoices
             </Link>
           </div>
         </section>
@@ -122,11 +122,11 @@ export default function SettingsPage() {
             <PasswordForm />
             <div className="border-t border-border pt-6 flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-semibold text-text-primary">Your data</h3>
+                <h3 className="font-semibold text-text-primary">Your Data</h3>
                 <p className="text-sm text-text-secondary mt-0.5">Download everything stored about you as a file.</p>
               </div>
               <button type="button" onClick={downloadData} disabled={exporting} className="px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg whitespace-nowrap disabled:opacity-50">
-                {exporting ? 'Preparing…' : 'Download my data'}
+                {exporting ? 'Preparing…' : 'Download My Data'}
               </button>
             </div>
             <div className="border-t border-border pt-6 flex flex-col sm:flex-row gap-3">
@@ -135,18 +135,18 @@ export default function SettingsPage() {
                 onClick={() => signOut('local')}
                 className="flex-1 py-3 border border-border hover:border-accent text-text-primary rounded-lg text-sm font-medium"
               >
-                Sign out
+                Sign Out
               </button>
               <button
                 type="button"
                 onClick={() => signOut('global')}
                 className="flex-1 py-3 border border-border hover:border-accent text-text-primary rounded-lg text-sm font-medium"
               >
-                Sign out on all devices
+                Sign Out on All Devices
               </button>
             </div>
             <div className="border-t border-border pt-6 space-y-4">
-              <h3 className="font-semibold text-error">Delete account</h3>
+              <h3 className="font-semibold text-error">Delete Account</h3>
               <p className="text-sm text-text-secondary leading-relaxed">
                 Permanently deletes your account, your Vault, your connections and everything else. This can&apos;t be undone.
               </p>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
                   onClick={() => { setShowDelete(true); setDeleteError('') }}
                   className="py-2.5 px-5 border border-error/40 text-error hover:bg-error hover:text-white rounded-lg text-sm font-medium"
                 >
-                  Delete account
+                  Delete Account
                 </button>
               ) : (
                 <div className="space-y-3 rounded-xl border border-error/30 bg-error/5 p-4">
@@ -176,7 +176,7 @@ export default function SettingsPage() {
                       disabled={!deletePassword || deleting}
                       className="py-2.5 px-5 bg-error text-white rounded-lg text-sm font-medium disabled:opacity-50"
                     >
-                      {deleting ? 'Deleting…' : 'Permanently delete my account'}
+                      {deleting ? 'Deleting…' : 'Permanently Delete My Account'}
                     </button>
                     <button
                       type="button"

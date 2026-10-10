@@ -50,7 +50,7 @@ export default function PasswordForm() {
         </div>
         {!open && (
           <button type="button" onClick={() => { setOpen(true); setStatus(null) }} className="px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg whitespace-nowrap">
-            Change password
+            Change Password
           </button>
         )}
       </div>
@@ -61,10 +61,10 @@ export default function PasswordForm() {
           <input type="password" autoComplete="new-password" value={repeat} onChange={e => setRepeat(e.target.value)} placeholder="Repeat new password" aria-label="Repeat new password" maxLength={72} required className={input} />
           <div className="flex flex-wrap items-center gap-3">
             <button type="submit" disabled={busy} className="px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg disabled:opacity-50">
-              {busy ? 'Saving…' : 'Save new password'}
+              {busy ? 'Saving…' : 'Save New Password'}
             </button>
             <button type="button" onClick={() => { setOpen(false); setStatus(null) }} className="px-4 py-2.5 text-sm text-text-secondary">Cancel</button>
-            <Link href="/forgot-password" className="ml-auto text-xs text-accent hover:underline">Forgot your current password?</Link>
+            <Link href="/forgot-password" className="ml-auto text-xs text-accent hover:underline">Forgot Your Current Password?</Link>
           </div>
         </form>
       )}

@@ -61,7 +61,7 @@ export default function VisitorInsights() {
                 period === p ? 'bg-accent text-white shadow-soft' : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {p === 'week' ? 'This week' : 'This month'}
+              {p === 'week' ? 'This Week' : 'This Month'}
             </button>
           ))}
         </div>
@@ -118,7 +118,7 @@ export default function VisitorInsights() {
       )}
 
       <Link href="/insights" className="inline-block text-sm font-medium text-accent hover:underline">
-        See your weekly and monthly Echoes →
+        See Your Weekly and Monthly Echoes →
       </Link>
     </div>
   )

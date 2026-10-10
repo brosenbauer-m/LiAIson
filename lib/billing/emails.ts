@@ -44,7 +44,7 @@ export async function sendMonthlyBillEmail(documentId: number, kind: 'paid' | 'f
     lines = total > 0
       ? [`We charged ${euros(total)} to your saved payment method for your LiAIson usage in ${month}.${prepaid > 0 ? ` ${euros(prepaid)} was paid from your prepaid credit first.` : ''}`]
       : [`Your LiAIson usage in ${month} (${euros(prepaid)}) was paid from your prepaid credit. Nothing was charged to your card.`]
-    button = { label: 'View receipt', url: receiptUrl }
+    button = { label: 'View Receipt', url: receiptUrl }
   } else {
     subject = `Action needed: your LiAIson bill for ${month} (${euros(total)})`
     lines = [
@@ -52,7 +52,7 @@ export async function sendMonthlyBillEmail(documentId: number, kind: 'paid' | 'f
       'Until it is paid, you can’t send new messages. Your own LiAIson stays online for others.',
       'You can pay it in Settings with any payment method.',
     ]
-    button = { label: 'Pay now', url: settingsUrl }
+    button = { label: 'Pay Now', url: settingsUrl }
   }
 
   const html = `

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 // Copies text to the clipboard and confirms with a short "Copied" state.
-export default function CopyButton({ text, label = 'Copy link' }: { text: string; label?: string }) {
+export default function CopyButton({ text, label = 'Copy Link' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     try {

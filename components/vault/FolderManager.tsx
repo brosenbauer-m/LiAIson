@@ -96,7 +96,7 @@ export default function FolderManager({ folders, onCreate, onUpdate, onDelete }:
                 onClick={() => setColor(c)}
                 className={`w-6 h-6 rounded-full transition-all ${color === c ? 'ring-2 ring-offset-2 ring-accent' : ''}`}
                 style={{ backgroundColor: c }}
-                aria-label={`Choose color ${c}`}
+                aria-label={`Choose Color ${c}`}
               />
             ))}
           </div>

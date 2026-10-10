@@ -68,7 +68,7 @@ export default function BillingSetupPage() {
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">
-            {done ? 'You’re all set' : 'Your free month has ended'}
+            {done ? 'You’re All Set' : 'Your Free Month Has Ended'}
           </h1>
           <p className="text-text-secondary mt-3 leading-relaxed">
             {done
@@ -90,7 +90,7 @@ export default function BillingSetupPage() {
 
         {state && !state.exempt && (
           <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
-            <h2 className="font-semibold text-text-primary text-lg">Your plan</h2>
+            <h2 className="font-semibold text-text-primary text-lg">Your Plan</h2>
             <div className={`grid gap-2 ${choices(state).length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
               {choices(state).map(id => (
                 <button

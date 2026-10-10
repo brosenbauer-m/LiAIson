@@ -34,7 +34,7 @@ export default async function ReceiptPage(props: { params: Promise<{ number: str
   return (
     <div className="max-w-2xl mx-auto px-4 py-12 space-y-6 print:py-0">
       <div className="flex items-center justify-between gap-4 print:hidden">
-        <Link href="/billing/receipts" className="text-sm text-text-secondary hover:text-accent">← All receipts</Link>
+        <Link href="/billing/receipts" className="text-sm text-text-secondary hover:text-accent">← All Receipts</Link>
         <PrintButton />
       </div>
 

@@ -54,7 +54,8 @@ const SLIDES: Slide[] = [
       <>
         <b>Circles</b> decide what your LiAIson may tell whom, and they sit inside each other: whoever is in a circle also sees
         everything in the circles around it. From Ambivert up there is an <b>Outer Circle</b> for everyone and an{' '}
-        <b>Inner Circle</b> for friends; with Social Butterfly you can place your own circles anywhere, even inside the Inner Circle.
+        <b>Inner Circle</b> for friends; with Social Butterfly you can place your own circles anywhere, even inside the Inner Circle,
+        or on their own outside everything else.
         You pick someone&apos;s circle when you accept their request.
       </>
     ),
@@ -78,7 +79,7 @@ const SLIDES: Slide[] = [
     ),
     mock: <DiscoverMock />,
     callouts: [
-      { ax: 244, ay: 70, y: 52, title: 'By name', text: 'Find anyone by name or @username, on every tier.' },
+      { ax: 244, ay: 70, y: 52, title: 'By Name', text: 'Find anyone by name or @username, on every tier.' },
       { ax: 392, ay: 117, y: 130, title: 'By Information', text: 'Search by what people share, on higher tiers.' },
       { ax: 392, ay: 205, y: 212, title: 'A short reason', text: 'Never their Vault text.' },
       { ax: 260, ay: 360, y: 340, title: 'Only the findable', text: 'People decide whether they can be found.' },
@@ -229,7 +230,7 @@ export default function HowItWorks() {
         <span className="text-sm text-text-muted tabular-nums" aria-live="polite">{index + 1} of {SLIDES.length}</span>
         {last ? (
           <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card">
-            See tiers <span aria-hidden="true">→</span>
+            See Tiers <span aria-hidden="true">→</span>
           </Link>
         ) : (
           <button

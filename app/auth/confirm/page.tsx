@@ -54,7 +54,7 @@ export default function ConfirmPage() {
     router.refresh()
   }
 
-  const title = link?.type === 'email_change' ? 'Confirm your new email' : link?.type === 'recovery' ? 'Reset your password' : 'Confirm your email'
+  const title = link?.type === 'email_change' ? 'Confirm Your New Email' : link?.type === 'recovery' ? 'Reset Your Password' : 'Confirm Your Email'
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
@@ -79,7 +79,7 @@ export default function ConfirmPage() {
               {error && (
                 <div className="text-error text-sm bg-error/10 border border-error/30 rounded-lg px-3 py-2" role="alert">
                   {error}{' '}
-                  <Link href="/login" className="underline">Sign in</Link>
+                  <Link href="/login" className="underline">Sign In</Link>
                 </div>
               )}
               <button

@@ -146,7 +146,7 @@ export default function TierSection() {
                 disabled={busy || (unchanged && !keep)}
                 className="flex-1 px-4 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg disabled:opacity-50"
               >
-                {busy ? 'Please wait…' : keep ? 'Keep current tier' : unchanged ? 'Choose a different tier' : `Confirm · ${feeOfChoice(choice) === 0 ? 'Free' : `${formatEur(feeOfChoice(choice))}/month`}`}
+                {busy ? 'Please wait…' : keep ? 'Keep Current Tier' : unchanged ? 'Choose a Different Tier' : `Confirm · ${feeOfChoice(choice) === 0 ? 'Free' : `${formatEur(feeOfChoice(choice))}/month`}`}
               </button>
               <button
                 type="button"
@@ -164,7 +164,7 @@ export default function TierSection() {
             onClick={() => { setMessage(null); setChanging(true) }}
             className="w-full px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg"
           >
-            {state.pendingPlan ? 'Change or keep tier' : 'Change tier'}
+            {state.pendingPlan ? 'Change or Keep Tier' : 'Change Tier'}
           </button>
         )
       )}
@@ -172,7 +172,7 @@ export default function TierSection() {
       {message && (
         <p className={`text-sm ${message.type === 'error' ? 'text-error' : 'text-success'}`} role={message.type === 'error' ? 'alert' : 'status'}>
           {message.text}{' '}
-          {message.needsCard && <Link href="#payment" className="text-accent hover:underline font-medium">Add a card below</Link>}
+          {message.needsCard && <Link href="#payment" className="text-accent hover:underline font-medium">Add a Card Below</Link>}
         </p>
       )}
     </div>

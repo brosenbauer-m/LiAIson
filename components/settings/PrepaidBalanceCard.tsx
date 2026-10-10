@@ -136,7 +136,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
 
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
-      <h2 className="font-semibold text-text-primary text-lg">Prepaid balance</h2>
+      <h2 className="font-semibold text-text-primary text-lg">Prepaid Balance</h2>
 
       {!state && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}
       {loadError && !state && <p className="text-sm text-error" role="alert">Could not load your balance right now.</p>}
@@ -168,7 +168,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
           )}
 
           {confirmAmount !== null && state.savedCard ? (
-            <div className="space-y-3 bg-surface border border-border rounded-lg p-4" role="dialog" aria-label="Confirm top-up">
+            <div className="space-y-3 bg-surface border border-border rounded-lg p-4" role="dialog" aria-label="Confirm Top-Up">
               <p className="text-sm text-text-primary">
                 Pay <span className="font-semibold">{euros(confirmAmount)}</span> with <span className="font-semibold">{state.savedCard}</span>?
               </p>
@@ -187,7 +187,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
                   disabled={busy}
                   className="px-5 py-2 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all disabled:opacity-50"
                 >
-                  Use another payment method
+                  Use Another Payment Method
                 </button>
                 <button
                   type="button"
@@ -222,7 +222,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-medium text-text-primary">Recent receipts</p>
-                <Link href="/billing/receipts" className="text-sm text-accent hover:underline">All receipts →</Link>
+                <Link href="/billing/receipts" className="text-sm text-accent hover:underline">All Receipts →</Link>
               </div>
               <ul className="divide-y divide-border border border-border rounded-lg">
                 {state.receipts.map(r => (

@@ -70,7 +70,7 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
 
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
-      <h2 className="font-semibold text-text-primary text-lg">Usage &amp; spending limit</h2>
+      <h2 className="font-semibold text-text-primary text-lg">Usage &amp; Spending Limit</h2>
 
       {status === 'loading' && <p className="text-sm text-text-secondary">Loading...</p>}
       {status === 'error' && <p className="text-sm text-error" role="alert">Could not load your usage right now.</p>}

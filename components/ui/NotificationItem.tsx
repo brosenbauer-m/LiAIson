@@ -17,7 +17,7 @@ const typeIcons: Record<string, string> = {
   connection_interest: '✨',
 }
 
-export default function NotificationItem({ notification, onDismiss, onAction, actionLabel = 'Take action →' }: NotificationItemProps) {
+export default function NotificationItem({ notification, onDismiss, onAction, actionLabel = 'Take Action →' }: NotificationItemProps) {
   return (
     <div className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border">
       <span className="text-xl flex-shrink-0">{typeIcons[notification.type] || '📢'}</span>

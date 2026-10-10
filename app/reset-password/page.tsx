@@ -42,14 +42,14 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Choose a new password</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Choose a New Password</h1>
         </div>
         <div className="bg-card border border-border rounded-2xl p-8">
           {ready === null && <p className="text-sm text-text-secondary">Loading…</p>}
           {ready === false && (
             <div className="space-y-4 text-center">
               <p className="text-text-primary">This reset link has expired or was already used.</p>
-              <Link href="/forgot-password" className="inline-block text-accent hover:underline text-sm">Request a new link</Link>
+              <Link href="/forgot-password" className="inline-block text-accent hover:underline text-sm">Request a New Link</Link>
             </div>
           )}
           {ready && (
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
               </div>
               {error && <p className="text-sm text-error" role="alert">{error}</p>}
               <button type="submit" disabled={busy} className="w-full py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg disabled:opacity-50">
-                {busy ? 'Saving…' : 'Save new password'}
+                {busy ? 'Saving…' : 'Save New Password'}
               </button>
             </form>
           )}

@@ -73,7 +73,7 @@ export default function VaultPage() {
         .order('domain', { ascending: true })
 
       if (error) {
-        setErrorMessage("Couldn't load your vault — please refresh")
+        setErrorMessage("Couldn't load your Vault — please refresh")
         setLoading(false)
         return
       }
@@ -215,7 +215,7 @@ export default function VaultPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-text-secondary">Loading your vault...</div>
+        <div className="text-text-secondary">Loading your Vault...</div>
       </div>
     )
   }
@@ -227,7 +227,7 @@ export default function VaultPage() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full shadow-card">
             <div className="text-5xl mb-4">🎉</div>
-            <h2 className="text-2xl font-bold text-text-primary mb-3">Welcome to your Vault!</h2>
+            <h2 className="text-2xl font-bold text-text-primary mb-3">Welcome to Your Vault!</h2>
             <p className="text-text-secondary text-base mb-6 leading-relaxed">
               This is where you feed your LiAIson. The more you add, the better it can represent you. Start with a few sections and build from there.
             </p>
@@ -265,7 +265,7 @@ export default function VaultPage() {
                 {totalChars > vaultLimit
                   ? 'Your Vault is over the limit of your plan. You can shorten text, but not add more.'
                   : 'Your Vault is almost full.'}{' '}
-                <Link href="/settings#subscription" className="text-accent hover:underline">Get more space with a higher tier</Link>
+                <Link href="/settings#subscription" className="text-accent hover:underline">Get More Space With a Higher Tier</Link>
               </p>
             )}
           </div>
@@ -274,7 +274,7 @@ export default function VaultPage() {
         {errorMessage && (
           <p role="alert" className="mb-5 rounded-lg border border-error/30 bg-error/10 px-4 py-3 text-sm text-error">
             {errorMessage}
-            {limitHit && <> <Link href="/settings#subscription" className="underline font-medium">See tiers</Link></>}
+            {limitHit && <> <Link href="/settings#subscription" className="underline font-medium">See Tiers</Link></>}
           </p>
         )}
 

@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Forgot your password?</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Forgot Your Password?</h1>
           <p className="text-text-secondary mt-2">We&apos;ll email you a link to choose a new one.</p>
         </div>
         <div className="bg-card border border-border rounded-2xl p-8">
@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
             <div className="space-y-4 text-center">
               <p className="text-text-primary">If an account exists for <span className="font-medium">{email}</span>, a reset link is on its way.</p>
               <p className="text-sm text-text-secondary">The link works for one hour. Check your spam folder if you don&apos;t see it.</p>
-              <Link href="/login" className="inline-block text-accent hover:underline text-sm">Back to sign in</Link>
+              <Link href="/login" className="inline-block text-accent hover:underline text-sm">Back to Sign In</Link>
             </div>
           ) : (
             <form onSubmit={submit} className="space-y-5">
@@ -62,10 +62,10 @@ export default function ForgotPasswordPage() {
               </div>
               {error && <p className="text-sm text-error" role="alert">{error}</p>}
               <button type="submit" disabled={busy} className="w-full py-3 bg-accent hover:bg-accent-light text-white font-semibold rounded-lg disabled:opacity-50">
-                {busy ? 'Sending…' : 'Send reset link'}
+                {busy ? 'Sending…' : 'Send Reset Link'}
               </button>
               <p className="text-center text-sm text-text-secondary">
-                <Link href="/login" className="text-accent hover:underline">Back to sign in</Link>
+                <Link href="/login" className="text-accent hover:underline">Back to Sign In</Link>
               </p>
             </form>
           )}

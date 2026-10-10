@@ -69,7 +69,7 @@ function ReportCard({ r }: { r: Report }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-semibold text-text-primary">What people wanted to know</h3>
+        <h3 className="font-semibold text-text-primary">What People Wanted to Know</h3>
         {c.categories.map(cat => (
           <div key={cat.category}>
             <div className="flex items-center justify-between text-sm mb-1">
@@ -105,14 +105,14 @@ function ReportCard({ r }: { r: Report }) {
 
       {c.suggestions.length > 0 && (
         <div className="rounded-lg border border-border p-4">
-          <h3 className="font-semibold text-text-primary mb-2">Ideas for your Vault</h3>
+          <h3 className="font-semibold text-text-primary mb-2">Ideas for Your Vault</h3>
           <ul className="space-y-1">
             {c.suggestions.map(s => (
               <li key={s} className="text-sm text-text-secondary">• {s}</li>
             ))}
           </ul>
           <Link href="/vault" className="inline-block mt-3 text-sm font-medium text-accent hover:underline">
-            Open my Vault →
+            Open My Vault →
           </Link>
         </div>
       )}

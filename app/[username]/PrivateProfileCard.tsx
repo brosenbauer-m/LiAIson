@@ -54,7 +54,7 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
         </svg>
       </div>
       <div>
-        <p className="font-semibold text-text-primary text-lg">This LiAIson is private.</p>
+        <p className="font-semibold text-text-primary text-lg">This LiAIson is Private.</p>
         <p className="text-sm text-text-secondary mt-1">
           {status === 'signed_out'
             ? `Sign up or log in to connect with ${displayName}.`
@@ -70,13 +70,13 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
             href="/signup"
             className="px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft"
           >
-            Sign up
+            Sign Up
           </Link>
           <Link
             href={`/login?redirect=/${encodeURIComponent(username)}`}
             className="px-5 py-2.5 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all"
           >
-            Log in
+            Log In
           </Link>
         </div>
       ) : status === 'self' || status === 'connected' ? null : (

@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       to: email,
       subject: 'Reset your LiAIson password',
       text: `Someone asked to reset the password of your LiAIson account. If that was you, open this link to choose a new password:\n\n${link}\n\nThe link works for one hour. If it wasn't you, you can ignore this email; your password stays the same.`,
-      html: `<p>Someone asked to reset the password of your LiAIson account. If that was you, choose a new password here:</p><p><a href="${escapeHtml(link)}">Reset my password</a></p><p>The link works for one hour. If it wasn't you, you can ignore this email; your password stays the same.</p>`,
+      html: `<p>Someone asked to reset the password of your LiAIson account. If that was you, choose a new password here:</p><p><a href="${escapeHtml(link)}">Reset My Password</a></p><p>The link works for one hour. If it wasn't you, you can ignore this email; your password stays the same.</p>`,
     })
   } catch (err) {
     console.error('PASSWORD_RESET_ERROR', err)

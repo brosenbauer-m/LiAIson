@@ -113,7 +113,7 @@ export default function SimilaritiesPage() {
       const d = await res.json().catch(() => ({}))
       if (!res.ok) {
         const link = d.emptyVault
-          ? { href: '/vault', label: 'Go to your Vault' }
+          ? { href: '/vault', label: 'Go to Your Vault' }
           : d.needsCard
             ? { href: '/settings', label: 'Go to Settings' }
             : d.locked
@@ -162,7 +162,7 @@ export default function SimilaritiesPage() {
         ) : (
           <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
             <div className="flex items-baseline justify-between gap-4">
-              <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} people</h2>
+              <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} People</h2>
               <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
             </div>
 
@@ -234,7 +234,7 @@ export default function SimilaritiesPage() {
 
         {people && result && (
           <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
-            <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">What you have in common</p>
+            <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">What You Have in Common</p>
             <ul className="space-y-2">
               {people.map(p => {
                 const level = result.levels?.[p.key] ?? 1

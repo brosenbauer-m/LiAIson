@@ -119,7 +119,7 @@ export default async function ConnectionsPage() {
 
         {suggestions.length > 0 && (
           <section className="space-y-4 pt-4">
-            <h2 className="text-xl font-semibold text-text-primary">Suggested connections</h2>
+            <h2 className="text-xl font-semibold text-text-primary">Suggested Connections</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {suggestions.map(u => <ProfileCard key={u.id} user={u} />)}
             </div>

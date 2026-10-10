@@ -13,12 +13,12 @@ export default function PrivacyPage() {
 
         <div className="space-y-8 text-text-secondary leading-relaxed">
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">What is LiAIson?</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">What Is LiAIson?</h2>
             <p>LiAIson is a personal AI agent platform that lets you create an AI representative — your LiAIson — which speaks on your behalf to anyone who visits your public profile. This policy explains how we handle your data, in plain English.</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">What data we collect</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">What Data We Collect</h2>
             <p className="mb-3">We collect:</p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Your email address and password (for authentication)</li>
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">How we use your data</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">How We Use Your Data</h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>To power your LiAIson — vault content is fed into your AI agent&apos;s system prompt</li>
               <li>To surface useful notifications about your profile (gaps, visitor queries, stale content)</li>
@@ -44,15 +44,15 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor interactions</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor Interactions</h2>
             <p>When someone chats with your LiAIson, their messages are sent to Mistral AI, a French AI provider, and processed only in its data centres in the EU and EFTA countries (Mistral&apos;s EU regional service), to generate responses. We do not store visitor messages. For each question we keep only a short anonymous statement of what was asked about (e.g. &quot;People want to know more about your climbing&quot;) with a category, so owners can see what visitors are interested in. These statements never contain the visitor&apos;s words, identity or contact details and are deleted after about 35 days. Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
             <p>If you are signed in and chat with someone else&apos;s LiAIson, the non-draft content of your own Vault is also sent to Mistral AI with your message, so answers can relate to you (for example &quot;what do we have in common?&quot;). It is used only to answer you, is never shown to the other person and is not stored.</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">Your controls</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">Your Controls</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Circles sit inside each other: whoever is in a circle also sees the circles around it, for example someone in a circle you placed inside your Inner Circle also sees your Inner and Outer Circle. Your Profile Bio is always in your Outer Circle</li>
+              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Circles sit inside each other: whoever is in a circle also sees the circles around it, for example someone in a circle you placed inside your Inner Circle also sees your Inner and Outer Circle. A circle you keep on its own outside the Outer Circle shows its people only that circle (and your Outer Circle if your profile is Public). Your Profile Bio is always in your Outer Circle</li>
               <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
               <li>You can turn Discoverable on or off at any time. When it is off, or your profile is Private, no one can find you by what you share</li>
               <li>You can download all data stored about you as a file, change your password, and delete your account with everything in it at any time in Settings</li>
@@ -63,12 +63,12 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">Where your data is stored</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">Where Your Data Is Stored</h2>
             <p>LiAIson is built with European privacy in mind. Your account, vault and profile data are stored in the EU (Ireland), our application servers run in Frankfurt, Germany, and all AI responses are generated by Mistral AI in its EU/EFTA data centres. Your vault content is never used to train AI models.</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">Third-party services</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">Third-Party Services</h2>
             <ul className="list-disc pl-5 space-y-2">
               <li>Supabase – database and authentication (EU, Ireland)</li>
               <li>Vercel – application hosting (servers in Frankfurt, Germany)</li>
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-text-primary mb-3">Your rights under the GDPR</h2>
+            <h2 className="text-xl font-semibold text-text-primary mb-3">Your Rights Under the GDPR</h2>
             <p>If you are in the EU or EEA, you have the right to access, correct, export or delete your personal data, to restrict or object to its processing, and to withdraw consent at any time. You can delete your account and all vault data yourself in Settings. For any other request, email us and we will respond within 30 days. You also have the right to lodge a complaint with your local data protection authority (in Austria: the Datenschutzbehörde, dsb.gv.at).</p>
           </section>
 
