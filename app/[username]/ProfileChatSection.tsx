@@ -192,6 +192,8 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
       ])
     } finally {
       setLoading(false)
+      // The header's usage indicator picks up the cost of this message.
+      setTimeout(() => window.dispatchEvent(new Event('liaison:usage-changed')), 1500)
     }
   }, [messages, loading, rateLimited, paused, isLoggedIn, username, loadTrial, similarityNote])
 
@@ -415,7 +417,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
               disabled={loading || !input.trim()}
               className="px-6 py-3 bg-accent hover:bg-accent-light text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-all shadow-soft hover:shadow-card"
             >
-              Send
+              Send<span aria-hidden="true">*</span>
             </button>
           </form>
         )}

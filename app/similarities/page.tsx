@@ -217,7 +217,7 @@ export default function SimilaritiesPage() {
                 disabled={busy || selected.length < 2}
                 className="w-full px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50"
               >
-                {busy ? 'Creating…' : 'Create Similarities Chart'}
+                {busy ? 'Creating…' : 'Create Similarities Chart*'}
               </button>
               <p className="mt-2 text-xs text-text-muted text-center">
                 Each person counts as one Similarity check. {left} of {data.quota} left this month.

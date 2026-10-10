@@ -90,7 +90,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
             disabled={busy}
             className="mt-4 w-full px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50"
           >
-            {busy ? 'Checking…' : 'See What We Have in Common'}
+            {busy ? 'Checking…' : 'See What We Have in Common*'}
           </button>
           <p className="mt-2 text-xs text-text-muted text-center">
             {left} of {state.quota} Similarity checks left this month

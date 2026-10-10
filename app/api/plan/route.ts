@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { changePlan, getPlanState } from '@/lib/billing/plan'
 import { isPlanId } from '@/lib/plans'
+import { getSearchQuota } from '@/lib/search/search'
+import { getSimilarityQuota } from '@/lib/similarity/compare'
 
 // GET → the signed-in user's plan state. POST { plan, options? } → change plan
 // (options = Social Butterfly slider choices)
@@ -12,7 +14,13 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
   try {
-    return NextResponse.json(await getPlanState(user.id), { headers: { 'Cache-Control': 'no-store' } })
+    // Plus this month's AI searches and Similarity checks, for the limit bars.
+    const [state, searches, similarities] = await Promise.all([
+      getPlanState(user.id),
+      getSearchQuota(user.id).catch(() => null),
+      getSimilarityQuota(user.id).catch(() => null),
+    ])
+    return NextResponse.json({ ...state, searches, similarities }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('PLAN_GET_ERROR', err)
     return NextResponse.json({ error: 'Could not load your plan' }, { status: 500 })

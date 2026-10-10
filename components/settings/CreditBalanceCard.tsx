@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { EU_COUNTRIES } from '@/lib/billing/countries'
 
 type Receipt = { receiptNumber: string; kind: 'topup' | 'monthly'; totalEur: number; paidAt: string }
@@ -258,29 +257,6 @@ export default function CreditBalanceCard({ bare = false }: { bare?: boolean } =
             </div>
           )}
 
-          {state.receipts.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-medium text-text-primary">Recent receipts</p>
-                <Link href="/billing/receipts" className="text-sm text-accent hover:underline">All Receipts →</Link>
-              </div>
-              <ul className="divide-y divide-border border border-border rounded-lg">
-                {state.receipts.map(r => (
-                  <li key={r.receiptNumber}>
-                    <Link
-                      href={`/billing/receipts/${r.receiptNumber}`}
-                      className="flex items-center justify-between gap-4 px-4 py-2 text-sm hover:bg-surface/60 transition-colors"
-                    >
-                      <span className="text-text-secondary">
-                        {new Date(r.paidAt).toLocaleDateString()} · {r.kind === 'topup' ? 'Top-up' : 'Monthly bill'} · {r.receiptNumber}
-                      </span>
-                      <span className="text-text-primary tabular-nums">{euros(r.totalEur)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </>
       )}
 

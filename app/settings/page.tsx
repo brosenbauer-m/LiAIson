@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import ProfileSection from '@/components/settings/ProfileSection'
 import PrivacySection from '@/components/settings/PrivacySection'
@@ -105,15 +104,6 @@ export default function SettingsPage() {
             <div className="border-t border-border pt-8"><CreditBalanceCard bare /></div>
           </div>
           <div id="payment" className={`${card} scroll-mt-24`}><PaymentMethodCard bare /></div>
-          <div className={`${card} flex items-center justify-between gap-4`}>
-            <div>
-              <h3 className="font-semibold text-text-primary text-lg">Invoices</h3>
-              <p className="text-sm text-text-secondary mt-1">Every bill and top-up, with a printable receipt.</p>
-            </div>
-            <Link href="/billing/receipts" className="px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg whitespace-nowrap">
-              View Invoices
-            </Link>
-          </div>
         </section>
 
         <section className="space-y-4">

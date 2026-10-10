@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getMonthUsage, getSpendLimitCents, MAX_SPEND_LIMIT_CENTS } from '@/lib/usage/spend'
+import { getBalanceEur } from '@/lib/billing/topup'
+import { isCurrency } from '@/lib/currency'
+import { eurRate } from '@/lib/currency/rates'
 
-// Owner-only: this month's AI usage of your own LiAIson, and your monthly
-// spending limit. POST { limitEuros } changes the limit (whole euros, 0–500).
+// The signed-in user's own usage this month, monthly spending limit, credit
+// balance, whether the free month is still on, and the display currency with
+// today's rate (used by Settings and the usage indicator in the header).
+// POST { limitEuros } changes the limit (whole euros, 0–500).
 
 async function getSignedInUserId(): Promise<string | null> {
   const supabase = await createClient()
@@ -19,9 +24,29 @@ export async function GET() {
   }
 
   try {
-    const [usage, limitCents] = await Promise.all([getMonthUsage(userId), getSpendLimitCents(userId)])
+    const { data: profile } = await createServiceClient()
+      .from('users')
+      .select('display_currency, trial_ends_at, billing_exempt')
+      .eq('id', userId)
+      .single<{ display_currency: string | null; trial_ends_at: string | null; billing_exempt: boolean | null }>()
+    const [usage, limitCents, creditEur, fx] = await Promise.all([
+      getMonthUsage(userId),
+      getSpendLimitCents(userId),
+      getBalanceEur(userId).catch(() => 0),
+      eurRate(isCurrency(profile?.display_currency) ? profile.display_currency : 'EUR'),
+    ])
+    const creditCents = Math.max(0, creditEur) * 100
     return NextResponse.json(
-      { ...usage, limitCents, paused: usage.costCents >= limitCents },
+      {
+        ...usage,
+        limitCents,
+        creditCents,
+        paused: usage.costCents >= limitCents + creditCents,
+        inTrial: !!profile?.trial_ends_at && new Date(profile.trial_ends_at) > new Date(),
+        exempt: profile?.billing_exempt === true,
+        currency: fx.currency,
+        rate: fx.rate,
+      },
       { headers: { 'Cache-Control': 'no-store' } }
     )
   } catch {

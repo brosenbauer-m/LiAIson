@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 
 type Summary = {
   monthToDateEur: number
@@ -73,7 +72,6 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <div className="flex items-center justify-between gap-4">
         <h2 className="font-semibold text-text-primary text-lg">Monthly Bill</h2>
-        <Link href="/billing/receipts" className="text-sm text-accent hover:underline">Receipts →</Link>
       </div>
 
       {!summary && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}

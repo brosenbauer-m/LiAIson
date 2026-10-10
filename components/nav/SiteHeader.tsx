@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import NotificationBell from '@/components/nav/NotificationBell'
+import UsageIndicator from '@/components/nav/UsageIndicator'
 
 type AuthState = 'loading' | 'signed-in' | 'signed-out'
 
@@ -73,7 +74,8 @@ export default function SiteHeader() {
                 </Link>
               ))}
             </nav>
-            <div className="ml-auto md:ml-2 mr-1 md:mr-0">
+            <div className="ml-auto md:ml-2 mr-1 md:mr-0 flex items-center gap-2">
+              {pathname !== '/' && <UsageIndicator />}
               <NotificationBell />
             </div>
             <button

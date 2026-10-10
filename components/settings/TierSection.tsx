@@ -8,7 +8,6 @@ import {
   BUTTERFLY_SLIDERS,
   DEFAULT_PLAN_OPTIONS,
   SLIDER_KEYS,
-  formatChars,
   formatEur,
   samePlanOptions,
   type PlanId,
@@ -29,6 +28,26 @@ type PlanState = {
   trialEndsAt: string
   vaultChars: number
   vaultLimit: number
+  extraCircles: number
+  customCircles: number
+  searches: { used: number; quota: number } | null
+  similarities: { used: number; quota: number } | null
+}
+
+// One limit of the tier with its bar.
+function LimitBar({ label, used, limit, unit }: { label: string; used: number; limit: number; unit?: string }) {
+  const pct = Math.min(100, Math.round((used / Math.max(1, limit)) * 100))
+  return (
+    <div className="space-y-1.5">
+      <div className="flex justify-between gap-4 text-xs text-text-secondary">
+        <span>{label}</span>
+        <span className="tabular-nums">{used.toLocaleString('en-GB')} / {limit.toLocaleString('en-GB')}{unit ? ` ${unit}` : ''}</span>
+      </div>
+      <div className="h-2 bg-accent-subtle rounded-full overflow-hidden" aria-hidden="true">
+        <div className={`h-full rounded-full ${pct >= 100 ? 'bg-error' : 'bg-accent'}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  )
 }
 
 function formatDay(iso: string): string {
@@ -88,7 +107,6 @@ export default function TierSection() {
   }
 
   const plan = PLANS[state.plan]
-  const used = Math.min(100, Math.round((state.vaultChars / Math.max(1, state.vaultLimit)) * 100))
 
   return (
     <div className="space-y-5">
@@ -111,14 +129,15 @@ export default function TierSection() {
         </ul>
       )}
 
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-xs text-text-secondary">
-          <span>Vault</span>
-          <span className="tabular-nums">{formatChars(state.vaultChars)} / {formatChars(state.vaultLimit)} characters</span>
-        </div>
-        <div className="h-2 bg-accent-subtle rounded-full overflow-hidden" aria-hidden="true">
-          <div className={`h-full rounded-full ${used >= 100 ? 'bg-error' : 'bg-accent'}`} style={{ width: `${used}%` }} />
-        </div>
+      <div className="space-y-3">
+        <LimitBar label="Vault" used={state.vaultChars} limit={state.vaultLimit} unit="characters" />
+        {state.searches && state.searches.quota > 0 && (
+          <LimitBar label="Searches by description this month" used={state.searches.used} limit={state.searches.quota} />
+        )}
+        {state.similarities && state.similarities.quota > 0 && (
+          <LimitBar label="Similarity checks this month" used={state.similarities.used} limit={state.similarities.quota} />
+        )}
+        {state.extraCircles > 0 && <LimitBar label="Own circles" used={state.customCircles} limit={state.extraCircles} />}
       </div>
 
       {state.pendingPlan && state.pendingFrom && (

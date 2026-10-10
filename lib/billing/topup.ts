@@ -8,7 +8,7 @@ import type { MolliePayment } from '@/lib/billing/mollie'
 // Quick choices; any whole amount from TOPUP_MIN_EUR to TOPUP_MAX_EUR is allowed.
 export const TOPUP_AMOUNTS_EUR = [5, 10, 20] as const
 export const TOPUP_MIN_EUR = 5
-export const TOPUP_MAX_EUR = 200
+export const TOPUP_MAX_EUR = 10000
 
 export function isTopUpAmount(n: unknown): n is number {
   return typeof n === 'number' && Number.isInteger(n) && n >= TOPUP_MIN_EUR && n <= TOPUP_MAX_EUR
