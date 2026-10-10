@@ -77,7 +77,7 @@ export default function PrivacySection() {
         </div>
         <p className="text-sm text-text-secondary leading-relaxed">
           {isPublic
-            ? 'Anyone with an account can talk to your LiAIson about your Outer Circle. People in your Inner Circle or your own circles also hear about those.'
+            ? 'Anyone with an account can talk to your LiAIson about your Outer Circle. People in your Inner Circle also hear about it, and people in your own circles about their circle and every circle around it.'
             : <>Only people whose connection request you accepted can see your profile and talk to your LiAIson. You choose their circle on the <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.</>}
         </p>
       </div>

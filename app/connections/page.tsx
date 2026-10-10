@@ -6,6 +6,7 @@ import { getPlanLimits } from '@/lib/billing/plan'
 import ConnectionsList from './ConnectionsList'
 import ConnectionRequests from './ConnectionRequests'
 import CustomCircles from './CustomCircles'
+import { orderCircles } from '@/lib/circles'
 import ProfileCard from '@/components/ui/ProfileCard'
 
 export const dynamic = 'force-dynamic'
@@ -38,7 +39,7 @@ export default async function ConnectionsPage() {
       .order('created_at', { ascending: false }),
     serviceSupabase
       .from('custom_circles')
-      .select('id, name')
+      .select('id, name, parent_id, in_inner')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: true }),
   ])
@@ -47,7 +48,8 @@ export default async function ConnectionsPage() {
   const innerAllowed = limits.circles === 2
 
   // Own circles (Social Butterfly) and who is in them.
-  const circles = limits.extraCircles > 0 ? ((circleRows as { id: string; name: string }[] | null) ?? []) : []
+  type CircleRow = { id: string; name: string; parent_id: string | null; in_inner: boolean }
+  const circles = limits.extraCircles > 0 ? ((circleRows as CircleRow[] | null) ?? []) : []
   const { data: memberRows } = circles.length
     ? await serviceSupabase.from('custom_circle_members').select('circle_id, member_id').in('circle_id', circles.map(c => c.id))
     : { data: [] }
@@ -95,13 +97,15 @@ export default async function ConnectionsPage() {
           <CustomCircles
             circles={circles.map(c => ({ ...c, memberCount: members.filter(m => m.circle_id === c.id).length }))}
             allowed={limits.extraCircles}
+            innerAllowed={innerAllowed}
+            innerCount={(connections ?? []).filter(c => c.in_inner_circle).length}
           />
         )}
         <ConnectionsList
-          key={[...(connections ?? []).map(c => `${c.id}:${c.in_inner_circle}`), ...circles.map(c => `${c.id}:${c.name}`), ...members.map(m => `${m.circle_id}:${m.member_id}`)].join(',')}
+          key={[...(connections ?? []).map(c => `${c.id}:${c.in_inner_circle}`), ...circles.map(c => `${c.id}:${c.name}`)].join(',')}
           initialConnections={connections ?? []}
           innerAllowed={innerAllowed}
-          customCircles={circles}
+          customCircles={orderCircles(circles)}
           initialMemberships={memberships}
         />
 

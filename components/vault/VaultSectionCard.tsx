@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
-import { placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
+import { circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
   section: VaultSection
@@ -157,6 +157,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
                 type="button"
                 onClick={() => setPlacement(p)}
                 aria-pressed={placement === p}
+                title={p.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === p.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
                   placement === p ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
                 }`}

@@ -30,14 +30,9 @@ export const CIRCLE_LABEL: Record<BasicCircle, string> = {
   draft: 'Drafts',
 }
 
-export const CIRCLE_HELP: Record<BasicCircle, string> = {
-  outer: 'Everyone who can see your profile.',
-  inner: 'Only people you put in your Inner Circle.',
-  draft: 'Only you. Your LiAIson does not use drafts.',
-}
-
-// One of the owner's own circles (Social Butterfly).
-export type CustomCircle = { id: string; name: string }
+// One of the owner's own circles (Social Butterfly); parent_id / in_inner say
+// where it sits (missing = directly in the Outer Circle).
+export type CustomCircle = { id: string; name: string; parent_id?: string | null; in_inner?: boolean }
 
 // Where an own circle sits (custom_circles.parent_id / in_inner).
 export type CircleNode = { id: string; parent_id: string | null; in_inner: boolean }
@@ -75,7 +70,26 @@ export function placementLabel(placement: Placement, circles: CustomCircle[]): s
   return circles.find(c => c.id === placement.slice(2))?.name ?? 'Own circle'
 }
 
-export function placementHelp(placement: Placement, circles: CustomCircle[]): string {
-  if (!placement.startsWith('c:')) return CIRCLE_HELP[placement as BasicCircle]
-  return `Only people you put in ${placementLabel(placement, circles)}.`
+// Own circles in reading order: those in the Inner Circle first, then those in
+// the Outer Circle, each followed by the circles inside it.
+export function orderCircles<T extends CustomCircle>(circles: T[]): T[] {
+  const ids = new Set(circles.map(c => c.id))
+  const out: T[] = []
+  const add = (c: T) => {
+    if (out.includes(c)) return
+    out.push(c)
+    circles.filter(k => k.parent_id === c.id).forEach(add)
+  }
+  const roots = circles.filter(c => !c.parent_id || !ids.has(c.parent_id))
+  roots.filter(c => c.in_inner).forEach(add)
+  roots.filter(c => !c.in_inner).forEach(add)
+  circles.forEach(add) // anything left (never expected)
+  return out
+}
+
+// Where an own circle sits, e.g. "Inside Family" or "Inside the Inner Circle".
+export function circleWhere(circle: CustomCircle, circles: CustomCircle[]): string {
+  const parent = circle.parent_id ? circles.find(c => c.id === circle.parent_id) : undefined
+  if (parent) return `Inside ${parent.name}`
+  return circle.in_inner ? 'Inside the Inner Circle' : 'In the Outer Circle'
 }

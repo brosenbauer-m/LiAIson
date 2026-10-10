@@ -26,7 +26,7 @@ interface Props {
 
 const CIRCLE_OPTIONS: { inner: boolean; label: string; help: string }[] = [
   { inner: false, label: 'Outer Circle', help: 'They see what everyone sees.' },
-  { inner: true, label: 'Inner Circle', help: 'They also see your Inner Circle.' },
+  { inner: true, label: 'Inner Circle', help: 'They see your Inner Circle and your Outer Circle.' },
 ]
 
 export default function ConnectionRequests({ requests: initialRequests, innerAllowed }: Props) {

@@ -264,7 +264,7 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'circles',
     title: 'Circles',
-    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. With Introvert there is one circle, so everyone sees the same information. With Social Butterfly you can also make your own circles, such as Family or Climbing club, and put each part of your Vault in the circle that should see it.',
+    text: 'Circles decide who can see what in your Vault. Your Outer Circle is for everyone who visits your profile. Your Inner Circle is only for people you choose, such as friends or close colleagues. Circles sit inside each other, so whoever is in your Inner Circle also sees your Outer Circle, and you never have to write the same thing twice. With Introvert there is one circle, so everyone sees the same information. With Social Butterfly you can also make your own circles, such as Family or Climbing club, and place them anywhere: in your Outer Circle, inside your Inner Circle, or inside each other. Everyone in a circle sees it and every circle around it. You arrange them by dragging them into each other.',
   },
   {
     key: 'butterfly',

@@ -8,7 +8,7 @@ import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import ProfileBioCard from '@/components/vault/ProfileBioCard'
 import type { VaultSection, VaultFolder } from '@/types'
-import { placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
+import { circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -62,7 +62,7 @@ export default function VaultPage() {
       const circlesRes = await fetch('/api/circles', { cache: 'no-store' }).catch(() => null)
       if (circlesRes?.ok) {
         const data = await circlesRes.json() as { extraCircles: number; circles: CustomCircle[] }
-        setCustomCircles(data.extraCircles > 0 ? data.circles.map(c => ({ id: c.id, name: c.name })) : [])
+        setCustomCircles(data.extraCircles > 0 ? orderCircles(data.circles.map(c => ({ id: c.id, name: c.name, parent_id: c.parent_id, in_inner: c.in_inner }))) : [])
       }
 
       const { data, error } = await supabase
@@ -289,6 +289,7 @@ export default function VaultPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
+              title={tab.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === tab.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
               className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab
                   ? 'bg-accent text-white shadow-soft'

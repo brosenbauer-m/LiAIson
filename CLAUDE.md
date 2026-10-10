@@ -29,7 +29,7 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access/remove
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
 - `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert+: score + bubble map, cached in similarity_results); `/compare` + `app/api/compare` several people (Butterfly, `group.ts`); chat similarity marker/note → `lib/chat/signals.ts`
-- Own circles (Social Butterfly): `app/api/circles` (+`/members`), `app/connections/CustomCircles.tsx`, sections via `circle='custom'` + `custom_circle_id` (`lib/circles.ts` placements)
+- Own circles (Social Butterfly): `app/api/circles` (+`/members`; PATCH `parent` moves), nested via `custom_circles.parent_id`/`in_inner` (members see every circle around theirs; `circleChain` in `lib/circles.ts`), Circle Studio `app/connections/CustomCircles.tsx` + `components/circles/` (layout, sound), sections via `circle='custom'` + `custom_circle_id`
 - `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`)
 - `app/settings/`, `components/settings/` Profile (bio = Vault `profile_bio` section), Profile Privacy, Subscription (TierSection, usage, credits, card, invoices), delete; `/profile` + `/plans` redirect
 - `components/plans/TierPicker.tsx` (sign-up + Settings), `lib/plans.ts` (all plan limits + texts; Butterfly sliders, `planLimits(plan, options)`), `lib/billing/plan.ts` (plan state/changes; `plan_changes` incl. `options` is the source of truth)
@@ -37,7 +37,7 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - `lib/ratelimit/trial.ts` free-month limits · `lib/usage/` AI usage log + spend/markup
 - `lib/insights/` visitor insights + Echoes (weekly/monthly) · `app/api/cron/insights` daily
 - `app/api/cron/billing` daily: unconfirmed accounts (`lib/auth/unverified.ts`), search index sweep, month-end billing on the 1st
-- `app/auth/confirm` email confirm button · `app/api/auth/discard-signup` · `app/api/account/delete`
+- `app/auth/confirm` email confirm button (also password reset) · `/forgot-password` + `app/api/auth/forgot` · `/reset-password` · `app/api/account/password` · `app/api/account/export` · `app/api/auth/discard-signup` · `app/api/account/delete`
 
 ## Scripts
 `npm run build` · `npm run lint` · `npm run sb:migration "name"` · `npm run check:migrations`

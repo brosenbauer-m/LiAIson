@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import type { CustomCircle } from '@/lib/circles'
+import { useRouter } from 'next/navigation'
+import { circleChain, circleWhere, type CircleNode, type CustomCircle } from '@/lib/circles'
 import Avatar from '@/components/ui/Avatar'
 
 interface ConnectionUser {
@@ -43,6 +44,17 @@ interface Props {
 }
 
 export default function ConnectionsList({ initialConnections, innerAllowed, customCircles, initialMemberships }: Props) {
+  const router = useRouter()
+  // An own circle placed inside the Inner Circle gives its people the Inner
+  // Circle too (lib/access/resolveScope.ts): name it for that person.
+  const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner }] as [string, CircleNode]))
+  const innerThrough = (userId: string): string | null => {
+    for (const id of memberships[userId] ?? []) {
+      const chain = circleChain(id, nodes)
+      if (chain.length > 0 && chain[chain.length - 1].in_inner) return customCircles.find(c => c.id === id)?.name ?? null
+    }
+    return null
+  }
   const [connections, setConnections] = useState(initialConnections)
   const [memberships, setMemberships] = useState(initialMemberships)
   const [circleSaving, setCircleSaving] = useState<string | null>(null)
@@ -63,6 +75,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
         body: JSON.stringify({ circleId, memberIds: [userId], member: !was }),
       })
       if (!res.ok) apply(was)
+      else router.refresh()
     } catch {
       apply(was)
     } finally {
@@ -181,7 +194,9 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
     <div className={`space-y-4 ${selectedIds.size > 0 ? 'pb-32' : ''}`}>
       <p className="text-sm text-text-secondary">
         {innerAllowed
-          ? 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'
+          ? customCircles.length > 0
+            ? 'Circles sit inside each other. Everyone you connect with sees your Outer Circle; people in your Inner Circle also see the Inner Circle; people in one of your own circles see it and every circle around it.'
+            : 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'
           : 'Everyone you connect with sees your Vault (except drafts).'}
         {!innerAllowed && (
           <> With Ambivert or Extrovert you can also put people in an Inner Circle. <Link href="/#how-it-works" className="text-accent hover:underline">Learn more</Link></>
@@ -313,6 +328,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                               onClick={() => toggleCircle(fromUser.id, circle.id)}
                               disabled={circleSaving === `${fromUser.id}:${circle.id}` || bulkSaving}
                               aria-pressed={member}
+                              title={circleWhere(circle, customCircles)}
                               className={`px-3 py-1 rounded-full text-xs font-medium border transition-all disabled:opacity-50 ${
                                 member ? 'border-accent bg-accent text-white' : 'border-border text-text-secondary hover:border-accent/50'
                               }`}
@@ -322,6 +338,9 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                           )
                         })}
                       </div>
+                    )}
+                    {fromUser && !connection.in_inner_circle && innerThrough(fromUser.id) && (
+                      <p className="text-xs text-text-secondary">Sees the Inner Circle through {innerThrough(fromUser.id)}.</p>
                     )}
                     {innerAllowed && <div className="flex flex-wrap gap-2">
                       {CIRCLE_OPTIONS.map(option => (

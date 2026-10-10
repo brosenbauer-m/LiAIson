@@ -52,7 +52,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Your controls</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Your Profile Bio is always in your Outer Circle</li>
+              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Circles sit inside each other: whoever is in a circle also sees the circles around it, for example someone in a circle you placed inside your Inner Circle also sees your Inner and Outer Circle. Your Profile Bio is always in your Outer Circle</li>
               <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
               <li>You can turn Discoverable on or off at any time. When it is off, or your profile is Private, no one can find you by what you share</li>
               <li>You can download all data stored about you as a file, change your password, and delete your account with everything in it at any time in Settings</li>
