@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/service'
 import { getPlanLimits } from '@/lib/billing/plan'
-import type { VisibleCircle } from '@/lib/circles'
+import { circleChain, type CircleNode, type VisibleCircle } from '@/lib/circles'
 
 // Which parts of the owner's Vault a visitor may see (see lib/circles.ts).
 // - The owner sees everything except drafts (never drafts through their LiAIson).
@@ -9,8 +9,10 @@ import type { VisibleCircle } from '@/lib/circles'
 // - Accepted connections in the owner's Inner Circle also see the Inner Circle,
 //   but only while the owner's plan has two circles (Ambivert and up).
 // - Accepted connections in one of the owner's own circles (Social Butterfly)
-//   also see the sections in that circle, but only while the owner's plan has
-//   own circles. Membership without an accepted connection counts for nothing.
+//   also see the sections in that circle and in every circle around it
+//   (circles are nested, migration 30): an own circle placed in the Inner
+//   Circle gives its members the Inner Circle too. Only while the owner's plan
+//   has own circles. Membership without an accepted connection counts for nothing.
 // Returns null when the visitor may see nothing (no chat, no sections).
 export type VisibleScope = {
   circles: VisibleCircle[]
@@ -57,21 +59,25 @@ export async function resolveCircles(
   if (!connected) return { circles: ['outer'], customCircleIds: [] }
 
   const limits = await getPlanLimits(ownerId)
-  const circles: VisibleCircle[] = inner && limits.circles === 2 ? ['outer', 'inner'] : ['outer']
 
   let customCircleIds: string[] = []
+  let innerThroughCircle = false
   if (limits.extraCircles > 0) {
-    const { data: own } = await supabase.from('custom_circles').select('id').eq('owner_id', ownerId)
-    const ownIds = ((own as { id: string }[] | null) ?? []).map(c => c.id)
-    if (ownIds.length > 0) {
-      const { data: memberships } = await supabase
-        .from('custom_circle_members')
-        .select('circle_id')
-        .eq('member_id', options.visitorUserId!)
-        .in('circle_id', ownIds)
-      customCircleIds = ((memberships as { circle_id: string }[] | null) ?? []).map(m => m.circle_id)
+    const [{ data: own }, { data: memberships }] = await Promise.all([
+      supabase.from('custom_circles').select('id, parent_id, in_inner').eq('owner_id', ownerId),
+      supabase.from('custom_circle_members').select('circle_id').eq('member_id', options.visitorUserId!),
+    ])
+    const byId = new Map(((own as CircleNode[] | null) ?? []).map(c => [c.id, c]))
+    const visible = new Set<string>()
+    for (const { circle_id } of (memberships as { circle_id: string }[] | null) ?? []) {
+      const chain = circleChain(circle_id, byId)
+      chain.forEach(c => visible.add(c.id))
+      if (chain.length > 0 && chain[chain.length - 1].in_inner) innerThroughCircle = true
     }
+    customCircleIds = [...visible]
   }
+
+  const circles: VisibleCircle[] = (inner || innerThroughCircle) && limits.circles === 2 ? ['outer', 'inner'] : ['outer']
   return { circles, customCircleIds }
 }
 

@@ -7,6 +7,10 @@
 //   "Family". A section in one (circle = 'custom' + custom_circle_id) is seen
 //   only by that circle's members. A 'custom' section without a circle id is
 //   seen by no one (treated as a draft).
+// - Circles are nested (owner decision 2026-10-10): everyone in a circle also
+//   sees every circle around it. An own circle sits directly in the Outer
+//   Circle, in the Inner Circle, or inside another own circle (parent_id), so
+//   Outer > Inner > Family, or Outer > Climbing club > Coaches.
 // - Draft: only the owner; never used by their LiAIson.
 // Replaces the old Professional / Personal flags.
 
@@ -34,6 +38,24 @@ export const CIRCLE_HELP: Record<BasicCircle, string> = {
 
 // One of the owner's own circles (Social Butterfly).
 export type CustomCircle = { id: string; name: string }
+
+// Where an own circle sits (custom_circles.parent_id / in_inner).
+export type CircleNode = { id: string; parent_id: string | null; in_inner: boolean }
+
+// The circle and every own circle around it, innermost first. The last one
+// decides (by in_inner) whether the Inner Circle is around them. Unknown ids
+// give []; a loop (never stored, see migration 30) is cut off.
+export function circleChain<T extends CircleNode>(id: string, byId: Map<string, T>): T[] {
+  const chain: T[] = []
+  const seen = new Set<string>()
+  let node = byId.get(id)
+  while (node && !seen.has(node.id)) {
+    seen.add(node.id)
+    chain.push(node)
+    node = node.parent_id ? byId.get(node.parent_id) : undefined
+  }
+  return chain
+}
 
 // Where a section is: a basic circle, or `c:<id>` for an own circle.
 export type Placement = BasicCircle | `c:${string}`
