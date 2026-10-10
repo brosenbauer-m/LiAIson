@@ -51,9 +51,9 @@ const config: Config = {
         // Circles page: circles float gently like bubbles.
         bob: {
           '0%, 100%': { transform: 'translate(0, 0)' },
-          '25%': { transform: 'translate(1px, -2px)' },
-          '50%': { transform: 'translate(0, -3px)' },
-          '75%': { transform: 'translate(-1px, -1.5px)' },
+          '25%': { transform: 'translate(2.5px, -4px)' },
+          '50%': { transform: 'translate(0, -7px)' },
+          '75%': { transform: 'translate(-2.5px, -3px)' },
         },
         nudge: {
           '0%, 80%, 100%': { transform: 'translateX(0)' },

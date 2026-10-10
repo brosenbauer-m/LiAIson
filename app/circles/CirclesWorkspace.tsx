@@ -285,11 +285,14 @@ export default function CirclesWorkspace({
     }
   }
 
-  // --- Dragging people / sections from the panels onto a circle (mouse) -----
+  // --- Dragging people / sections from the panels onto a circle -------------
+  // With a mouse the whole row drags; on touch screens the grip handle does
+  // (so the list still scrolls). The page scrolls along near the screen edges.
 
   const onRowPointerDown = (e: React.PointerEvent, kind: Kind, id: string) => {
-    if (e.pointerType !== 'mouse' || e.button > 0) return
-    if ((e.target as HTMLElement).closest('input, button, a, select')) return
+    const fromHandle = !!(e.target as HTMLElement).closest('[data-grip]')
+    if (e.button > 0 || (e.pointerType !== 'mouse' && !fromHandle)) return
+    if (!fromHandle && (e.target as HTMLElement).closest('input, button, a, select')) return
     e.currentTarget.setPointerCapture(e.pointerId)
     press.current = { kind, id, x: e.clientX, y: e.clientY, started: false }
   }
@@ -299,6 +302,8 @@ export default function CirclesWorkspace({
     if (!p.started && Math.hypot(e.clientX - p.x, e.clientY - p.y) < MIN_DRAG) return
     const picked = p.kind === 'people' ? pickedPeople : pickedSections
     if (!p.started) { p.started = true; play('lift') }
+    if (e.clientY < 90) window.scrollBy(0, -16)
+    else if (e.clientY > window.innerHeight - 90) window.scrollBy(0, 16)
     setPanelDrag({ kind: p.kind, ids: picked.has(p.id) ? [...picked] : [p.id], x: e.clientX, y: e.clientY })
     setDropTarget(boardRef.current?.hitTest(e.clientX, e.clientY) ?? null)
   }
@@ -340,51 +345,30 @@ export default function CirclesWorkspace({
   const inherited = sectionView === 'draft' ? [] : around(selected).flatMap(id => sectionsIn(id).map(s => ({ ...s, from: nameOf(id) })))
   const draftCount = sectionsIn('draft').length
   const sel = nodes.get(selected)
-  const whereText = (id: string) => {
-    const c = nodes.get(id)
-    if (!c) return id === 'inner' ? 'Inside the Outer Circle' : 'Everyone who can see your profile'
-    if (c.parent_id) return `Inside ${nameOf(c.parent_id)}`
-    return c.isolated ? 'On its own, outside the Outer Circle' : c.in_inner ? 'Inside the Inner Circle' : 'Inside the Outer Circle'
-  }
 
-  const moveOptions = (kind: Kind) => [...ids, ...(kind === 'sections' ? ['draft'] : [])]
   const pickedPerson = pickedPeople.size === 1 ? people.find(p => pickedPeople.has(p.userId)) : undefined
 
   const panelClass = 'bg-card border border-border rounded-3xl shadow-soft flex flex-col lg:max-h-[78vh]'
-  const filterSelect = (value: string, onChange: (v: string) => void, extra: string[] = []) => (
-    <span className="relative inline-block">
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        aria-label="Show circle"
-        className="appearance-none bg-background border border-border rounded-full pl-3 pr-8 py-1.5 text-xs font-medium text-text-primary focus:outline-none focus:border-accent max-w-[11rem] truncate"
-      >
-        {[...ids, ...extra].map(id => <option key={id} value={id}>{nameOf(id)}</option>)}
-      </select>
-      <svg className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 4.5 3 3 3-3" /></svg>
+  const circleChip = (label: string) => (
+    <span className="inline-flex items-center max-w-[10rem] truncate rounded-full bg-accent-tint px-3 py-1 text-xs font-medium text-accent">{label}</span>
+  )
+  const grip = (label: string) => (
+    <span
+      data-grip
+      role="img"
+      aria-label={`Drag ${label} onto a circle`}
+      className="ml-auto flex-shrink-0 p-1.5 -mr-1 rounded-lg text-text-muted hover:text-accent touch-none cursor-grab"
+    >
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+        <circle cx="5" cy="3" r="1.2" /><circle cx="9" cy="3" r="1.2" /><circle cx="5" cy="7" r="1.2" /><circle cx="9" cy="7" r="1.2" /><circle cx="5" cy="11" r="1.2" /><circle cx="9" cy="11" r="1.2" />
+      </svg>
     </span>
   )
   const actionBar = (kind: Kind, count: number) => (
     <div className="border-t border-border p-3 space-y-2 bg-surface/60 rounded-b-3xl">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <span className="font-medium text-text-primary">{count} selected</span>
-        <span className="relative inline-block">
-          <select
-            value=""
-            onChange={e => {
-              const target = e.target.value
-              if (!target) return
-              if (kind === 'people') void movePeople([...pickedPeople], target)
-              else void moveSections([...pickedSections], target)
-            }}
-            aria-label="Move to"
-            className="appearance-none bg-accent text-white rounded-full pl-3 pr-7 py-1.5 font-medium focus:outline-none"
-          >
-            <option value="">Move to…</option>
-            {moveOptions(kind).map(id => <option key={id} value={id}>{nameOf(id)}</option>)}
-          </select>
-          <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 4.5 3 3 3-3" /></svg>
-        </span>
+        <span className="text-text-muted">Drag them onto a circle</span>
         <button type="button" onClick={() => (kind === 'people' ? setPickedPeople(new Set()) : setPickedSections(new Set()))} className="ml-auto text-text-secondary hover:text-text-primary">
           Clear
         </button>
@@ -407,7 +391,7 @@ export default function CirclesWorkspace({
     <section className={panelClass} aria-label="Connections">
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Connections <span className="text-text-muted font-normal tabular-nums">{shownPeople.length}</span></h2>
-        {filterSelect(selected, select)}
+        {circleChip(nameOf(selected))}
       </header>
       <ul className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {shownPeople.length === 0 && <li className="px-3 py-8 text-center text-sm text-text-muted">No one sees this circle yet.</li>}
@@ -434,6 +418,7 @@ export default function CirclesWorkspace({
                 <Link href={`/${p.username}`} className="inline-block max-w-full align-top text-sm font-medium text-text-primary truncate hover:underline">{p.name}</Link> <TierMark plan={p.plan} />
                 <p className="text-[11px] text-text-muted truncate">{homeOf(p)}</p>
               </div>
+              {grip(p.name)}
             </li>
           )
         })}
@@ -446,7 +431,7 @@ export default function CirclesWorkspace({
     <section className={panelClass} aria-label="Vault sections">
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Sections <span className="text-text-muted font-normal tabular-nums">{shownSections.length}</span></h2>
-        {filterSelect(sectionCircle, v => (v === 'draft' ? (setSectionView('draft'), setPickedSections(new Set())) : select(v)), ['draft'])}
+        {circleChip(nameOf(sectionCircle))}
       </header>
       <ul className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {shownSections.length === 0 && (
@@ -477,6 +462,7 @@ export default function CirclesWorkspace({
                 <p className="text-sm font-medium text-text-primary truncate">{s.label}</p>
                 <p className="text-[11px] text-text-muted tabular-nums">{s.chars.toLocaleString('en-GB')} characters</p>
               </div>
+              {grip(s.label)}
             </li>
           )
         })}
@@ -495,6 +481,11 @@ export default function CirclesWorkspace({
           </>
         )}
       </ul>
+      {sectionView === 'draft' && pickedSections.size === 0 && (
+        <button type="button" onClick={() => setSectionView('circle')} className="mx-4 mb-3 text-left text-xs text-text-muted hover:text-accent">
+          ← Back to {nameOf(selected)}
+        </button>
+      )}
       {sectionView === 'circle' && draftCount > 0 && pickedSections.size === 0 && (
         <button type="button" onClick={() => { setSectionView('draft'); setPickedSections(new Set()) }} className="mx-4 mb-3 text-left text-xs text-text-muted hover:text-accent">
           {draftCount} {draftCount === 1 ? 'draft' : 'drafts'} not in any circle →
@@ -510,7 +501,7 @@ export default function CirclesWorkspace({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)] lg:items-start">
         {/* The circles */}
-        <div className="order-1 lg:order-2 bg-card border border-border rounded-3xl shadow-soft px-4 py-6 sm:px-10 sm:py-10 flex flex-col items-center gap-6">
+        <div className="order-1 lg:order-2 flex flex-col items-center gap-6">
           <CircleBoard
             ref={boardRef}
             circles={circles}
@@ -539,31 +530,14 @@ export default function CirclesWorkspace({
                 <button type="button" onClick={() => setRenaming(false)} className="px-2 text-sm text-text-secondary">Cancel</button>
               </form>
             ) : (
-              <>
+              around(selected).length > 0 && (
                 <p className="text-sm text-text-secondary">
-                  <b className="text-text-primary font-semibold">{nameOf(selected)}</b> · {whereText(selected)}
+                  Individuals in this Circle also see {around(selected).map(nameOf).join(', ').replace(/, ([^,]*)$/, ' and $1')}.
                 </p>
-                {selected !== 'outer' && (
-                  <p className="text-xs text-text-muted">Its people also see {around(selected).map(nameOf).join(', ').replace(/, ([^,]*)$/, ' and $1') || 'nothing else'}.</p>
-                )}
-              </>
+              )
             )}
             {sel && canCustom && !renaming && !deleting && (
               <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                <span className="relative inline-block">
-                  <select
-                    value=""
-                    onChange={e => { if (e.target.value) void moveCircle(sel.id, e.target.value) }}
-                    aria-label={`Move ${sel.name} to`}
-                    className="appearance-none bg-background border border-border rounded-full pl-3 pr-7 py-1.5 font-medium text-text-primary focus:outline-none focus:border-accent"
-                  >
-                    <option value="">Place in…</option>
-                    {['outer', 'inner', ...circles.filter(c => c.id !== sel.id).map(c => c.id), 'alone'].map(id => (
-                      <option key={id} value={id}>{id === 'alone' ? 'On Its Own' : nameOf(id)}</option>
-                    ))}
-                  </select>
-                  <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-text-muted" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="m3 4.5 3 3 3-3" /></svg>
-                </span>
                 <button type="button" onClick={() => setRenaming(true)} className="px-3 py-1.5 rounded-full border border-border text-text-secondary hover:border-accent hover:text-accent">Rename</button>
                 <button type="button" onClick={() => setDeleting({ target: sel.parent_id ?? (sel.in_inner ? 'inner' : 'outer') })} className="px-3 py-1.5 rounded-full border border-border text-text-secondary hover:border-error hover:text-error">Delete</button>
               </div>
