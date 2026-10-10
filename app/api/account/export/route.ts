@@ -21,7 +21,7 @@ export async function GET() {
   const [
     profile, sections, folders, outgoing, incoming, circles, planChanges, documents, balance, reports, notifications,
   ] = await Promise.all([
-    s.from('users').select('username, display_name, short_bio, avatar_url, contact_links, public_scope, is_discoverable, report_emails, monthly_spend_limit_cents, trial_ends_at, plan, plan_options, created_at').eq('id', id).single(),
+    s.from('users').select('username, display_name, short_bio, avatar_url, contact_links, public_scope, report_emails_weekly, report_emails_monthly, monthly_spend_limit_cents, trial_ends_at, plan, plan_options, created_at').eq('id', id).single(),
     s.from('vault_sections').select('label, section_type, content, circle, custom_circle_id, source, updated_at').eq('user_id', id).order('domain'),
     s.from('vault_folders').select('name, color, created_at').eq('user_id', id),
     s.from('connection_interests').select(`status, created_at, to_user:users!connection_interests_to_user_id_fkey(${person})`).eq('from_user_id', id),

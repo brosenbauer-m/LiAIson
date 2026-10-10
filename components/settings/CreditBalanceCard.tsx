@@ -8,6 +8,8 @@ type Receipt = { receiptNumber: string; kind: 'topup' | 'monthly'; totalEur: num
 type BalanceState = {
   balanceEur: number
   amounts: number[]
+  min: number
+  max: number
   receipts: Receipt[]
   billingCountry: string | null
   savedCard: string | null
@@ -17,14 +19,15 @@ function euros(n: number): string {
   return `€${n.toFixed(2)}`
 }
 
-// Settings card: prepaid credit. Top-ups are paid with the saved card (after a
-// confirmation prompt) or on Mollie's checkout page, and are used first when
-// the monthly bill is made.
-export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } = {}) {
+// Settings card: Credit Balance (prepaid credit). Top-ups (a quick amount or
+// any whole amount) are paid with the saved card (after a confirmation prompt)
+// or on Mollie's checkout page, and are used first when the monthly bill is made.
+export default function CreditBalanceCard({ bare = false }: { bare?: boolean } = {}) {
   const [state, setState] = useState<BalanceState | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [country, setCountry] = useState('')
   const [confirmAmount, setConfirmAmount] = useState<number | null>(null)
+  const [custom, setCustom] = useState('')
   const [busy, setBusy] = useState(false)
   const [checking, setChecking] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -130,13 +133,17 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
 
   const handleAmount = (amount: number) => {
     setMessage(null)
+    if (state && (!Number.isInteger(amount) || amount < state.min || amount > state.max)) {
+      setMessage({ type: 'error', text: `Please enter a whole amount from €${state.min} to €${state.max}.` })
+      return
+    }
     if (state?.savedCard) setConfirmAmount(amount)
     else startTopUp(amount, false)
   }
 
   return (
     <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
-      <h2 className="font-semibold text-text-primary text-lg">Prepaid Balance</h2>
+      <h2 className="font-semibold text-text-primary text-lg">Credit Balance</h2>
 
       {!state && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}
       {loadError && !state && <p className="text-sm text-error" role="alert">Could not load your balance right now.</p>}
@@ -151,19 +158,24 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
           </div>
 
           {!state.billingCountry && (
-            <div className="space-y-2">
-              <label htmlFor="topup-country" className="text-sm font-medium text-text-primary">Country you live in</label>
-              <select
-                id="topup-country"
-                value={country}
-                onChange={e => setCountry(e.target.value)}
-                className="min-w-[12rem] bg-surface border border-border rounded-lg px-4 py-2 text-sm text-text-primary focus:outline-none focus:border-accent"
-              >
-                <option value="">Choose…</option>
-                {EU_COUNTRIES.map(c => (
-                  <option key={c.code} value={c.code}>{c.name}</option>
-                ))}
-              </select>
+            <div>
+              <label htmlFor="topup-country" className="block text-sm font-medium text-text-primary mb-1.5">Country you live in</label>
+              <div className="relative max-w-xs">
+                <select
+                  id="topup-country"
+                  value={country}
+                  onChange={e => setCountry(e.target.value)}
+                  className="block w-full appearance-none bg-surface border border-border rounded-lg pl-4 pr-10 py-2.5 text-sm text-text-primary focus:outline-none focus:border-accent"
+                >
+                  <option value="">Choose…</option>
+                  {EU_COUNTRIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.name}</option>
+                  ))}
+                </select>
+                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-muted" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                  <path d="m3 4.5 3 3 3-3" />
+                </svg>
+              </div>
             </div>
           )}
 
@@ -202,7 +214,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
           ) : (
             <div className="space-y-2">
               <p className="text-sm font-medium text-text-primary">Add credit</p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {state.amounts.map(a => (
                   <button
                     key={a}
@@ -214,7 +226,35 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
                     {`+ ${euros(a)}`}
                   </button>
                 ))}
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={e => { e.preventDefault(); if (custom) handleAmount(Number(custom)) }}
+                >
+                  <label className="relative">
+                    <span className="sr-only">Other amount in euros</span>
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-text-muted">€</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={state.min}
+                      max={state.max}
+                      step={1}
+                      value={custom}
+                      onChange={e => setCustom(e.target.value)}
+                      placeholder="Other"
+                      className="w-28 bg-surface border-2 border-border rounded-lg pl-7 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    disabled={busy || !custom}
+                    className="px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                  >
+                    Add
+                  </button>
+                </form>
               </div>
+              <p className="text-xs text-text-muted">Any whole amount from €{state.min} to €{state.max}.</p>
             </div>
           )}
 
@@ -251,7 +291,7 @@ export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } 
       )}
 
       <p className="text-xs text-text-secondary leading-relaxed">
-        Prepaid credit is used first for your monthly usage. Payments are handled by Mollie (Netherlands, EU).
+        Your credit is used first for your monthly usage. Payments are handled by Mollie (Netherlands, EU).
         Payments are in test mode for now.
       </p>
     </div>

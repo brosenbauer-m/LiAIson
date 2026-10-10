@@ -134,15 +134,16 @@ export default function HowItWorks() {
     track.scrollTo({ left: next * track.clientWidth, behavior: 'smooth' })
   }, [])
 
-  // "Learn more" about circles elsewhere links to /#circles: open that slide.
+  // "Learn More" links elsewhere go to /#circles or /#echoes: open that slide.
   useEffect(() => {
     let t: ReturnType<typeof setTimeout> | undefined
     const open = () => {
-      if (window.location.hash !== '#circles') return
+      const hash = window.location.hash.slice(1)
+      const i = SLIDES.findIndex(s => s.short.toLowerCase() === hash)
+      if (i < 0) return
       t = setTimeout(() => {
         const track = trackRef.current
-        const i = SLIDES.findIndex(s => s.short === 'Circles')
-        if (track && i >= 0) track.scrollTo({ left: i * track.clientWidth, behavior: 'auto' })
+        if (track) track.scrollTo({ left: i * track.clientWidth, behavior: 'auto' })
       }, 60)
     }
     open()
@@ -162,13 +163,15 @@ export default function HowItWorks() {
 
   return (
     <div
-      id="circles"
       className="w-full"
       onKeyDown={e => {
         if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1) }
         if (e.key === 'ArrowLeft') { e.preventDefault(); go(index - 1) }
       }}
     >
+      {/* Targets for /#circles and /#echoes (see the effect above). */}
+      <span id="circles" aria-hidden="true" />
+      <span id="echoes" aria-hidden="true" />
       {/* Steps: always shows where you are and that more follows */}
       <ol className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Steps">
         {SLIDES.map((s, i) => (

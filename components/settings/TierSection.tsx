@@ -135,7 +135,7 @@ export default function TierSection() {
         </p>
       )}
 
-      {!state.exempt && (
+      {(
         changing ? (
           <div className="space-y-3">
             <TierPicker value={choice} onChange={setChoice} current={state.plan} />

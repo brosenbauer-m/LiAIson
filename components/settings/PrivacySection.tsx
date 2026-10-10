@@ -3,16 +3,17 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import Toggle from '@/components/ui/Toggle'
 import CirclesNote from '@/components/ui/CirclesNote'
 
 // Settings → Profile Privacy: Public / Private (users.public_scope, 'none' =
-// Private) and Discoverable. Both refresh the Discover search index.
+// Private). Discoverable is no longer a separate switch (2026-10-10): everyone
+// can be found by name and username; Public profiles also by description (AI
+// search over the Outer Circle). Changing it refreshes the Discover index.
 export default function PrivacySection() {
   const supabase = createClient()
   const [userId, setUserId] = useState<string | null>(null)
+  const [username, setUsername] = useState('')
   const [isPublic, setIsPublic] = useState(true)
-  const [discoverable, setDiscoverable] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
   // Introvert (one circle) sees nothing about circles.
@@ -24,13 +25,13 @@ export default function PrivacySection() {
       if (!user) return
       setUserId(user.id)
       const [{ data }, planRes] = await Promise.all([
-        supabase.from('users').select('public_scope, is_discoverable').eq('id', user.id).single(),
+        supabase.from('users').select('username, public_scope').eq('id', user.id).single(),
         fetch('/api/plan', { cache: 'no-store' }).catch(() => null),
       ])
       if (planRes?.ok) setHasCircles(((await planRes.json()) as { circles?: number }).circles === 2)
       if (data) {
+        setUsername(data.username ?? '')
         setIsPublic(data.public_scope !== 'none')
-        setDiscoverable(data.is_discoverable !== false)
       }
       setLoading(false)
     }
@@ -38,11 +39,13 @@ export default function PrivacySection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const update = async (fields: { public_scope?: string; is_discoverable?: boolean }, undo: () => void) => {
-    if (!userId) return
-    const { error } = await supabase.from('users').update(fields).eq('id', userId)
+  const choose = async (nextPublic: boolean) => {
+    if (!userId || nextPublic === isPublic) return
+    setIsPublic(nextPublic)
+    // Public = everyone sees the Outer Circle (circles replace the old levels).
+    const { error } = await supabase.from('users').update({ public_scope: nextPublic ? 'both' : 'none' }).eq('id', userId)
     if (error) {
-      undo()
+      setIsPublic(!nextPublic)
       return
     }
     void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
@@ -50,57 +53,47 @@ export default function PrivacySection() {
     window.setTimeout(() => setSaved(false), 2000)
   }
 
-  const choose = (nextPublic: boolean) => {
-    if (nextPublic === isPublic) return
-    setIsPublic(nextPublic)
-    // Public = everyone sees your Outer Circle (circles replace the old levels).
-    void update({ public_scope: nextPublic ? 'both' : 'none' }, () => setIsPublic(!nextPublic))
-  }
-
-  const toggleDiscoverable = () => {
-    const next = !discoverable
-    setDiscoverable(next)
-    void update({ is_discoverable: next }, () => setDiscoverable(!next))
-  }
-
   if (loading) return <p className="text-sm text-text-secondary">Loading...</p>
 
+  const link = 'text-accent hover:underline'
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <div className="inline-flex rounded-full border border-border bg-background p-1" role="radiogroup" aria-label="Profile visibility">
-          {[{ v: true, label: 'Public' }, { v: false, label: 'Private' }].map(o => (
-            <button
-              key={o.label}
-              type="button"
-              role="radio"
-              aria-checked={isPublic === o.v}
-              onClick={() => choose(o.v)}
-              className={`px-5 py-2 rounded-full text-sm font-medium ${isPublic === o.v ? 'bg-accent text-white shadow-soft' : 'text-text-secondary hover:text-text-primary'}`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-sm text-text-secondary leading-relaxed">
-          {isPublic
-            ? hasCircles
-              ? 'Anyone with an account can talk to your LiAIson about your Outer Circle. People in your other circles also hear about those circles and every circle around them.'
-              : 'Anyone with an account can see your profile and talk to your LiAIson about your Vault (except drafts).'
-            : <>Only people whose connection request you accepted can see your profile and talk to your LiAIson.{hasCircles && <> You choose their circles on the <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.</>}</>}
-        </p>
-        {!hasCircles && <CirclesNote />}
+    <div className="space-y-4">
+      <div className="inline-flex rounded-full border border-border bg-background p-1" role="radiogroup" aria-label="Profile visibility">
+        {[{ v: true, label: 'Public' }, { v: false, label: 'Private' }].map(o => (
+          <button
+            key={o.label}
+            type="button"
+            role="radio"
+            aria-checked={isPublic === o.v}
+            onClick={() => choose(o.v)}
+            className={`px-5 py-2 rounded-full text-sm font-medium ${isPublic === o.v ? 'bg-accent text-white shadow-soft' : 'text-text-secondary hover:text-text-primary'}`}
+          >
+            {o.label}
+          </button>
+        ))}
       </div>
-
-      <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
-        <div>
-          <p className="font-medium text-text-primary">Discoverable</p>
-          <p className="text-sm text-text-secondary leading-relaxed mt-1">
-            People can find you by name on Discover. If your profile is Public, they can also find you by what is in your {hasCircles ? 'Outer Circle' : 'Vault'} with AI search (they see your name and a short reason, never your Vault text). When off, your profile can only be reached through your link.
-          </p>
-        </div>
-        <Toggle checked={discoverable} onChange={toggleDiscoverable} label="Discoverable" />
-      </div>
+      <p className="text-sm text-text-secondary leading-relaxed">
+        {isPublic ? (
+          <>
+            Your LiAIson can talk to any user with the information in your{' '}
+            <Link href="/vault" className={link}>{hasCircles ? 'Outer Circle' : 'Vault'}</Link>. Your{' '}
+            <Link href={username ? `/${username}` : '/dashboard'} className={link}>profile</Link> can be found in{' '}
+            <Link href="/discover" className={link}>Discover</Link> by name, username and description.
+          </>
+        ) : hasCircles ? (
+          <>
+            Your LiAIson can only talk to <Link href="/connections" className={link}>Connections</Link> with information from
+            the <Link href="/vault" className={link}>Circle</Link> assigned to the Connection. Your profile can only be found by
+            name and username.
+          </>
+        ) : (
+          <>
+            Your LiAIson can only talk to <Link href="/connections" className={link}>Connections</Link> with the information in
+            your <Link href="/vault" className={link}>Vault</Link>. Your profile can only be found by name and username.
+          </>
+        )}
+      </p>
+      {!hasCircles && <CirclesNote />}
       {saved && <p className="text-sm text-success" role="status">Saved ✓</p>}
     </div>
   )

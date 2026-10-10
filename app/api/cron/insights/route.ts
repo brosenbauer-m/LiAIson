@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     summary[period.type] = stats
   }
 
-  // Email new reports (respects users.report_emails; retries for up to 3 days).
+  // Email new reports (respects users.report_emails_weekly / _monthly; retries for up to 3 days).
   let emails: { sent: number; skipped: number; failed: number } | 'failed'
   try {
     emails = await emailPendingReports()

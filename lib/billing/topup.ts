@@ -5,10 +5,13 @@ import type { MolliePayment } from '@/lib/billing/mollie'
 // balance; the balance is used first when the monthly bill is made.
 // Flow: createTopUp → Mollie checkout → webhook → markTopUpPaid (once only).
 
+// Quick choices; any whole amount from TOPUP_MIN_EUR to TOPUP_MAX_EUR is allowed.
 export const TOPUP_AMOUNTS_EUR = [5, 10, 20] as const
+export const TOPUP_MIN_EUR = 5
+export const TOPUP_MAX_EUR = 200
 
-export function isTopUpAmount(n: unknown): n is (typeof TOPUP_AMOUNTS_EUR)[number] {
-  return typeof n === 'number' && (TOPUP_AMOUNTS_EUR as readonly number[]).includes(n)
+export function isTopUpAmount(n: unknown): n is number {
+  return typeof n === 'number' && Number.isInteger(n) && n >= TOPUP_MIN_EUR && n <= TOPUP_MAX_EUR
 }
 
 export async function getBalanceEur(userId: string): Promise<number> {

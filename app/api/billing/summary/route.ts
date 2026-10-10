@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { currentPeriod } from '@/lib/insights/periods'
 import { billableUsageEur, getUnpaidBill, MIN_CHARGE_EUR } from '@/lib/billing/monthly'
-import { isTestMode } from '@/lib/billing/seller'
 import { planFeeFor } from '@/lib/billing/planFee'
 import { PLANS } from '@/lib/plans'
 
@@ -39,7 +38,6 @@ export async function GET() {
         inTrial: trialEnd.getTime() > Date.now(),
         trialEndsAt: profile?.trial_ends_at ?? null,
         unpaid,
-        testRunAvailable: isTestMode() && !!profile?.billing_exempt,
       },
       { headers: { 'Cache-Control': 'no-store' } }
     )

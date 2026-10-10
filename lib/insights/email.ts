@@ -34,11 +34,13 @@ export async function emailReport(r: ReportRow): Promise<'sent' | 'skipped' | 'f
 
   const { data: owner } = await supabase
     .from('users')
-    .select('display_name, report_emails')
+    .select('display_name, report_emails_weekly, report_emails_monthly')
     .eq('id', r.profile_user_id)
-    .single<{ display_name: string | null; report_emails: boolean }>()
+    .single<{ display_name: string | null; report_emails_weekly: boolean; report_emails_monthly: boolean }>()
 
-  if (!owner || owner.report_emails === false) {
+  // Weekly and monthly Echo emails are chosen separately (Settings → Profile).
+  const wanted = r.period_type === 'week' ? owner?.report_emails_weekly : owner?.report_emails_monthly
+  if (!owner || wanted === false) {
     await supabase.from('visitor_reports').update({ emailed_at: new Date().toISOString() }).eq('id', r.id)
     return 'skipped'
   }

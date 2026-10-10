@@ -8,6 +8,8 @@ import { isEuCountry, toCountryCode } from '@/lib/billing/countries'
 import { vatBreakdown, formatEur } from '@/lib/billing/vat'
 import {
   TOPUP_AMOUNTS_EUR,
+  TOPUP_MAX_EUR,
+  TOPUP_MIN_EUR,
   isTopUpAmount,
   getBalanceEur,
   getRecentReceipts,
@@ -17,7 +19,7 @@ import {
 
 // Prepaid balance of the signed-in user.
 // GET  → { balanceEur, amounts, receipts, billingCountry, savedCard }
-// POST { amount: 5|10|20, country?, useSavedCard? }
+// POST { amount: whole euros TOPUP_MIN_EUR–TOPUP_MAX_EUR, country?, useSavedCard? }
 //      → { checkoutUrl } (Mollie checkout) or, with useSavedCard, { status } (charged to the saved card)
 
 async function getSignedInUser() {
@@ -39,6 +41,8 @@ export async function GET() {
       {
         balanceEur,
         amounts: TOPUP_AMOUNTS_EUR,
+        min: TOPUP_MIN_EUR,
+        max: TOPUP_MAX_EUR,
         receipts,
         billingCountry: account?.billing_country ?? null,
         savedCard: account?.mandate_status === 'valid' && account.mandate_id ? account.card_label : null,
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
   const { amount, country: requestedCountry, useSavedCard } = (body ?? {}) as { amount?: unknown; country?: unknown; useSavedCard?: unknown }
   if (!isTopUpAmount(amount)) {
-    return NextResponse.json({ error: 'Please choose €5, €10 or €20.' }, { status: 400 })
+    return NextResponse.json({ error: `Please choose a whole amount from €${TOPUP_MIN_EUR} to €${TOPUP_MAX_EUR}.` }, { status: 400 })
   }
 
   try {

@@ -9,7 +9,7 @@ import PrivacySection from '@/components/settings/PrivacySection'
 import TierSection from '@/components/settings/TierSection'
 import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
-import PrepaidBalanceCard from '@/components/settings/PrepaidBalanceCard'
+import CreditBalanceCard from '@/components/settings/CreditBalanceCard'
 import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
 import PasswordForm from '@/components/settings/PasswordForm'
 
@@ -102,7 +102,7 @@ export default function SettingsPage() {
             <TierSection />
             <div className="border-t border-border pt-8"><SpendingLimitCard bare /></div>
             <div className="border-t border-border pt-8"><MonthlyBillCard bare /></div>
-            <div className="border-t border-border pt-8"><PrepaidBalanceCard bare /></div>
+            <div className="border-t border-border pt-8"><CreditBalanceCard bare /></div>
           </div>
           <div id="payment" className={`${card} scroll-mt-24`}><PaymentMethodCard bare /></div>
           <div className={`${card} flex items-center justify-between gap-4`}>

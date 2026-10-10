@@ -81,7 +81,7 @@ export default async function ReceiptPage(props: { params: Promise<{ number: str
           <tbody>
             {r.kind === 'topup' ? (
               <tr className="border-b border-border">
-                <td className="py-2 text-text-primary">LiAIson prepaid credit</td>
+                <td className="py-2 text-text-primary">LiAIson credit</td>
                 <td className="py-2 text-right tabular-nums text-text-primary">{euros(r.netEur)}</td>
               </tr>
             ) : (
@@ -106,7 +106,7 @@ export default async function ReceiptPage(props: { params: Promise<{ number: str
                 )}
                 {r.prepaidAppliedEur > 0 && (
                   <tr className="border-b border-border">
-                    <td className="py-2 text-text-primary">Paid from prepaid credit</td>
+                    <td className="py-2 text-text-primary">Paid from credit balance</td>
                     <td className="py-2 text-right tabular-nums text-text-primary">−{euros(r.prepaidAppliedEur)}</td>
                   </tr>
                 )}

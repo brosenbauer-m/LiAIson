@@ -22,7 +22,8 @@ import {
 //   bigger than the new plan allows.
 // - During the free month, and while no card is saved (account locked to
 //   /billing/setup, no fee yet), every change applies at once.
-// - billing_exempt accounts keep every feature and can't change plan.
+// - billing_exempt accounts are never billed; they can change plan to try
+//   every tier (changes apply at once).
 // - Social Butterfly: slider choices are kept with each change
 //   (plan_changes.options). A change that raises the fee is an upgrade (at
 //   once); one that doesn't is a downgrade (next month). Fewer own circles than
@@ -148,12 +149,12 @@ export async function getPlanState(userId: string): Promise<PlanState> {
 
   // One-circle plan (Introvert): Inner Circle sections become drafts (owner
   // decision). They are already hidden from everyone by resolveCircles.
-  if (PLANS[plan].circles === 1 && user.billing_exempt !== true) {
+  if (PLANS[plan].circles === 1) {
     await supabase.from('vault_sections').update({ circle: 'draft' }).eq('user_id', userId).eq('circle', 'inner')
   }
   // No own circles on this plan: their sections become drafts (the circles
   // and their members are kept for a later upgrade).
-  if (current.extraCircles === 0 && user.billing_exempt !== true) {
+  if (current.extraCircles === 0) {
     await supabase
       .from('vault_sections')
       .update({ circle: 'draft', custom_circle_id: null })
@@ -196,7 +197,6 @@ export async function changePlan(userId: string, target: PlanId, rawOptions?: un
   const state = await getPlanState(userId)
   const now = new Date()
 
-  if (state.exempt) return { ok: false, status: 400, error: 'Your account already has every feature.' }
   if (!PLANS[target].available && target !== state.plan) {
     return { ok: false, status: 403, error: `${PLANS[target].name} is coming soon.` }
   }
@@ -255,7 +255,7 @@ export async function changePlan(userId: string, target: PlanId, rawOptions?: un
     }
   }
   await removeScheduled()
-  if (state.inTrial || !state.hasCard) {
+  if (state.inTrial || !state.hasCard || state.exempt) {
     await addChange(now)
     return { ok: true, message: target === state.plan ? 'Your plan has been updated.' : `You're now on ${name}.`, state: await getPlanState(userId) }
   }

@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
-import Toggle from '@/components/ui/Toggle'
 import { PLANS, DEFAULT_PLAN_OPTIONS, isPlanId, type PlanId, type PlanOptions } from '@/lib/plans'
 import TierPicker from '@/components/plans/TierPicker'
 
@@ -18,7 +17,6 @@ export default function SignupPage() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [ageConfirmed, setAgeConfirmed] = useState(false)
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
-  const [isDiscoverable, setIsDiscoverable] = useState(true)
   const [plan, setPlan] = useState<PlanId>('introvert')
   const [planOptions, setPlanOptions] = useState<PlanOptions>(DEFAULT_PLAN_OPTIONS)
   const [error, setError] = useState('')
@@ -161,7 +159,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan, ...(plan === 'butterfly' ? { plan_options: planOptions } : {}), signup_nonce: nonce },
+        data: { display_name: displayName, username, plan, ...(plan === 'butterfly' ? { plan_options: planOptions } : {}), signup_nonce: nonce },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -370,16 +368,9 @@ export default function SignupPage() {
               <TierPicker value={{ plan, options: planOptions }} onChange={c => { setPlan(c.plan); setPlanOptions(c.options) }} />
             </fieldset>
 
-            <div className="flex items-center justify-between gap-4 py-1">
-              <p className="text-sm text-text-secondary">
-                Let people find me on Discover: by my name, and (if my profile is Public) by what I share in my Outer Circle, using AI search. You can change this anytime in Settings.
-              </p>
-              <Toggle
-                checked={isDiscoverable}
-                onChange={() => setIsDiscoverable(!isDiscoverable)}
-                label="Discoverable"
-              />
-            </div>
+            <p className="text-sm text-text-secondary">
+              Your profile starts Public: people can find you on Discover and talk to your LiAIson. You can make it Private anytime in Settings.
+            </p>
 
             <div className="space-y-3">
               <label className="flex items-start gap-3 cursor-pointer">

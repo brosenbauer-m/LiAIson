@@ -11,7 +11,7 @@ function euros(n: number): string {
 }
 
 function describe(kind: 'topup' | 'monthly', periodStart: string | null): string {
-  if (kind === 'topup') return 'Prepaid credit'
+  if (kind === 'topup') return 'Credit top-up'
   if (!periodStart) return 'Monthly usage'
   const d = new Date(periodStart)
   return `Usage ${d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })}`

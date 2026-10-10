@@ -13,30 +13,17 @@ type Summary = {
   inTrial: boolean
   trialEndsAt: string | null
   unpaid: { id: number; totalEur: number } | null
-  testRunAvailable: boolean
 }
 
 function euros(n: number): string {
   return `€${n.toFixed(2)}`
 }
 
-const TEST_RESULTS: Record<string, string> = {
-  nothing: 'Nothing to bill.',
-  exists: 'A test bill for this month already exists — see your receipts.',
-  carried_over: 'Below €5 — carried over to next month.',
-  paid_from_credit: 'Paid entirely from prepaid credit ✓',
-  charging: 'Charging your saved card… check your receipts in a moment.',
-  paid: 'Charged to your saved card ✓',
-  failed: 'Charge failed — the bill is now unpaid (see above).',
-}
-
-// Settings card: this month's bill so far, unpaid bills ("Pay now") and, for the
-// owner in Mollie test mode only, a button to run a test bill.
+// Settings card: this month's bill so far and unpaid bills ("Pay now").
 export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {}) {
   const [summary, setSummary] = useState<Summary | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [extra, setExtra] = useState('20')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   const load = useCallback(async () => {
@@ -74,26 +61,6 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
       window.location.assign(data.checkoutUrl)
     } catch {
       setMessage({ type: 'error', text: 'Could not start the payment.' })
-      setBusy(false)
-    }
-  }
-
-  const testRun = async () => {
-    setMessage(null)
-    setBusy(true)
-    try {
-      const res = await fetch('/api/billing/test-run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extraUsageEur: Number(extra) || 0 }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) setMessage({ type: 'error', text: data.error ?? 'Test run failed.' })
-      else setMessage({ type: data.result === 'failed' ? 'error' : 'success', text: TEST_RESULTS[data.result] ?? String(data.result) })
-      await load()
-    } catch {
-      setMessage({ type: 'error', text: 'Test run failed.' })
-    } finally {
       setBusy(false)
     }
   }
@@ -145,7 +112,7 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
                 </div>
               )}
               <p className="text-xs text-text-secondary leading-relaxed">
-                Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your prepaid credit); smaller amounts carry over.
+                Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your credit balance); smaller amounts carry over.
                 {summary.inTrial ? ' During your free month, you can send up to 5 free messages a day.' : ''}
               </p>
               {summary.inTrial && summary.trialEndsAt && (
@@ -156,32 +123,6 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
             </>
           )}
 
-          {summary.testRunAvailable && (
-            <div className="space-y-2 border-t border-border pt-4">
-              <p className="text-xs font-medium text-text-primary">Owner test (test mode only)</p>
-              <p className="text-xs text-text-secondary">Runs this month&apos;s bill now for your account, plus pretend usage, using your test card and prepaid credit.</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <label htmlFor="extra-usage" className="text-xs text-text-secondary">Pretend usage €</label>
-                <input
-                  id="extra-usage"
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={extra}
-                  onChange={e => setExtra(e.target.value)}
-                  className="w-24 bg-surface border border-border rounded-lg px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:border-accent"
-                />
-                <button
-                  type="button"
-                  onClick={testRun}
-                  disabled={busy}
-                  className="px-4 py-1.5 border-2 border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg transition-all disabled:opacity-50"
-                >
-                  {busy ? 'Running…' : 'Run Test Bill'}
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
 
