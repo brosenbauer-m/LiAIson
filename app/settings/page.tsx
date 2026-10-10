@@ -11,6 +11,7 @@ import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import PrepaidBalanceCard from '@/components/settings/PrepaidBalanceCard'
 import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
+import PasswordForm from '@/components/settings/PasswordForm'
 
 // Settings (profile merged in, owner decision 2026-10-10): Profile, Profile
 // Privacy, Subscription (tier with usage, credits and limit; payment method;
@@ -30,8 +31,28 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
+  const [exporting, setExporting] = useState(false)
+  // Saves the JSON from /api/account/export as a file.
+  const downloadData = async () => {
+    setExporting(true)
+    try {
+      const res = await fetch('/api/account/export', { cache: 'no-store' })
+      if (!res.ok) throw new Error('failed')
+      const url = URL.createObjectURL(await res.blob())
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `liaison-data-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Could not prepare your data right now. Please try again later.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const signOut = async (scope: 'local' | 'global' = 'local') => {
+    await supabase.auth.signOut({ scope })
     router.push('/')
     router.refresh()
   }
@@ -98,13 +119,32 @@ export default function SettingsPage() {
         <section className="space-y-4">
           <SectionTitle>Account</SectionTitle>
           <div className={`${card} space-y-6`}>
-            <button
-              type="button"
-              onClick={signOut}
-              className="w-full py-3 border border-border hover:border-accent text-text-primary rounded-lg text-sm font-medium"
-            >
-              Sign out
-            </button>
+            <PasswordForm />
+            <div className="border-t border-border pt-6 flex items-center justify-between gap-4">
+              <div>
+                <h3 className="font-semibold text-text-primary">Your data</h3>
+                <p className="text-sm text-text-secondary mt-0.5">Download everything stored about you as a file.</p>
+              </div>
+              <button type="button" onClick={downloadData} disabled={exporting} className="px-4 py-2.5 border border-border hover:border-accent text-text-primary text-sm font-medium rounded-lg whitespace-nowrap disabled:opacity-50">
+                {exporting ? 'Preparing…' : 'Download my data'}
+              </button>
+            </div>
+            <div className="border-t border-border pt-6 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => signOut('local')}
+                className="flex-1 py-3 border border-border hover:border-accent text-text-primary rounded-lg text-sm font-medium"
+              >
+                Sign out
+              </button>
+              <button
+                type="button"
+                onClick={() => signOut('global')}
+                className="flex-1 py-3 border border-border hover:border-accent text-text-primary rounded-lg text-sm font-medium"
+              >
+                Sign out on all devices
+              </button>
+            </div>
             <div className="border-t border-border pt-6 space-y-4">
               <h3 className="font-semibold text-error">Delete account</h3>
               <p className="text-sm text-text-secondary leading-relaxed">

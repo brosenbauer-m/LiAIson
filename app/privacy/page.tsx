@@ -55,6 +55,7 @@ export default function PrivacyPage() {
               <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Your Profile Bio is always in your Outer Circle</li>
               <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
               <li>You can turn Discoverable on or off at any time. When it is off, or your profile is Private, no one can find you by what you share</li>
+              <li>You can download all data stored about you as a file, change your password, and delete your account with everything in it at any time in Settings</li>
               <li>You can set a monthly spending limit for the messages you send; when it is reached, you can&apos;t send more until the next month or until you raise it</li>
               <li>Files you import (PDF or Word) are only read to extract their text and are not stored; only the text you review and approve is saved to your Vault</li>
               <li>You can delete your account and all associated data at any time from Settings</li>

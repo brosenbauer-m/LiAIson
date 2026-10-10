@@ -17,6 +17,7 @@ type ConfirmLink = { tokenHash: string; type: EmailOtpType; next: string }
 
 function safeNext(value: string | null, type: EmailOtpType): string {
   if (value && value.startsWith('/') && !value.startsWith('//')) return value
+  if (type === 'recovery') return '/reset-password'
   return type === 'email_change' ? '/settings?email=changed' : '/vault?welcome=1'
 }
 
@@ -53,7 +54,7 @@ export default function ConfirmPage() {
     router.refresh()
   }
 
-  const title = link?.type === 'email_change' ? 'Confirm your new email' : 'Confirm your email'
+  const title = link?.type === 'email_change' ? 'Confirm your new email' : link?.type === 'recovery' ? 'Reset your password' : 'Confirm your email'
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">

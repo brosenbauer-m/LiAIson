@@ -48,6 +48,11 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-8">
+          {searchParams.get('reset') === '1' && (
+            <p className="mb-5 text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
+              Your password was changed. Please sign in.
+            </p>
+          )}
           {searchParams.get('confirmed') === '1' && (
             <p className="mb-5 text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
               Your email is confirmed. Please sign in.
@@ -69,9 +74,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1.5">
-                Password
-              </label>
+              <div className="flex items-baseline justify-between mb-1.5">
+                <label className="block text-sm font-medium text-text-primary">Password</label>
+                <Link href="/forgot-password" className="text-xs text-accent hover:underline">Forgot password?</Link>
+              </div>
               <input
                 type="password"
                 value={password}
