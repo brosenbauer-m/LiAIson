@@ -33,10 +33,10 @@ export function isMeteredFeature(feature: string): boolean {
   return METERED_FEATURES.has(feature)
 }
 
-// Features billed pay-as-you-go (to the sender). 'topic' is legacy (no longer
-// produced). Insight capture and Echoes ('insight', 'echo') are logged to the
+// Features billed pay-as-you-go (to the sender / the person using them):
+// chat messages and Vault Proofread. 'topic' is legacy (no longer produced). Insight capture and Echoes ('insight', 'echo') are logged to the
 // LiAIson owner but belong to the Echoes feature subscription, so not metered.
-const METERED_FEATURES = new Set(['chat', 'topic'])
+const METERED_FEATURES = new Set(['chat', 'topic', 'proofread'])
 
 export const DEFAULT_SPEND_LIMIT_CENTS = 1500
 export const MAX_SPEND_LIMIT_CENTS = 50000

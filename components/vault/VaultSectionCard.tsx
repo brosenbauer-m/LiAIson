@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
+import ProofreadPanel from '@/components/vault/ProofreadPanel'
 import { circleChain, circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
@@ -25,6 +26,8 @@ const countChars = (text: string) => Array.from(text).length
 export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft, innerAllowed, customCircles, noCircles }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [placement, setPlacement] = useState<Placement>(placementOf(section))
+  // Proofread opens once the person starts writing in this section.
+  const [writing, setWriting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -149,13 +152,16 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
         </p>
       )}
 
-      <textarea
-        value={content}
-        onChange={e => setContent(e.target.value)}
-        placeholder={`Add information about your ${section.label.toLowerCase()}...`}
-        rows={4}
-        className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all"
-      />
+      <div className={writing ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_17rem] items-start' : ''}>
+        <textarea
+          value={content}
+          onChange={e => { setContent(e.target.value); setWriting(true) }}
+          placeholder={`Add information about your ${section.label.toLowerCase()}...`}
+          rows={4}
+          className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all"
+        />
+        <ProofreadPanel text={content} active={writing} onAccept={setContent} />
+      </div>
       <p className={`-mt-2 text-xs ${blocked ? 'text-error' : 'text-text-muted'}`}>
         {blocked
           ? <>This is {overBy.toLocaleString('en-GB')} characters more than fits in your Vault. Shorten it, or <Link href="/settings#subscription" className="underline">get more space with a higher plan</Link>.</>
