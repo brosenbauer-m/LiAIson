@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import EchoesLocked from '@/components/plans/EchoesLocked'
+import LiaisonNote from '@/components/insights/LiaisonNote'
 
 type Category = { category: string; count: number; examples: string[] }
 type Echoes = 'none' | 'monthly' | 'weekly_monthly'
-type Data = { total: number; categories: Category[]; locked?: Echoes }
+type Data = { total: number; categories: Category[]; locked?: Echoes; latestNote?: string | null }
 
 export default function VisitorInsights() {
   const [period, setPeriod] = useState<'week' | 'month'>('week')
@@ -32,7 +33,7 @@ export default function VisitorInsights() {
           setError('Could not load insights right now.')
           setData(null)
         } else {
-          setData({ total: body.total ?? 0, categories: body.categories ?? [], locked: body.locked ? body.echoes : undefined })
+          setData({ total: body.total ?? 0, categories: body.categories ?? [], locked: body.locked ? body.echoes : undefined, latestNote: body.latestNote ?? null })
         }
       })
       .catch(() => { if (!cancelled) setError('Could not load insights right now.') })
@@ -120,6 +121,13 @@ export default function VisitorInsights() {
       <Link href="/insights" className="inline-block text-sm font-medium text-accent hover:underline">
         See Your Weekly and Monthly Echoes →
       </Link>
+
+      {/* The latest Echo's suggestion, in your LiAIson's words. */}
+      {!loading && data?.latestNote && !data.locked && (
+        <div className="border-t border-border pt-5">
+          <LiaisonNote note={data.latestNote} compact />
+        </div>
+      )}
     </div>
   )
 }

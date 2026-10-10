@@ -6,7 +6,8 @@ import { getPlanAt } from '@/lib/billing/plan'
 import { echoAllowed, PLANS } from '@/lib/plans'
 
 // Owner-only: live counts of what visitors want to know, for the current
-// calendar week (Mon–Sun, Vienna time) or current calendar month.
+// calendar week (Mon–Sun, Vienna time) or current calendar month, plus the
+// LiAIson's note from the latest Echo (shown on the dashboard).
 
 const EXAMPLES_PER_CATEGORY = 3
 
@@ -30,6 +31,15 @@ export async function GET(request: NextRequest) {
   }
 
   const service = createServiceClient()
+  const { data: latest } = await service
+    .from('visitor_reports')
+    .select('report')
+    .eq('profile_user_id', user.id)
+    .order('period_end', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ report: { note?: unknown } | null }>()
+  const latestNote = typeof latest?.report?.note === 'string' ? latest.report.note : null
+
   const { data, error } = await service
     .from('visitor_insights')
     .select('category, statement, created_at')
@@ -60,6 +70,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(
     {
       period: { type, label: period.label, start: period.start.toISOString(), end: period.end.toISOString() },
+      latestNote,
       total: categories.reduce((sum, c) => sum + c.count, 0),
       categories,
     },

@@ -69,7 +69,7 @@ export async function emailReport(r: ReportRow): Promise<'sent' | 'skipped' | 'f
   <ul style="padding-left:18px;margin:0 0 16px">
     ${top.map(t => `<li style="margin-bottom:6px"><strong>${escapeHtml(t.category)}</strong> (${t.count})${t.examples[0] ? `<br><span style="color:#555">${escapeHtml(t.examples[0])}</span>` : ''}</li>`).join('')}
   </ul>
-  ${c.suggestions.length ? `<h2 style="font-size:16px;margin:20px 0 8px">Ideas for your Vault</h2><ul style="padding-left:18px;margin:0 0 16px">${c.suggestions.map(s => `<li style="margin-bottom:6px">${escapeHtml(s)}</li>`).join('')}</ul>` : ''}
+  ${c.note ? `<div style="margin:20px 0 16px;padding:14px 16px;background:#F6EFE6;border:1px solid #E7DDD0;border-radius:16px 16px 16px 4px"><p style="margin:0 0 4px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#8F7B6C">Your LiAIson</p><p style="margin:0;font-size:15px;line-height:1.5;color:#2B1E16">${escapeHtml(c.note)}</p></div>` : c.suggestions.length ? `<h2 style="font-size:16px;margin:20px 0 8px">Ideas for your Vault</h2><ul style="padding-left:18px;margin:0 0 16px">${c.suggestions.map(s => `<li style="margin-bottom:6px">${escapeHtml(s)}</li>`).join('')}</ul>` : ''}
   <p style="margin:24px 0"><a href="${reportsUrl}" style="background:#111;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold">See your full Echo</a></p>
   <p style="font-size:12px;color:#777;line-height:1.5">Echoes are anonymous: they never show who asked or their exact words. You can turn these emails off in <a href="${settingsUrl}" style="color:#777">Settings</a>.</p>
 </div>`
@@ -79,7 +79,7 @@ export async function emailReport(r: ReportRow): Promise<'sent' | 'skipped' | 'f
     (c.summary ? `${c.summary}\n\n` : '') +
     `${c.total} ${c.total === 1 ? 'question' : 'questions'} this ${r.period_type}.\n\n` +
     `What people wanted to know:\n${top.map(t => `- ${t.category} (${t.count})${t.examples[0] ? `: ${t.examples[0]}` : ''}`).join('\n')}\n\n` +
-    (c.suggestions.length ? `Ideas for your Vault:\n${c.suggestions.map(s => `- ${s}`).join('\n')}\n\n` : '') +
+    (c.note ? `Your LiAIson: ${c.note}\n\n` : c.suggestions.length ? `Ideas for your Vault:\n${c.suggestions.map(s => `- ${s}`).join('\n')}\n\n` : '') +
     `See your full Echo: ${reportsUrl}\nTurn these emails off: ${settingsUrl}`
 
   try {

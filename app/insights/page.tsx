@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import EchoesLocked from '@/components/plans/EchoesLocked'
+import LiaisonNote from '@/components/insights/LiaisonNote'
 
 type ReportCategory = { category: string; count: number; examples: string[]; change: number | null }
 type ReportContent = {
   headline: string
   summary: string
   suggestions: string[]
+  note?: string
   categories: ReportCategory[]
   total: number
   previousTotal: number | null
@@ -103,7 +105,9 @@ function ReportCard({ r }: { r: Report }) {
         ))}
       </div>
 
-      {c.suggestions.length > 0 && (
+      {c.note ? (
+        <LiaisonNote note={c.note} />
+      ) : c.suggestions.length > 0 && (
         <div className="rounded-lg border border-border p-4">
           <h3 className="font-semibold text-text-primary mb-2">Ideas for Your Vault</h3>
           <ul className="space-y-1">
