@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
 import Toggle from '@/components/ui/Toggle'
-import { PLANS, SIGNUP_PLAN_IDS, isPlanId, type PlanId } from '@/lib/plans'
-import PlanFeatures from '@/components/plans/PlanFeatures'
+import { PLANS, DEFAULT_PLAN_OPTIONS, isPlanId, type PlanId, type PlanOptions } from '@/lib/plans'
+import TierPicker from '@/components/plans/TierPicker'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -20,6 +20,7 @@ export default function SignupPage() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false)
   const [isDiscoverable, setIsDiscoverable] = useState(true)
   const [plan, setPlan] = useState<PlanId>('introvert')
+  const [planOptions, setPlanOptions] = useState<PlanOptions>(DEFAULT_PLAN_OPTIONS)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [signedInEmail, setSignedInEmail] = useState('')
@@ -31,11 +32,11 @@ export default function SignupPage() {
   // different email" can undo it and keep everything else that was filled in.
   const [pending, setPending] = useState<{ userId: string; nonce: string } | null>(null)
 
-  // Plan chosen on the plans page (/signup?plan=…).
+  // Tier chosen elsewhere (/signup?plan=…).
   useEffect(() => {
     const fromUrl = new URLSearchParams(window.location.search).get('plan')
     const timer = setTimeout(() => {
-      if (isPlanId(fromUrl) && SIGNUP_PLAN_IDS.includes(fromUrl)) setPlan(fromUrl)
+      if (isPlanId(fromUrl) && PLANS[fromUrl].available) setPlan(fromUrl)
     }, 0)
     return () => clearTimeout(timer)
   }, [])
@@ -160,7 +161,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan, signup_nonce: nonce },
+        data: { display_name: displayName, username, is_discoverable: isDiscoverable, plan, ...(plan === 'butterfly' ? { plan_options: planOptions } : {}), signup_nonce: nonce },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -365,41 +366,8 @@ export default function SignupPage() {
             </div>
 
             <fieldset>
-              <legend className="block text-sm font-medium text-text-primary mb-1.5">Plan</legend>
-              <div className="grid grid-cols-3 gap-2">
-                {SIGNUP_PLAN_IDS.map(id => (
-                  <label
-                    key={id}
-                    className={`cursor-pointer rounded-lg border px-3 py-2.5 text-center transition-all ${
-                      plan === id ? 'border-accent bg-accent-tint' : 'border-border bg-surface hover:border-accent/60'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="plan"
-                      value={id}
-                      checked={plan === id}
-                      onChange={() => setPlan(id)}
-                      className="sr-only"
-                    />
-                    <span className="block text-sm font-medium text-text-primary">{PLANS[id].name}</span>
-                    <span className="block text-xs text-text-secondary">{PLANS[id].feeEur === 0 ? 'Free' : `€${PLANS[id].feeEur}/month`}</span>
-                  </label>
-                ))}
-              </div>
-              <div className="mt-3 rounded-lg border border-border bg-surface px-4 py-3 space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-text-primary">
-                    {PLANS[plan].name}: {PLANS[plan].feeEur === 0 ? 'free' : `€${PLANS[plan].feeEur} per month`}
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">{PLANS[plan].tagline}</p>
-                </div>
-                <PlanFeatures plan={PLANS[plan]} />
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Tap a line to learn more. Your first month is free. After that, your plan continues automatically and you&apos;ll need to save a card. You can change your plan at any time.{' '}
-                  <Link href="/plans" className="text-accent-light hover:underline" target="_blank">Compare all plans</Link>
-                </p>
-              </div>
+              <legend className="block text-sm font-medium text-text-primary mb-1.5">Tier</legend>
+              <TierPicker value={{ plan, options: planOptions }} onChange={c => { setPlan(c.plan); setPlanOptions(c.options) }} />
             </fieldset>
 
             <div className="flex items-center justify-between gap-4 py-1">

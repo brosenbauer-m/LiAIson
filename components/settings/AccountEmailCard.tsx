@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 // Settings card: shows the account email and lets the person change it.
 // Supabase sends a confirmation link; the email only changes once confirmed
 // (the link opens /auth/confirm, see the "Change email address" template).
-export default function AccountEmailCard() {
+export default function AccountEmailCard({ bare = false }: { bare?: boolean } = {}) {
   const [email, setEmail] = useState<string | null>(null)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
@@ -56,7 +56,7 @@ export default function AccountEmailCard() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
+    <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <h2 className="font-semibold text-text-primary text-lg">Email address</h2>
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-text-primary break-all">{email ?? 'Loading...'}</p>

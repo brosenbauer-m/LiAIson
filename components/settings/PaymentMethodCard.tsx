@@ -14,7 +14,7 @@ type CardState = {
 // Adding a card runs a €0 check on Mollie's secure page; nothing is charged.
 // returnPath: the page Mollie sends the person back to after the card check.
 // onSaved: called once the card is confirmed.
-export default function PaymentMethodCard({ returnPath = '/settings', onSaved }: { returnPath?: '/settings' | '/billing/setup'; onSaved?: () => void } = {}) {
+export default function PaymentMethodCard({ returnPath = '/settings', onSaved, bare = false }: { returnPath?: '/settings' | '/billing/setup'; onSaved?: () => void; bare?: boolean } = {}) {
   const onSavedRef = useRef(onSaved)
   useEffect(() => { onSavedRef.current = onSaved }, [onSaved])
   const [card, setCard] = useState<CardState | null>(null)
@@ -122,7 +122,7 @@ export default function PaymentMethodCard({ returnPath = '/settings', onSaved }:
   const hasCard = card?.status === 'valid' && !!card.cardLabel
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
+    <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <div className="flex items-center justify-between gap-4">
         <h2 className="font-semibold text-text-primary text-lg">Payment method</h2>
         <Link href="/billing/receipts" className="text-sm text-accent hover:underline">View receipts →</Link>

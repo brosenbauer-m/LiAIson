@@ -180,7 +180,7 @@ export async function getPlanState(userId: string): Promise<PlanState> {
     trialEndsAt: user.trial_ends_at,
     hasCard: account?.mandate_status === 'valid' && !!account.mandate_id,
     vaultChars: await getVaultChars(userId),
-    vaultLimit: Math.min(PLANS[plan].vaultChars, pendingPlan ? PLANS[pendingPlan].vaultChars : Infinity),
+    vaultLimit: Math.min(current.vaultChars, pending ? pending.vaultChars : Infinity),
     circles: PLANS[plan].circles,
     extraCircles: current.extraCircles,
     customCircles: await countCustomCircles(userId),
@@ -226,6 +226,15 @@ export async function changePlan(userId: string, target: PlanId, rawOptions?: un
     return { ok: true, message: `You'll stay on ${name}.`, state: await getPlanState(userId) }
   }
 
+  // The Vault must fit the new size first (also when other sliders go up).
+  if (state.vaultChars > next.vaultChars) {
+    return {
+      ok: false,
+      status: 409,
+      error: `Your Vault has ${state.vaultChars.toLocaleString('en-GB')} characters; this choice allows ${next.vaultChars.toLocaleString('en-GB')}. Please shorten your Vault first.`,
+    }
+  }
+
   // Upgrade (a higher plan, or slider choices that cost more): right away.
   const upgrade = target === state.plan ? next.feeEur > state.feeEur : planRank(target) > planRank(state.plan)
   if (upgrade) {
@@ -235,15 +244,7 @@ export async function changePlan(userId: string, target: PlanId, rawOptions?: un
     return { ok: true, message: what, state: await getPlanState(userId) }
   }
 
-  // Downgrade: the Vault must fit the smaller plan first.
-  const limit = PLANS[target].vaultChars
-  if (state.vaultChars > limit) {
-    return {
-      ok: false,
-      status: 409,
-      error: `Your Vault has ${state.vaultChars.toLocaleString('en-GB')} characters; ${name} allows ${limit.toLocaleString('en-GB')}. Please shorten your Vault first.`,
-    }
-  }
+  // Downgrade (the Vault already fits, see above).
   // Fewer own circles on Social Butterfly: delete some first. (Leaving Social
   // Butterfly keeps them for later; their sections become drafts.)
   if (target === 'butterfly' && state.customCircles > next.extraCircles) {

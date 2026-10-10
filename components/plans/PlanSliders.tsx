@@ -14,7 +14,7 @@ export default function PlanSliders({ value, onChange }: { value: PlanOptions; o
           <div key={key} className="space-y-1.5">
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <label htmlFor={id} className="text-text-secondary">{s.label}</label>
-              <span className="font-semibold text-text-primary tabular-nums">{value[key]}</span>
+              <span className="font-semibold text-text-primary tabular-nums">{value[key].toLocaleString('en-GB')}</span>
             </div>
             <input
               id={id}

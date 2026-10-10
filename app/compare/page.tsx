@@ -101,7 +101,7 @@ export default function ComparePage() {
           : d.needsCard
             ? { href: '/settings', label: 'Go to Settings' }
             : d.locked
-              ? { href: '/plans#butterfly', label: 'See Social Butterfly' }
+              ? { href: '/settings#subscription', label: 'See Social Butterfly' }
               : undefined
         setError({ text: d.error ?? 'Something went wrong. Please try again.', link })
         return
@@ -141,7 +141,7 @@ export default function ComparePage() {
             <p className="text-sm text-text-secondary leading-relaxed">
               Comparing yourself with several people at once is part of Social Butterfly. With Extrovert you can compare yourself with one person on their profile.
             </p>
-            <Link href="/plans#butterfly" className="text-sm text-accent hover:underline font-medium">See Social Butterfly →</Link>
+            <Link href="/settings#subscription" className="text-sm text-accent hover:underline font-medium">See Social Butterfly →</Link>
           </div>
         ) : (
           <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">

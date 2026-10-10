@@ -16,7 +16,7 @@ function euros(cents: number): string {
 
 // Settings card: this month's AI usage of your own messages and your monthly
 // spending limit (pay-as-you-go foundation; no payments are taken yet).
-export default function SpendingLimitCard() {
+export default function SpendingLimitCard({ bare = false }: { bare?: boolean } = {}) {
   const [usage, setUsage] = useState<Usage | null>(null)
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading')
   const [limitInput, setLimitInput] = useState('')
@@ -69,7 +69,7 @@ export default function SpendingLimitCard() {
     : 100
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
+    <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <h2 className="font-semibold text-text-primary text-lg">Usage &amp; spending limit</h2>
 
       {status === 'loading' && <p className="text-sm text-text-secondary">Loading...</p>}

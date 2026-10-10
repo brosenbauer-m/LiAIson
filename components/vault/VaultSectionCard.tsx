@@ -94,7 +94,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
       />
       <p className={`-mt-2 text-xs ${blocked ? 'text-error' : 'text-text-muted'}`}>
         {blocked
-          ? <>This is {overBy.toLocaleString('en-GB')} characters more than fits in your Vault. Shorten it, or <Link href="/plans" className="underline">get more space with a higher plan</Link>.</>
+          ? <>This is {overBy.toLocaleString('en-GB')} characters more than fits in your Vault. Shorten it, or <Link href="/settings#subscription" className="underline">get more space with a higher plan</Link>.</>
           : `${length.toLocaleString('en-GB')} characters`}
       </p>
 

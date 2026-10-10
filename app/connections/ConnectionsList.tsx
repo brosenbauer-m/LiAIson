@@ -184,7 +184,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
           ? 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'
           : 'Everyone you connect with sees your Vault (except drafts).'}
         {!innerAllowed && (
-          <> With Ambivert or Extrovert you can also put people in an Inner Circle. <Link href="/plans#circles" className="text-accent hover:underline">Learn more</Link></>
+          <> With Ambivert or Extrovert you can also put people in an Inner Circle. <Link href="/#how-it-works" className="text-accent hover:underline">Learn more</Link></>
         )}
       </p>
 

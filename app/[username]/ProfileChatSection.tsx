@@ -321,7 +321,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
                 {similarityNote === 'map' ? (
                   <a href="#similarity" className="hover:text-text-primary hover:underline">✨ See everything you have in common →</a>
                 ) : (
-                  <Link href="/plans#similarity" className="hover:text-text-primary hover:underline">✨ With Extrovert, see a map of everything you have in common →</Link>
+                  <Link href="/settings#subscription" className="hover:text-text-primary hover:underline">✨ With Extrovert, see a map of everything you have in common →</Link>
                 )}
               </p>
             )}

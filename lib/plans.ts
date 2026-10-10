@@ -9,16 +9,13 @@
 // Similarity: on every plan the LiAIson points out what the reader has in
 // common with the person in chat. Score + bubble map on Extrovert and Social
 // Butterfly; Social Butterfly also compares several people at once.
-// Social Butterfly: the fee follows sliders (own circles, AI searches,
-// Similarity comparisons); see BUTTERFLY_SLIDERS. Shown as "Coming soon" until
-// `available` is true (the exempt accounts have it for testing).
+// Social Butterfly: the fee follows sliders (Vault size, own circles, AI
+// searches, Similarity comparisons); see BUTTERFLY_SLIDERS. A plan with
+// `available: false` is shown as "Coming soon" and can't be chosen.
 
 export type PlanId = 'introvert' | 'ambivert' | 'extrovert' | 'butterfly'
 
 export const PLAN_IDS: PlanId[] = ['introvert', 'ambivert', 'extrovert', 'butterfly']
-
-// Plans offered at sign-up. Social Butterfly is chosen later on the Plans page.
-export const SIGNUP_PLAN_IDS: PlanId[] = ['introvert', 'ambivert', 'extrovert']
 
 export type EchoLevel = 'none' | 'monthly' | 'weekly_monthly'
 
@@ -50,7 +47,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: 'Introvert',
     feeEur: 0,
     tagline: 'A simple LiAIson that answers questions about you.',
-    vaultChars: 3000,
+    vaultChars: 1000,
     echoes: 'none',
     aiSearchesPerMonth: 0,
     similarity: 'none',
@@ -60,7 +57,7 @@ export const PLANS: Record<PlanId, Plan> = {
     groupCompare: 0,
     available: true,
     features: [
-      { text: 'Your Vault can hold up to 3,000 characters.', help: 'vault' },
+      { text: 'Your Vault can hold up to 1,000 characters.', help: 'vault' },
       { text: 'Everyone who visits your profile sees the same information.', help: 'circles' },
       { text: 'You can find people on LiAIson by their name.', help: 'search' },
       { text: 'When you chat, the LiAIson tells you what you have in common.', help: 'similarity' },
@@ -70,7 +67,7 @@ export const PLANS: Record<PlanId, Plan> = {
   ambivert: {
     id: 'ambivert',
     name: 'Ambivert',
-    feeEur: 2,
+    feeEur: 3,
     tagline: 'More room to share, and a monthly report of what people ask about you.',
     vaultChars: 15000,
     echoes: 'monthly',
@@ -93,7 +90,7 @@ export const PLANS: Record<PlanId, Plan> = {
   extrovert: {
     id: 'extrovert',
     name: 'Extrovert',
-    feeEur: 4,
+    feeEur: 6,
     tagline: 'See how much you have in common with someone, plus weekly reports and the biggest Vault.',
     vaultChars: 30000,
     echoes: 'weekly_monthly',
@@ -116,7 +113,7 @@ export const PLANS: Record<PlanId, Plan> = {
   butterfly: {
     id: 'butterfly',
     name: 'Social Butterfly',
-    feeEur: 6,
+    feeEur: 9,
     tagline: 'Your own circles, compare several people at once, and choose how much you need.',
     vaultChars: 30000,
     echoes: 'weekly_monthly',
@@ -126,12 +123,12 @@ export const PLANS: Record<PlanId, Plan> = {
     circles: 2,
     extraCircles: 2,
     groupCompare: 4,
-    available: false,
+    available: true,
     features: [
       { text: 'Make your own circles, such as Family or Climbing club, and choose what each one sees.', help: 'circles', highlight: true },
       { text: 'Compare yourself with up to 4 people at once on one map.', help: 'similarity', highlight: true },
-      { text: 'Choose how many circles, searches and comparisons you need. The price follows.', help: 'butterfly' },
-      { text: 'Everything in Extrovert: weekly and monthly Echoes and a 30,000-character Vault.', help: 'echoes' },
+      { text: 'Choose your Vault size (30,000 to 60,000 characters), circles, searches and comparisons. The price follows.', help: 'butterfly' },
+      { text: 'Everything in Extrovert, including weekly and monthly Echoes.', help: 'echoes' },
       { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
   },
@@ -139,21 +136,23 @@ export const PLANS: Record<PlanId, Plan> = {
 
 // Social Butterfly sliders (Claude's proposal 2026-10-09, owner to confirm).
 // Price = base fee + eurPerStep for every step above the minimum. The
-// minimums are what the base fee includes. The Vault stays at 30,000
+// minimums are what the base fee includes. The Vault slider stops at 60,000
 // characters: a bigger Vault makes every message to it cost more for the sender.
-export type PlanOptions = { extraCircles: number; aiSearches: number; similarities: number }
+// Keep vaultChars in sync with normalize_plan_options in the database.
+export type PlanOptions = { vaultChars: number; extraCircles: number; aiSearches: number; similarities: number }
 export type SliderKey = keyof PlanOptions
 
 export const BUTTERFLY_SLIDERS: Record<SliderKey, { label: string; min: number; max: number; step: number; eurPerStep: number }> = {
+  vaultChars: { label: 'Vault size (characters)', min: 30000, max: 60000, step: 10000, eurPerStep: 1 },
   extraCircles: { label: 'Your own circles', min: 2, max: 10, step: 1, eurPerStep: 0.5 },
   aiSearches: { label: 'AI searches per month', min: 20, max: 100, step: 20, eurPerStep: 1 },
   similarities: { label: 'Similarity comparisons per month', min: 100, max: 500, step: 100, eurPerStep: 1 },
 }
 
-export const SLIDER_KEYS: SliderKey[] = ['extraCircles', 'aiSearches', 'similarities']
+export const SLIDER_KEYS: SliderKey[] = ['vaultChars', 'extraCircles', 'aiSearches', 'similarities']
 
-export const DEFAULT_PLAN_OPTIONS: PlanOptions = { extraCircles: 2, aiSearches: 20, similarities: 100 }
-export const MAX_PLAN_OPTIONS: PlanOptions = { extraCircles: 10, aiSearches: 100, similarities: 500 }
+export const DEFAULT_PLAN_OPTIONS: PlanOptions = { vaultChars: 30000, extraCircles: 2, aiSearches: 20, similarities: 100 }
+export const MAX_PLAN_OPTIONS: PlanOptions = { vaultChars: 60000, extraCircles: 10, aiSearches: 100, similarities: 500 }
 
 // Any input → valid slider positions (clamped, on a step).
 export function normalizePlanOptions(raw: unknown, fallback: PlanOptions = DEFAULT_PLAN_OPTIONS): PlanOptions {
@@ -198,6 +197,7 @@ export function planLimits(plan: PlanId, rawOptions?: unknown): PlanLimits {
   return {
     ...base,
     feeEur: butterflyFeeEur(options),
+    vaultChars: options.vaultChars,
     extraCircles: options.extraCircles,
     aiSearchesPerMonth: options.aiSearches,
     similaritiesPerMonth: options.similarities,
@@ -269,6 +269,6 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'butterfly',
     title: 'Social Butterfly',
-    text: 'Social Butterfly lets you choose how much you need. Move the sliders to pick how many of your own circles, AI searches and Similarity comparisons you want each month, and the monthly price changes with them. You can change them at any time: more takes effect right away, less from the start of next month.',
+    text: 'Social Butterfly lets you choose how much you need. Move the sliders to pick your Vault size and how many of your own circles, AI searches and Similarity comparisons you want each month, and the monthly price changes with them. You can change them at any time: more takes effect right away, less from the start of next month.',
   },
 ]

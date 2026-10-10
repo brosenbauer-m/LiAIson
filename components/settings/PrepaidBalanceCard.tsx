@@ -20,7 +20,7 @@ function euros(n: number): string {
 // Settings card: prepaid credit. Top-ups are paid with the saved card (after a
 // confirmation prompt) or on Mollie's checkout page, and are used first when
 // the monthly bill is made.
-export default function PrepaidBalanceCard() {
+export default function PrepaidBalanceCard({ bare = false }: { bare?: boolean } = {}) {
   const [state, setState] = useState<BalanceState | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [country, setCountry] = useState('')
@@ -135,7 +135,7 @@ export default function PrepaidBalanceCard() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft">
+    <div className={bare ? 'space-y-5' : 'bg-card border border-border rounded-2xl p-8 space-y-5 shadow-soft'}>
       <h2 className="font-semibold text-text-primary text-lg">Prepaid balance</h2>
 
       {!state && !loadError && <p className="text-sm text-text-secondary">Loading...</p>}

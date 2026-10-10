@@ -10,7 +10,7 @@ export default function EchoesLocked({ period, echoes }: { period: 'week' | 'mon
   return (
     <div className="rounded-lg border border-border bg-surface px-4 py-4 space-y-2">
       <p className="text-sm text-text-secondary">{text}</p>
-      <Link href="/plans#echoes" className="inline-block text-sm font-medium text-accent hover:underline">See plans →</Link>
+      <Link href="/settings#subscription" className="inline-block text-sm font-medium text-accent hover:underline">See tiers →</Link>
     </div>
   )
 }
