@@ -661,13 +661,13 @@ isOneToOne: false
                   ]
                 },"custom_circles": {
                   Row: {
-                    "created_at": string,"id": string,"name": string,"owner_id": string
+                    "created_at": string,"id": string,"in_inner": boolean,"name": string,"owner_id": string,"parent_id": string | null
                   }
                   Insert: {
-                    "created_at"?: string,"id"?: string,"name": string,"owner_id": string
+                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"name": string,"owner_id": string,"parent_id"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"name"?: string,"owner_id"?: string
+                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"name"?: string,"owner_id"?: string,"parent_id"?: string | null
                   }
                   Relationships: [
                     {
@@ -675,6 +675,12 @@ isOneToOne: false
       columns: ["owner_id"]
 isOneToOne: false
       referencedRelation: "users"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "custom_circles_parent_id_fkey"
+      columns: ["parent_id"]
+isOneToOne: false
+      referencedRelation: "custom_circles"
       referencedColumns: ["id"]
     }
                   ]
