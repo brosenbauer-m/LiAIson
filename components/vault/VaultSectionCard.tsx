@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
-import { circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
+import { circleChain, circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
   section: VaultSection
@@ -106,6 +106,23 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
     ? new Date(section.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
 
+
+  // Circles inside the chosen one also see this section (hierarchy): their
+  // tags are greyed. Circles on their own outside the Outer Circle don't.
+  const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner, isolated: !!c.isolated }]))
+  const alsoSees = new Set<Placement>()
+  if (placement === 'outer' && innerAllowed) alsoSees.add('inner')
+  for (const c of customCircles) {
+    const chain = circleChain(c.id, nodes)
+    const root = chain[chain.length - 1]
+    if (!root) continue
+    const inside =
+      placement === 'outer' ? !root.isolated
+        : placement === 'inner' ? !!root.in_inner
+          : placement.startsWith('c:') ? chain.slice(1).some(a => a.id === placement.slice(2))
+            : false
+    if (inside) alsoSees.add(`c:${c.id}`)
+  }
   return (
     <div className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft">
       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -159,9 +176,13 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
                 type="button"
                 onClick={() => setPlacement(p)}
                 aria-pressed={placement === p}
-                title={p.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === p.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
+                title={alsoSees.has(p) ? 'Also sees this (it sits inside the chosen circle)' : p.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === p.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
-                  placement === p ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
+                  placement === p
+                    ? 'border-accent bg-accent-tint text-accent'
+                    : alsoSees.has(p)
+                      ? 'border-transparent bg-accent/10 text-accent/60'
+                      : 'border-border text-text-secondary hover:border-accent/50'
                 }`}
               >
                 {p === 'draft' ? 'Draft' : noCircles && p === 'outer' ? 'Visible' : placementLabel(p, customCircles)}

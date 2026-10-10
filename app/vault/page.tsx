@@ -5,9 +5,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
-import FolderManager from '@/components/vault/FolderManager'
+import AddSectionDialog from '@/components/vault/AddSectionDialog'
 import CirclesNote from '@/components/ui/CirclesNote'
-import type { VaultSection, VaultFolder } from '@/types'
+import type { VaultSection } from '@/types'
 import { circleChain, circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
@@ -36,7 +36,7 @@ export default function VaultPage() {
   const [activeTab, setActiveTab] = useState<Tab>('outer')
   const [showWelcome, setShowWelcome] = useState(welcome)
   const [userId, setUserId] = useState<string | null>(null)
-  const [folders, setFolders] = useState<VaultFolder[]>([])
+  const [adding, setAdding] = useState(false)
   const [vaultLimit, setVaultLimit] = useState<number | null>(null)
   // Inner Circle only on plans with two circles (Ambivert / Extrovert).
   const [innerAllowed, setInnerAllowed] = useState(false)
@@ -78,12 +78,6 @@ export default function VaultPage() {
       }
       setSections(data as VaultSection[] ?? [])
 
-      const { data: folderData } = await supabase
-        .from('vault_folders')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-      setFolders(folderData as VaultFolder[] ?? [])
 
       setLoading(false)
     }
@@ -132,42 +126,8 @@ export default function VaultPage() {
     setSections(prev => prev.filter(section => section.id !== id))
   }, [supabase])
 
-  const createFolder = useCallback(async (name: string, color: string) => {
-    if (!userId) return
-    const { data, error } = await supabase
-      .from('vault_folders')
-      .insert({ user_id: userId, name, color })
-      .select()
-      .single()
-    if (error) { setErrorMessage("Couldn't create folder — please try again"); return }
-    if (data) setFolders(prev => [...prev, data as VaultFolder])
-  }, [supabase, userId])
-
-  const updateFolder = useCallback(async (id: string, updates: { name?: string; color?: string }) => {
-    const { data, error } = await supabase
-      .from('vault_folders')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-    if (error) { setErrorMessage("Couldn't update folder — please try again"); return }
-    if (data) setFolders(prev => prev.map(f => f.id === id ? { ...f, ...data } : f))
-  }, [supabase])
-
-  const deleteFolder = useCallback(async (id: string) => {
-    const { error } = await supabase
-      .from('vault_folders')
-      .delete()
-      .eq('id', id)
-    if (error) { setErrorMessage("Couldn't delete folder — please try again"); return }
-    setFolders(prev => prev.filter(f => f.id !== id))
-    setSections(prev => prev.map(s => s.folder_id === id ? { ...s, folder_id: null } : s))
-  }, [supabase])
-
-  const addCustomSection = async () => {
-    if (!userId) return
-    const label = prompt('Section name:')
-    if (!label) return
+  const addSection = async (label: string): Promise<boolean> => {
+    if (!userId) return false
 
     const { data, error } = await supabase
       .from('vault_sections')
@@ -187,10 +147,11 @@ export default function VaultPage() {
 
     if (error) {
       setErrorMessage("Couldn't add this section — please try again")
-      return
+      return false
     }
 
     if (data) setSections(prev => [...prev, data as VaultSection])
+    return true
   }
 
 
@@ -291,7 +252,6 @@ export default function VaultPage() {
           </p>
         )}
 
-        <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
 
         {/* Tabs: one per circle (not on Introvert) */}
         {!noCircles && <div className="flex flex-wrap gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit max-w-full shadow-soft">
@@ -331,13 +291,20 @@ export default function VaultPage() {
           ))}
         </div>
 
-        {/* Add custom section */}
+        {/* Add a section (dialog with suggested names) */}
         <button
-          onClick={addCustomSection}
+          onClick={() => setAdding(true)}
           className="mt-6 w-full py-4 border-2 border-dashed border-border hover:border-accent hover:bg-accent-tint text-text-secondary hover:text-accent rounded-xl text-sm font-medium transition-all"
         >
-          + Add Custom Section
+          + Add Section
         </button>
+        {adding && (
+          <AddSectionDialog
+            existing={sections.map(s => s.label)}
+            onAdd={addSection}
+            onClose={() => setAdding(false)}
+          />
+        )}
       </div>
     </div>
   )
