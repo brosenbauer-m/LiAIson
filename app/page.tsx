@@ -75,13 +75,13 @@ export default function HomePage() {
             Tell Your Story a Million Times
           </h1>
           <p className="mt-8 text-base sm:text-lg text-text-secondary leading-relaxed text-balance animate-page-in" style={{ animationDelay: '120ms' }}>
-            Human nature yearns to know and to be known. Exchanging stories has guided us throughout our history, fulfilling our
-            social nature and keeping us alive. Millennia ago this came naturally: there were few of us, living in small
-            communities, with the time, desire and opportunity to get to know everyone around us. Today we are billions, and
-            neither our infrastructure, our lifestyles nor our biology can keep up with the desire to know and be known by this many.
+            The desire to know others and to be known is in our nature. Millennia ago we were few, living in small communities
+            with the time, will and opportunity to meet this need naturally. Today we are billions, making it increasingly
+            difficult to know, and be known by, so many. Our current lifestyles, biology and infrastructure are not designed to
+            sustain this social fulfilment at such a scale. Offload your insignificant interactions and let your LiAIson handle them.
           </p>
           <p className="mt-5 text-lg sm:text-xl text-text-primary font-medium animate-page-in" style={{ animationDelay: '220ms' }}>
-            Let your LiAIson help. Tell your story once, and let it be told endlessly.
+            Tell your story once, and let it be told endlessly.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center animate-page-in" style={{ animationDelay: '320ms' }}>
             <Link href={primaryHref} className="px-7 py-3.5 bg-accent hover:bg-accent-light text-white font-medium rounded-full shadow-card">
