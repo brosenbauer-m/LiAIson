@@ -6,10 +6,9 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
-import FileImport, { type ImportTarget } from '@/components/vault/FileImport'
 import ProfileBioCard from '@/components/vault/ProfileBioCard'
 import type { VaultSection, VaultFolder } from '@/types'
-import { placementFields, placementHelp, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
+import { placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -17,15 +16,6 @@ function limitMessage(limit: number): string {
   return `This doesn't fit in your Vault. Your plan allows up to ${limit.toLocaleString('en-GB')} characters in total. Shorten some text, or get more space with a higher plan.`
 }
 
-const SECTION_HINTS: Record<string, string> = {
-  skills: "Try describing not just what tools you know, but what problems you're best at solving.",
-  current_role: "Include your title, company, and what you're working on day-to-day.",
-  work_history: "Highlight key roles, what you achieved, and what you learned.",
-  bio: "Write as you'd introduce yourself to someone you just met — warm and genuine.",
-  values: "What principles guide your decisions? What do you care about deeply?",
-  looking_for: "Be specific about what kind of people or opportunities you're seeking.",
-  hobbies: "Don't just list activities — share what excites you about them.",
-}
 
 type Tab = Placement
 
@@ -204,34 +194,7 @@ export default function VaultPage() {
   }
 
 
-  const saveImportedSection = async (label: string, content: string, target: ImportTarget): Promise<true | string> => {
-    if (!userId) return "Couldn't save this section — please try again."
-    setErrorMessage(null)
-    const { data, error } = await supabase
-      .from('vault_sections')
-      .insert({
-        user_id: userId,
-        domain: 'custom',
-        is_professional: false,
-        is_personal: false,
-        ...placementFields(target),
-        section_type: 'custom',
-        label,
-        content,
-        source: 'file_extracted',
-      })
-      .select()
-      .single()
 
-    if (error || !data) {
-      const limit = /VAULT_LIMIT:(\d+)/.exec(error?.message ?? '')
-      return limit ? limitMessage(Number(limit[1])) : "Couldn't save this section — please try again."
-    }
-    setSections(prev => [...prev, data as VaultSection])
-    setActiveTab(target)
-    refreshSearchIndex()
-    return true
-  }
 
   const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
   const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
@@ -278,14 +241,9 @@ export default function VaultPage() {
 
 
       <div className="max-w-4xl mx-auto px-4 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">My Vault</h1>
-            <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here</p>
-          </div>
-          <div className="flex flex-col items-end">
-            <FileImport defaultTarget={activeTab} innerAllowed={innerAllowed} customCircles={customCircles} onSave={saveImportedSection} />
-          </div>
+        <div className="mb-8">
+          <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">My Vault</h1>
+          <p className="text-text-secondary text-lg mt-2">Your LiAIson only knows what you put here.</p>
         </div>
 
         {vaultLimit !== null && (
@@ -341,12 +299,7 @@ export default function VaultPage() {
             </button>
           ))}
         </div>
-        <p className="mb-8 text-sm text-text-secondary">
-          {placementHelp(activeTab, customCircles)}
-          {!innerAllowed && activeTab === 'outer' && (
-            <> With Ambivert or Extrovert you can also share some things only with people you choose. <Link href="/#how-it-works" className="text-accent hover:underline">Learn more</Link></>
-          )}
-        </p>
+        <div className="mb-8" />
 
         {/* Sections */}
         <div className="space-y-5">
@@ -356,7 +309,6 @@ export default function VaultPage() {
               section={section}
               onUpdate={updateSection}
               onDelete={deleteSection}
-              hint={SECTION_HINTS[section.section_type]}
               innerAllowed={innerAllowed}
               customCircles={customCircles}
               roomLeft={vaultLimit === null ? undefined : vaultLimit - (totalChars - countChars(section.content))}

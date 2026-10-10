@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
-import { placementHelp, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
+import { placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
   section: VaultSection
   onUpdate: (id: string, data: Partial<VaultSection>) => Promise<void>
   onDelete: (id: string) => Promise<void>
-  hint?: string
   // Characters this section may hold without going over the Vault limit
   // (limit minus everything saved in the other sections). Undefined = unknown.
   roomLeft?: number
@@ -21,7 +20,7 @@ interface VaultSectionCardProps {
 
 const countChars = (text: string) => Array.from(text).length
 
-export default function VaultSectionCard({ section, onUpdate, onDelete, hint, roomLeft, innerAllowed, customCircles }: VaultSectionCardProps) {
+export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft, innerAllowed, customCircles }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [placement, setPlacement] = useState<Placement>(placementOf(section))
   const [saving, setSaving] = useState(false)
@@ -29,6 +28,34 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const deleteConfirmationRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [importing, setImporting] = useState(false)
+  const [importNote, setImportNote] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  // Import a PDF or Word file into this section: its text is added below what
+  // is already here, ready to review; nothing is saved until you press Save.
+  // The file itself is never stored.
+  const handleImport = async (file: File) => {
+    setImporting(true)
+    setImportNote(null)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body })
+      const data = await res.json().catch(() => null) as { text?: string; truncated?: boolean; error?: string } | null
+      if (!res.ok || !data?.text) {
+        setImportNote({ type: 'error', text: data?.error ?? 'Something went wrong. Please try again.' })
+        return
+      }
+      setContent(prev => (prev.trim() ? `${prev.trimEnd()}\n\n${data.text}` : data.text!))
+      setImportNote({ type: 'ok', text: data.truncated ? 'Imported the first part of a long file. Review it, then Save.' : 'Imported. Review the text, then Save.' })
+    } catch {
+      setImportNote({ type: 'error', text: 'Something went wrong. Please try again.' })
+    } finally {
+      setImporting(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -73,17 +100,35 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
   // Only block saving when the text grows past the limit; shortening is always fine.
   const blocked = overBy > 0 && length > countChars(section.content ?? '')
 
-  const lastConfirmed = section.last_confirmed_at
-    ? new Date(section.last_confirmed_at).toLocaleDateString()
-    : 'Never confirmed'
+  const lastUpdated = section.updated_at
+    ? new Date(section.updated_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : null
 
   return (
     <div className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>
-        </div>
+        <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={importing}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-text-secondary hover:border-accent hover:text-text-primary disabled:opacity-60"
+        >
+          <span aria-hidden="true">↑</span> {importing ? 'Reading file…' : 'Import file'}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) void handleImport(f) }}
+        />
       </div>
+      {importNote && (
+        <p className={`-mt-2 text-xs ${importNote.type === 'error' ? 'text-error' : 'text-success'}`} role={importNote.type === 'error' ? 'alert' : 'status'}>
+          {importNote.text}
+        </p>
+      )}
 
       <textarea
         value={content}
@@ -120,17 +165,10 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, hint, ro
               </button>
             ))}
         </div>
-        <p className="text-xs text-text-muted">{placementHelp(placement, customCircles)}</p>
       </fieldset>
 
-      {hint && (
-        <p className="text-sm text-text-secondary italic border-l-2 border-accent pl-4">{hint}</p>
-      )}
-
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium border border-border bg-background text-text-secondary">
-          Last confirmed: {lastConfirmed}
-        </p>
+        <p className="text-xs text-text-muted">{lastUpdated ? `Last updated ${lastUpdated}` : ''}</p>
         <div className="flex gap-2">
           <button
             onClick={handleSave}
