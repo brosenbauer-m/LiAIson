@@ -938,8 +938,11 @@ isOneToOne: false
 "next_receipt_number":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"normalize_plan_options":
+{ Args: { "opts": Json }; Returns: Json
+                           },
 "plan_vault_limit":
-{ Args: { "p": string }; Returns: number
+{ Args: { "opts": Json,"p": string }; Returns: number
                            },
 "search_match_chunks":
 { Args: { "exclude_user": string,"keywords": (string)[],"match_count": number,"query_embedding": string }; Returns: {
