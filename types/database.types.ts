@@ -661,13 +661,13 @@ isOneToOne: false
                   ]
                 },"custom_circles": {
                   Row: {
-                    "created_at": string,"id": string,"in_inner": boolean,"name": string,"owner_id": string,"parent_id": string | null
+                    "created_at": string,"id": string,"in_inner": boolean,"isolated": boolean,"name": string,"owner_id": string,"parent_id": string | null
                   }
                   Insert: {
-                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"name": string,"owner_id": string,"parent_id"?: string | null
+                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"isolated"?: boolean,"name": string,"owner_id": string,"parent_id"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"name"?: string,"owner_id"?: string,"parent_id"?: string | null
+                    "created_at"?: string,"id"?: string,"in_inner"?: boolean,"isolated"?: boolean,"name"?: string,"owner_id"?: string,"parent_id"?: string | null
                   }
                   Relationships: [
                     {
