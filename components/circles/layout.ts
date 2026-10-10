@@ -1,4 +1,4 @@
-// Layout for the Circle Studio: circles drawn inside the circle they sit in
+// Layout for the circle board on the Circles page: circles drawn inside the circle they sit in
 // (Outer > Inner > own circles, see lib/circles.ts). Pure functions, no React.
 
 export type StudioCircle = { id: string; name: string; parent_id: string | null; in_inner: boolean; isolated: boolean; memberCount: number }
@@ -20,8 +20,8 @@ export type LaidOut = {
 
 type Tree = { id: string; kind: NodeKind; name: string; count: number; children: Tree[]; r: number; x: number; y: number }
 
-const GAP = 10 // between sibling circles
-const PAD = 12 // between children and the circle around them
+const GAP = 16 // between sibling circles
+const PAD = 18 // between children and the circle around them
 // Room for the name at the top of a circle with circles inside, and the
 // smallest circle; both grow on small screens (see layoutCircles options).
 type Sizes = { label: number; leafMin: number }

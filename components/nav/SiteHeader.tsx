@@ -23,11 +23,20 @@ export default function SiteHeader() {
   // closes by itself when the page changes.
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null)
   const menuOpen = menuOpenOn !== null && menuOpenOn === pathname
+  // Tiers with more than one circle have the Circles page instead of Connections.
+  const [hasCircles, setHasCircles] = useState(false)
+  const links = SIGNED_IN_LINKS.map(l => (l.href === '/connections' && hasCircles ? { href: '/circles', label: 'Circles' } : l))
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data }) => {
       setAuth(data.session ? 'signed-in' : 'signed-out')
+      if (data.session) {
+        fetch('/api/plan', { cache: 'no-store' })
+          .then(r => (r.ok ? r.json() : null))
+          .then((p: { circles?: number } | null) => setHasCircles(p?.circles === 2))
+          .catch(() => {})
+      }
     })
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuth(session ? 'signed-in' : 'signed-out')
@@ -53,7 +62,7 @@ export default function SiteHeader() {
         {auth === 'signed-in' && (
           <>
             <nav className="hidden md:flex items-center gap-1" aria-label="Main">
-              {SIGNED_IN_LINKS.map(link => (
+              {links.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -109,7 +118,7 @@ export default function SiteHeader() {
       {auth === 'signed-in' && menuOpen && (
         <nav className="md:hidden border-t border-border/70 animate-message-in" aria-label="Main mobile">
           <div className="max-w-6xl mx-auto px-2 py-2 flex flex-col">
-            {SIGNED_IN_LINKS.map(link => (
+            {links.map(link => (
               <Link
                 key={link.href}
                 href={link.href}

@@ -251,7 +251,7 @@ export async function changePlan(userId: string, target: PlanId, rawOptions?: un
     return {
       ok: false,
       status: 409,
-      error: `You have ${state.customCircles} circles of your own. Please delete some on the Connections page first, or keep at least ${state.customCircles}.`,
+      error: `You have ${state.customCircles} circles of your own. Please delete some on the Circles page first, or keep at least ${state.customCircles}.`,
     }
   }
   await removeScheduled()
