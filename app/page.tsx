@@ -12,14 +12,38 @@ import { useReveal, useSectionPager } from '@/components/landing/useSectionPager
 // Your Terms (privacy and EU), and the call to action. Claims stay within
 // what the app does and what the owner confirmed (company in Vienna).
 
-const TRUST = [
-  { title: 'Only what you disclose', text: 'Your LiAIson knows only what you write in your Vault. No outside sources, no guessing.' },
+// The EU is the headline of "On Your Terms" (owner 2026-10-10).
+const EU_POINTS = [
   { title: 'Kept in the EU', text: 'Your profile, your Vault and the AI that answers for you run in EU data centres.' },
-  { title: 'GDPR-compliant', text: 'Built around the European data protection rules from the first line of code.' },
+  { title: 'Paid in the EU', text: 'Payments are handled only by a payment provider in the EU.' },
+  { title: 'GDPR-Compliant', text: 'Built around the European data protection rules from the first line of code.' },
   { title: 'Based in Vienna, Austria', text: 'LiAIson is a company in Vienna, under Austrian and EU law.' },
-  { title: 'Change or erase anytime', text: 'Edit any part of your Vault whenever you like, or delete your account and everything in it in one step.' },
-  { title: 'You decide who sees what', text: 'Circles and a Public or Private profile. Echoes never show who asked or their exact words.' },
 ]
+
+const TRUST = [
+  { title: 'Only What You Disclose', text: 'Your LiAIson knows only what you write in your Vault. No outside sources, no guessing.' },
+  { title: 'You Decide Who Sees What', text: 'A Public or Private profile, and circles from Ambivert up. Echoes never show who asked or their exact words.' },
+  { title: 'Change or Erase Anytime', text: 'Edit any part of your Vault whenever you like, or delete your account and everything in it in one step.' },
+]
+
+// Twelve stars in a ring, like the EU flag.
+function EuStars({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 200 200" className={className} aria-hidden="true">
+      {Array.from({ length: 12 }, (_, i) => {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2
+        const x = 100 + Math.cos(a) * 70
+        const y = 100 + Math.sin(a) * 70
+        const pts = Array.from({ length: 10 }, (_, k) => {
+          const r = k % 2 ? 4.4 : 11
+          const t = (k / 10) * Math.PI * 2 - Math.PI / 2
+          return `${(x + Math.cos(t) * r).toFixed(1)},${(y + Math.sin(t) * r).toFixed(1)}`
+        }).join(' ')
+        return <polygon key={i} points={pts} fill="currentColor" />
+      })}
+    </svg>
+  )
+}
 
 export default function HomePage() {
   const [signedIn, setSignedIn] = useState(false)
@@ -54,7 +78,7 @@ export default function HomePage() {
             Human nature yearns to know and to be known. Exchanging stories has guided us throughout our history, fulfilling our
             social nature and keeping us alive. Millennia ago this came naturally: there were few of us, living in small
             communities, with the time, desire and opportunity to get to know everyone around us. Today we are billions, and
-            neither our societies nor our biology can fulfil the wish to know everyone and to be known by all.
+            neither our infrastructure, our lifestyles nor our biology can keep up with the desire to know and be known by this many.
           </p>
           <p className="mt-5 text-lg sm:text-xl text-text-primary font-medium animate-page-in" style={{ animationDelay: '220ms' }}>
             Let your LiAIson help. Tell your story once, and let it be told endlessly.
@@ -78,20 +102,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3 · On Your Terms */}
-      <section data-section className="snap-start min-h-full flex items-center py-16 border-t border-border">
+      {/* 3 · On Your Terms: the EU first, then the rest */}
+      <section data-section className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
         <div data-reveal className="w-full max-w-6xl mx-auto px-4">
           <h2 className="font-display text-4xl sm:text-6xl font-medium text-text-primary">On Your Terms</h2>
           <p className="mt-5 text-lg text-text-secondary max-w-2xl leading-relaxed">
             Your LiAIson only ever knows what you choose to tell it, and you stay in control of who hears what.
           </p>
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border rounded-2xl overflow-hidden">
-            {TRUST.map(t => (
-              <div key={t.title} className="bg-card p-6 sm:p-8">
-                <h3 className="font-semibold text-text-primary">{t.title}</h3>
-                <p className="mt-2 text-sm text-text-secondary leading-relaxed">{t.text}</p>
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-5 gap-4">
+            <div className="relative lg:col-span-3 overflow-hidden rounded-3xl bg-gradient-to-br from-accent to-[#3F2819] text-white p-7 sm:p-10 shadow-card">
+              <EuStars className="hidden sm:block absolute -right-16 -top-16 w-72 h-72 text-[#E3C27A] opacity-25" />
+              <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
+                <EuStars className="w-14 h-14 text-[#E3C27A] flex-shrink-0" />
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/60">Built in Vienna, Kept in the EU</p>
+                  <h3 className="font-display text-3xl sm:text-4xl leading-tight">Your Data and Payments Stay in the EU</h3>
+                </div>
               </div>
-            ))}
+              <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+                {EU_POINTS.map(p => (
+                  <div key={p.title} className="border-t border-white/15 pt-4">
+                    <h4 className="font-semibold text-[#F3E3C0]">{p.title}</h4>
+                    <p className="mt-1.5 text-sm text-white/75 leading-relaxed">{p.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-2 grid gap-4">
+              {TRUST.map(t => (
+                <div key={t.title} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
+                    <h3 className="font-semibold text-text-primary">{t.title}</h3>
+                  </div>
+                  <p className="mt-2 text-sm text-text-secondary leading-relaxed">{t.text}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

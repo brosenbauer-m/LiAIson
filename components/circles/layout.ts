@@ -1,7 +1,7 @@
 // Layout for the Circle Studio: circles drawn inside the circle they sit in
 // (Outer > Inner > own circles, see lib/circles.ts). Pure functions, no React.
 
-export type StudioCircle = { id: string; name: string; parent_id: string | null; in_inner: boolean; memberCount: number }
+export type StudioCircle = { id: string; name: string; parent_id: string | null; in_inner: boolean; isolated: boolean; memberCount: number }
 
 export type NodeKind = 'outer' | 'inner' | 'custom'
 
@@ -11,7 +11,7 @@ export type LaidOut = {
   name: string
   count: number
   parent: string | null
-  depth: number // 0 = Outer
+  depth: number // 0 = Outer, or a circle on its own outside it
   x: number // centre, relative to the Outer Circle's centre
   y: number
   r: number
@@ -35,14 +35,14 @@ function leafRadius(name: string, min: number): number {
 // Places circles of the given radii close together without overlapping,
 // largest first, each where it keeps the group smallest. Returns the group's
 // enclosing radius; positions are written into the items (centred on 0,0).
-function pack(items: Tree[]): number {
+function pack(items: Tree[], gap = GAP): number {
   const order = [...items].sort((a, b) => b.r - a.r || a.id.localeCompare(b.id))
   const placed: Tree[] = []
   const fits = (x: number, y: number, r: number) =>
-    placed.every(p => Math.hypot(p.x - x, p.y - y) >= p.r + r + GAP - 0.01)
+    placed.every(p => Math.hypot(p.x - x, p.y - y) >= p.r + r + gap - 0.01)
   for (const c of order) {
     if (placed.length === 0) { c.x = 0; c.y = 0 }
-    else if (placed.length === 1) { c.x = placed[0].r + c.r + GAP; c.y = 0 }
+    else if (placed.length === 1) { c.x = placed[0].r + c.r + gap; c.y = 0 }
     else {
       let best: [number, number] | null = null
       let bestScore = Infinity
@@ -55,8 +55,8 @@ function pack(items: Tree[]): number {
         const a = placed[i]
         for (let j = i + 1; j < placed.length; j++) {
           const b = placed[j]
-          const da = a.r + c.r + GAP
-          const db = b.r + c.r + GAP
+          const da = a.r + c.r + gap
+          const db = b.r + c.r + gap
           const d = Math.hypot(b.x - a.x, b.y - a.y)
           if (d === 0 || d > da + db || d < Math.abs(da - db)) continue
           const along = (da * da - db * db + d * d) / (2 * d)
@@ -68,10 +68,10 @@ function pack(items: Tree[]): number {
         }
         for (let k = 0; k < 12; k++) {
           const t = (k / 12) * Math.PI * 2
-          consider(a.x + Math.cos(t) * (a.r + c.r + GAP), a.y + Math.sin(t) * (a.r + c.r + GAP))
+          consider(a.x + Math.cos(t) * (a.r + c.r + gap), a.y + Math.sin(t) * (a.r + c.r + gap))
         }
       }
-      const [x, y] = best ?? [0, placed.reduce((m, p) => Math.max(m, p.y + p.r), 0) + c.r + GAP]
+      const [x, y] = best ?? [0, placed.reduce((m, p) => Math.max(m, p.y + p.r), 0) + c.r + gap]
       c.x = x
       c.y = y
     }
@@ -107,27 +107,44 @@ function flatten(node: Tree, parent: string | null, depth: number, ox: number, o
   node.children.forEach(c => flatten(c, node.id, depth + 1, x, y, out))
 }
 
+export type Bounds = { minX: number; minY: number; maxX: number; maxY: number }
+
 // All circles with their place, outermost first (so inner ones draw on top).
+// Circles on their own (isolated) sit next to the Outer Circle, not in it.
 export function layoutCircles(
   circles: StudioCircle[],
   options: { innerAllowed: boolean; innerCount: number; label?: number; leafMin?: number }
-): { nodes: LaidOut[]; radius: number } {
+): { nodes: LaidOut[]; bounds: Bounds } {
   const make = (c: StudioCircle): Tree => ({ id: c.id, kind: 'custom', name: c.name, count: c.memberCount, children: [], r: 0, x: 0, y: 0 })
   const byId = new Map(circles.map(c => [c.id, make(c)]))
   const outer: Tree = { id: 'outer', kind: 'outer', name: 'Outer Circle', count: 0, children: [], r: 0, x: 0, y: 0 }
   const inner: Tree = { id: 'inner', kind: 'inner', name: 'Inner Circle', count: options.innerCount, children: [], r: 0, x: 0, y: 0 }
   if (options.innerAllowed) outer.children.push(inner)
+  const alone: Tree[] = []
   for (const c of circles) {
     const node = byId.get(c.id)!
     const parent = c.parent_id ? byId.get(c.parent_id) : undefined
     if (parent && parent !== node) parent.children.push(node)
+    else if (c.isolated) alone.push(node)
     else if (c.in_inner && options.innerAllowed) inner.children.push(node)
     else outer.children.push(node)
   }
-  size(outer, { label: options.label ?? 24, leafMin: options.leafMin ?? 38 })
+  const sizes = { label: options.label ?? 24, leafMin: options.leafMin ?? 38 }
+  size(outer, sizes)
+  alone.forEach(a => size(a, sizes))
+  // The Outer Circle in the middle, circles on their own around it.
+  const world = [outer, ...alone]
+  if (alone.length > 0) pack(world, 24)
   const nodes: LaidOut[] = []
-  flatten(outer, null, 0, 0, 0, nodes)
-  return { nodes, radius: outer.r }
+  for (const top of world) flatten(top, null, 0, 0, 0, nodes)
+  const roots = nodes.filter(n => n.parent === null)
+  const bounds = {
+    minX: Math.min(...roots.map(n => n.x - n.r)),
+    minY: Math.min(...roots.map(n => n.y - n.r)),
+    maxX: Math.max(...roots.map(n => n.x + n.r)),
+    maxY: Math.max(...roots.map(n => n.y + n.r)),
+  }
+  return { nodes, bounds }
 }
 
 // Own circles nested inside `id` (itself included).

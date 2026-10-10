@@ -133,6 +133,22 @@ export default function HowItWorks() {
     track.scrollTo({ left: next * track.clientWidth, behavior: 'smooth' })
   }, [])
 
+  // "Learn more" about circles elsewhere links to /#circles: open that slide.
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined
+    const open = () => {
+      if (window.location.hash !== '#circles') return
+      t = setTimeout(() => {
+        const track = trackRef.current
+        const i = SLIDES.findIndex(s => s.short === 'Circles')
+        if (track && i >= 0) track.scrollTo({ left: i * track.clientWidth, behavior: 'auto' })
+      }, 60)
+    }
+    open()
+    window.addEventListener('hashchange', open)
+    return () => { clearTimeout(t); window.removeEventListener('hashchange', open) }
+  }, [])
+
   useEffect(() => {
     const track = trackRef.current
     if (!track) return
@@ -145,6 +161,7 @@ export default function HowItWorks() {
 
   return (
     <div
+      id="circles"
       className="w-full"
       onKeyDown={e => {
         if (e.key === 'ArrowRight') { e.preventDefault(); go(index + 1) }

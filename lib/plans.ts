@@ -114,7 +114,7 @@ export const PLANS: Record<PlanId, Plan> = {
     id: 'butterfly',
     name: 'Social Butterfly',
     feeEur: 9,
-    tagline: 'Your own circles, compare several people at once, and choose how much you need.',
+    tagline: 'Your own circles, Similarities with several people at once, and choose how much you need.',
     vaultChars: 30000,
     echoes: 'weekly_monthly',
     aiSearchesPerMonth: 20,
@@ -126,8 +126,8 @@ export const PLANS: Record<PlanId, Plan> = {
     available: true,
     features: [
       { text: 'Make your own circles, such as Family or Climbing club, and choose what each one sees.', help: 'circles', highlight: true },
-      { text: 'Compare yourself with up to 4 people at once on one map.', help: 'similarity', highlight: true },
-      { text: 'Choose your Vault size (30,000 to 60,000 characters), circles, searches and comparisons. The price follows.', help: 'butterfly' },
+      { text: 'Create a Similarities Chart with up to 4 people at once.', help: 'similarity', highlight: true },
+      { text: 'Choose your Vault size (30,000 to 60,000 characters), circles, searches and Similarity checks. The price follows.', help: 'butterfly' },
       { text: 'Everything in Extrovert, including weekly and monthly Echoes.', help: 'echoes' },
       { text: 'You pay only for the messages you send.', help: 'messages' },
     ],
@@ -146,7 +146,7 @@ export const BUTTERFLY_SLIDERS: Record<SliderKey, { label: string; min: number; 
   vaultChars: { label: 'Vault size (characters)', min: 30000, max: 60000, step: 10000, eurPerStep: 1 },
   extraCircles: { label: 'Your own circles', min: 2, max: 10, step: 1, eurPerStep: 0.5 },
   aiSearches: { label: 'AI searches per month', min: 20, max: 100, step: 20, eurPerStep: 1 },
-  similarities: { label: 'Similarity comparisons per month', min: 100, max: 500, step: 100, eurPerStep: 1 },
+  similarities: { label: 'Similarity checks per month', min: 100, max: 500, step: 100, eurPerStep: 1 },
 }
 
 export const SLIDER_KEYS: SliderKey[] = ['vaultChars', 'extraCircles', 'aiSearches', 'similarities']
@@ -258,8 +258,8 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   },
   {
     key: 'similarity',
-    title: 'Similarity',
-    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can compare yourself with up to 100 people a month. With Social Butterfly you can compare yourself with up to 4 people at once on one map. The other person is not told.',
+    title: 'Similarities',
+    text: 'When you chat with someone’s LiAIson, it tells you when you have something in common, for example the same hobby or city. It uses only what you both chose to share, and nothing from your drafts. With Extrovert you can also see how much you have in common with someone, from “Little in common” to “Very much in common”, and a map of the interests you share and the ones that are only yours or only theirs. You can do this with up to 100 people a month. With Social Butterfly you can create a Similarities Chart with up to 4 people at once on one map. The other person is not told.',
   },
   {
     key: 'circles',
@@ -269,6 +269,6 @@ export const FEATURE_HELP: { key: string; title: string; text: string }[] = [
   {
     key: 'butterfly',
     title: 'Social Butterfly',
-    text: 'Social Butterfly lets you choose how much you need. Move the sliders to pick your Vault size and how many of your own circles, AI searches and Similarity comparisons you want each month, and the monthly price changes with them. You can change them at any time: more takes effect right away, less from the start of next month.',
+    text: 'Social Butterfly lets you choose how much you need. Move the sliders to pick your Vault size and how many of your own circles, AI searches and Similarity checks you want each month, and the monthly price changes with them. You can change them at any time: more takes effect right away, less from the start of next month.',
   },
 ]

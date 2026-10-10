@@ -74,15 +74,15 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
             Based on what you both shared, using only what {displayName} lets you see. Only you see this; {displayName} is not told.
           </p>
           {groupCompare && (
-            <Link href={`/compare?u=${encodeURIComponent(username)}`} className="mt-2 inline-block text-sm text-accent hover:underline">
-              Compare with more people →
+            <Link href={`/similarities?u=${encodeURIComponent(username)}`} className="mt-2 inline-block text-sm text-accent hover:underline">
+              Add More People to a Similarities Chart
             </Link>
           )}
         </>
       ) : (
         <>
           <p className="text-sm text-text-secondary leading-relaxed">
-            Compare what you share with what {displayName} shares with you. Only you see the result.
+            See what you have in common with {displayName}, based on what you both share. Only you see the result.
           </p>
           <button
             type="button"
@@ -90,10 +90,10 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
             disabled={busy}
             className="mt-4 w-full px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50"
           >
-            {busy ? 'Comparing…' : 'See what we have in common'}
+            {busy ? 'Checking…' : 'See What We Have in Common'}
           </button>
           <p className="mt-2 text-xs text-text-muted text-center">
-            {left} of {state.quota} comparisons left this month
+            {left} of {state.quota} Similarity checks left this month
           </p>
         </>
       )}

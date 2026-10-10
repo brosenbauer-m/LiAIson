@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Toggle from '@/components/ui/Toggle'
+import CirclesNote from '@/components/ui/CirclesNote'
 
 // Settings → Profile Privacy: Public / Private (users.public_scope, 'none' =
 // Private) and Discoverable. Both refresh the Discover search index.
@@ -14,13 +15,19 @@ export default function PrivacySection() {
   const [discoverable, setDiscoverable] = useState(true)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
+  // Introvert (one circle) sees nothing about circles.
+  const [hasCircles, setHasCircles] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase.from('users').select('public_scope, is_discoverable').eq('id', user.id).single()
+      const [{ data }, planRes] = await Promise.all([
+        supabase.from('users').select('public_scope, is_discoverable').eq('id', user.id).single(),
+        fetch('/api/plan', { cache: 'no-store' }).catch(() => null),
+      ])
+      if (planRes?.ok) setHasCircles(((await planRes.json()) as { circles?: number }).circles === 2)
       if (data) {
         setIsPublic(data.public_scope !== 'none')
         setDiscoverable(data.is_discoverable !== false)
@@ -77,16 +84,19 @@ export default function PrivacySection() {
         </div>
         <p className="text-sm text-text-secondary leading-relaxed">
           {isPublic
-            ? 'Anyone with an account can talk to your LiAIson about your Outer Circle. People in your Inner Circle also hear about it, and people in your own circles about their circle and every circle around it.'
-            : <>Only people whose connection request you accepted can see your profile and talk to your LiAIson. You choose their circle on the <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.</>}
+            ? hasCircles
+              ? 'Anyone with an account can talk to your LiAIson about your Outer Circle. People in your other circles also hear about those circles and every circle around them.'
+              : 'Anyone with an account can see your profile and talk to your LiAIson about your Vault (except drafts).'
+            : <>Only people whose connection request you accepted can see your profile and talk to your LiAIson.{hasCircles && <> You choose their circles on the <Link href="/connections" className="text-accent hover:underline">Connections page</Link>.</>}</>}
         </p>
+        {!hasCircles && <CirclesNote />}
       </div>
 
       <div className="flex items-center justify-between gap-4 border-t border-border pt-5">
         <div>
           <p className="font-medium text-text-primary">Discoverable</p>
           <p className="text-sm text-text-secondary leading-relaxed mt-1">
-            People can find you by name on Discover. If your profile is Public, they can also find you by what is in your Outer Circle with AI search (they see your name and a short reason, never your Vault text). When off, your profile can only be reached through your link.
+            People can find you by name on Discover. If your profile is Public, they can also find you by what is in your {hasCircles ? 'Outer Circle' : 'Vault'} with AI search (they see your name and a short reason, never your Vault text). When off, your profile can only be reached through your link.
           </p>
         </div>
         <Toggle checked={discoverable} onChange={toggleDiscoverable} label="Discoverable" />

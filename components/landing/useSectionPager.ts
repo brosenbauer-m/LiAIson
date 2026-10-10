@@ -106,7 +106,7 @@ export function useSectionPager(container: React.RefObject<HTMLElement | null>) 
     const toHash = () => {
       const id = decodeURIComponent(window.location.hash.slice(1))
       const target = id ? el.querySelector<HTMLElement>(`#${CSS.escape(id)}`) : null
-      if (target) scrollToY(target.offsetTop)
+      if (target) scrollToY((target.closest<HTMLElement>('[data-section]') ?? target).offsetTop)
     }
     const onClick = (e: MouseEvent) => {
       const a = (e.target as HTMLElement | null)?.closest('a')
@@ -116,7 +116,7 @@ export function useSectionPager(container: React.RefObject<HTMLElement | null>) 
       if (!target) return
       e.preventDefault()
       history.replaceState(null, '', href)
-      scrollToY(target.offsetTop)
+      scrollToY((target.closest<HTMLElement>('[data-section]') ?? target).offsetTop)
     }
 
     const onMedia = () => {

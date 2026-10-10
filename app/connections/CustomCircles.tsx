@@ -5,17 +5,29 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
 import { canMoveInto, circleAt, layoutCircles, subtreeIds, type LaidOut, type StudioCircle } from '@/components/circles/layout'
-import { play, setSoundsOn, soundsOn } from '@/components/circles/sound'
+import { play } from '@/components/circles/sound'
 
 // Social Butterfly: the Circle Studio. The owner's circles drawn inside each
-// other (Outer > Inner > own circles); drag a circle into another one, or tap
-// it and choose "Move to". Everyone in a circle also sees every circle around
-// it (lib/circles.ts). Who is in each circle is chosen per connection below;
-// what each circle sees is chosen in the Vault.
+// other (Outer > Inner > own circles), plus circles on their own outside the
+// Outer Circle. Drag a circle into another one (or out onto the empty space),
+// or tap it and choose "Move to". Everyone in a circle also sees every circle
+// around it (lib/circles.ts). Who is in each circle is chosen per connection
+// below; what each circle sees is chosen in the Vault.
 
+// Where a circle can go: 'outer', 'inner', another circle's id, or 'alone'
+// (on its own outside the Outer Circle).
 type Drag = { id: string; dx: number; dy: number; target: string | null; valid: boolean }
 
 const MIN_DRAG = 6 // px before a press becomes a drag (a shorter press is a tap)
+const MAX_WIDTH = 440
+const MARGIN = 26 // empty space around the Outer Circle to drop circles "on their own"
+
+// A slightly different, slow bob per circle, so they float out of step.
+function bob(id: string): React.CSSProperties {
+  let h = 0
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  return { animationDuration: `${5 + (h % 30) / 10}s`, animationDelay: `-${(h % 50) / 10}s` }
+}
 
 export default function CustomCircles({
   circles,
@@ -41,7 +53,6 @@ export default function CustomCircles({
   const [drag, setDrag] = useState<Drag | null>(null)
   const [pulse, setPulse] = useState<string | null>(null)
   const [width, setWidth] = useState(0)
-  const [sound, setSound] = useState(true)
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -56,31 +67,38 @@ export default function CustomCircles({
     if (!el) return
     const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
     ro.observe(el)
-    const t = setTimeout(() => setSound(soundsOn()), 0)
-    return () => { ro.disconnect(); clearTimeout(t) }
+    return () => ro.disconnect()
   }, [])
 
-  const size = Math.min(width || 360, 620)
+  const maxWidth = Math.min(width || 340, MAX_WIDTH)
   // On a small screen the drawing is scaled down, so it is laid out again
   // (a few times, settling) with more room for names and bigger small circles.
   // When very small, circles with circles inside show only their name.
-  const { nodes, radius } = useMemo(() => {
+  const { nodes, bounds } = useMemo(() => {
+    const unitsWide = (b: { minX: number; maxX: number }) => b.maxX - b.minX + MARGIN * 2
     let result = layoutCircles(list, { innerAllowed, innerCount })
     for (let i = 0; i < 3; i++) {
-      const s = size / (result.radius * 2 + 8)
+      const s = maxWidth / unitsWide(result.bounds)
       if (s >= 0.9) break
       const text = Math.max(0.8, Math.min(1, s))
-      const label = Math.min(64, Math.max(24, ((s < 0.75 ? 17 : 30) * text + 10) / s))
-      result = layoutCircles(list, { innerAllowed, innerCount, label, leafMin: Math.min(72, Math.max(38, 34 / s)) })
+      const label = Math.min(64, Math.max(24, ((s < 0.75 ? 16 : 28) * text + 10) / s))
+      result = layoutCircles(list, { innerAllowed, innerCount, label, leafMin: Math.min(72, Math.max(36, 32 / s)) })
     }
     return result
-  }, [list, innerAllowed, innerCount, size])
+  }, [list, innerAllowed, innerCount, maxWidth])
   const byId = useMemo(() => new Map(nodes.map(n => [n.id, n])), [nodes])
-  const scale = size / (radius * 2 + 8)
-  const textScale = Math.max(0.8, Math.min(1, scale))
+  const unitsW = bounds.maxX - bounds.minX + MARGIN * 2
+  const unitsH = bounds.maxY - bounds.minY + MARGIN * 2
+  const scale = Math.min(1, maxWidth / unitsW)
+  const canvasW = unitsW * scale
+  const canvasH = unitsH * scale
+  const px = (x: number) => (x - bounds.minX + MARGIN) * scale
+  const py = (y: number) => (y - bounds.minY + MARGIN) * scale
+  const textScale = Math.max(0.85, Math.min(1, scale))
   const compact = scale < 0.75
   const moving = drag ? subtreeIds(nodes, drag.id) : null
 
+  const placeOf = (id: string) => byId.get(id)?.parent ?? 'alone'
   // The circles around a circle (innermost first): what its people also see.
   const around = (id: string): LaidOut[] => {
     const chain: LaidOut[] = []
@@ -89,10 +107,13 @@ export default function CustomCircles({
   }
   const nameOf = (id: string) => byId.get(id)?.name ?? ''
   const inPhrase = (id: string) => (id === 'outer' || id === 'inner' ? `the ${nameOf(id)}` : nameOf(id))
+  const whereText = (id: string) => (placeOf(id) === 'alone' ? 'on its own, outside the Outer Circle' : `in ${inPhrase(placeOf(id))}`)
+  const listText = (names: string[]) => names.join(', ').replace(/, ([^,]*)$/, ' and $1')
 
   const toLayout = (clientX: number, clientY: number) => {
     const rect = canvasRef.current!.getBoundingClientRect()
-    return { x: (clientX - rect.left - size / 2) / scale, y: (clientY - rect.top - size / 2) / scale }
+    const inside = clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom
+    return { x: (clientX - rect.left) / scale + bounds.minX - MARGIN, y: (clientY - rect.top) / scale + bounds.minY - MARGIN, inside }
   }
 
   const api = async (method: 'POST' | 'PATCH' | 'DELETE', body: Record<string, string>) => {
@@ -106,7 +127,7 @@ export default function CustomCircles({
     const before = list
     setError('')
     setList(prev => prev.map(c => c.id === id
-      ? { ...c, parent_id: target === 'outer' || target === 'inner' ? null : target, in_inner: target === 'inner' }
+      ? { ...c, parent_id: ['outer', 'inner', 'alone'].includes(target) ? null : target, in_inner: target === 'inner', isolated: target === 'alone' }
       : c))
     play('drop')
     setPulse(target)
@@ -135,9 +156,10 @@ export default function CustomCircles({
     if (!p.dragging && Math.hypot(dx, dy) < MIN_DRAG) return
     if (!p.dragging) { p.dragging = true; play('lift'); setSelected(null); setConfirmDelete(false); setEditing(null) }
     const point = toLayout(e.clientX, e.clientY)
-    const target = circleAt(nodes, point.x, point.y, subtreeIds(nodes, p.id))
-    const valid = !!target && canMoveInto(nodes, p.id, target.id)
-    setDrag({ id: p.id, dx: dx / scale, dy: dy / scale, target: target?.id ?? null, valid })
+    const hit = circleAt(nodes, point.x, point.y, subtreeIds(nodes, p.id))
+    const target = hit ? hit.id : point.inside ? 'alone' : null
+    const valid = target === 'alone' || (!!target && canMoveInto(nodes, p.id, target))
+    setDrag({ id: p.id, dx: dx / scale, dy: dy / scale, target, valid })
   }
   const onPointerUp = () => {
     const p = press.current
@@ -152,7 +174,7 @@ export default function CustomCircles({
     }
     const d = drag
     setDrag(null)
-    if (d.valid && d.target && d.target !== byId.get(d.id)?.parent) void move(d.id, d.target)
+    if (d.valid && d.target && d.target !== placeOf(d.id)) void move(d.id, d.target)
     else play('back')
   }
   const onPointerCancel = () => { press.current = null; setDrag(null) }
@@ -199,9 +221,12 @@ export default function CustomCircles({
       // Circles inside it move up one level, as on the server.
       setList(prev => {
         const gone = prev.find(c => c.id === id)
+        const top = !gone?.parent_id
         return prev
           .filter(c => c.id !== id)
-          .map(c => (c.parent_id === id ? { ...c, parent_id: gone?.parent_id ?? null, in_inner: gone?.parent_id ? false : !!gone?.in_inner } : c))
+          .map(c => (c.parent_id === id
+            ? { ...c, parent_id: gone?.parent_id ?? null, in_inner: top && !!gone?.in_inner, isolated: top && !!gone?.isolated }
+            : c))
       })
       setSelected(null)
       setConfirmDelete(false)
@@ -214,81 +239,63 @@ export default function CustomCircles({
   }
 
   const sel = selected ? byId.get(selected) : undefined
-  const selCircle = sel?.kind === 'custom' ? list.find(c => c.id === sel.id) : undefined
-  const targets = sel?.kind === 'custom'
-    ? nodes.filter(n => n.id !== sel.parent && canMoveInto(nodes, sel.id, n.id))
+  const selAlone = sel?.kind === 'custom' && around(sel.id).every(n => n.kind === 'custom')
+  const targets: { id: string; name: string }[] = sel?.kind === 'custom'
+    ? [
+        ...nodes.filter(n => n.id !== placeOf(sel.id) && canMoveInto(nodes, sel.id, n.id)).map(n => ({ id: n.id, name: n.name })),
+        ...(placeOf(sel.id) !== 'alone' ? [{ id: 'alone', name: 'On Its Own' }] : []),
+      ]
     : []
   const dragHint = drag
-    ? drag.valid && drag.target && drag.target !== byId.get(drag.id)?.parent
-      ? `Let go to put ${nameOf(drag.id)} in ${inPhrase(drag.target)}`
+    ? drag.valid && drag.target && drag.target !== placeOf(drag.id)
+      ? drag.target === 'alone'
+        ? `Let go to keep ${nameOf(drag.id)} on its own, outside the Outer Circle`
+        : `Let go to put ${nameOf(drag.id)} in ${inPhrase(drag.target)}`
       : drag.target && !drag.valid
         ? 'Circles can be nested at most 4 deep.'
-        : `Drag ${nameOf(drag.id)} into another circle`
+        : `Drag ${nameOf(drag.id)} into another circle, or outside the Outer Circle`
     : null
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="font-semibold text-text-primary text-lg">Your circles</h2>
+        <h2 className="font-semibold text-text-primary text-lg">Your Circles</h2>
         <span className="text-xs text-text-secondary tabular-nums">{list.length} of {allowed} own circles</span>
       </div>
       <p className="text-sm text-text-secondary leading-relaxed">
-        Circles sit inside each other, and everyone in a circle also sees what the circles around it see, so you never
-        write the same thing twice. Drag a circle into another one, or tap it.
+        Circles sit inside each other: everyone in a circle also sees what the circles around it see, so you never write the
+        same thing twice. Drag a circle into another one, or outside the Outer Circle to keep it on its own. Tap a circle for details.
       </p>
 
-      <div ref={wrapRef} className="relative">
-        <button
-          type="button"
-          onClick={() => { const next = !sound; setSound(next); setSoundsOn(next); if (next) play('drop') }}
-          aria-label={sound ? 'Turn sounds off' : 'Turn sounds on'}
-          aria-pressed={sound}
-          className="absolute right-0 top-0 z-[60] w-9 h-9 rounded-full border border-border bg-surface/90 backdrop-blur text-text-secondary hover:text-accent flex items-center justify-center"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M11 5 6 9H3v6h3l5 4V5z" />
-            {sound ? <><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.5 5.5a9 9 0 0 1 0 13" /></> : <path d="m16 9 5 6m0-6-5 6" />}
-          </svg>
-        </button>
-        <p className="h-5 text-center text-xs text-text-secondary" aria-live="polite">{dragHint ?? ''}</p>
+      <div ref={wrapRef}>
+        <p className="h-4 text-center text-xs text-text-secondary" aria-live="polite">{dragHint ?? ''}</p>
         <div
           ref={canvasRef}
-          className="relative mx-auto mt-2 select-none [-webkit-touch-callout:none]"
-          style={{ width: size, height: size }}
+          className={`relative mx-auto mt-2 select-none rounded-3xl border border-dashed transition-colors [-webkit-touch-callout:none] ${
+            drag?.target === 'alone' && drag.valid && placeOf(drag.id) !== 'alone' ? 'border-accent/40 bg-accent-tint/40' : 'border-transparent'
+          }`}
+          style={{ width: canvasW, height: canvasH }}
         >
           {nodes.map(n => {
             const isMoving = !!moving?.has(n.id)
             const isDragged = drag?.id === n.id
-            const isTarget = !!drag && drag.valid && drag.target === n.id && n.id !== byId.get(drag.id)?.parent
+            const isTarget = !!drag && drag.valid && drag.target === n.id && n.id !== placeOf(drag.id)
             const offX = isMoving ? drag!.dx : 0
             const offY = isMoving ? drag!.dy : 0
             const d = n.r * 2 * scale
-            const tone = n.kind === 'outer'
-              ? 'bg-accent-tint/70 border-border'
-              : n.kind === 'inner'
-                ? 'bg-accent-subtle/80 border-accent/20'
-                : n.depth % 2 ? 'bg-card border-accent/30' : 'bg-accent-tint border-accent/30'
             const atTop = n.hasChildren || n.kind === 'outer'
-            const label = (
-              <span
-                className={`absolute inset-x-0 flex flex-col items-center leading-tight pointer-events-none ${atTop ? 'top-0 pt-2 px-2' : 'inset-y-0 justify-center px-1'}`}
-                style={{ fontSize: 13 * textScale }}
-              >
-                <span className={`max-w-full truncate font-medium ${n.kind === 'custom' ? 'text-text-primary' : 'text-text-secondary'}`}>{n.name}</span>
-                {!(compact && atTop) && (
-                  <span className="text-text-muted whitespace-nowrap" style={{ fontSize: 11 * textScale }}>
-                    {n.kind === 'outer' ? 'everyone' : `${n.count} ${n.count === 1 ? 'person' : 'people'}`}
-                  </span>
-                )}
-              </span>
-            )
+            const tone = n.kind === 'outer'
+              ? 'bg-accent-tint/50 border-border'
+              : n.kind === 'inner'
+                ? 'bg-accent-subtle/60 border-accent/15'
+                : n.depth % 2 ? 'bg-card border-accent/25' : 'bg-accent-tint/80 border-accent/25'
             return (
               <motion.div
                 key={n.id}
                 initial={false}
                 animate={{
-                  x: size / 2 + (n.x + offX) * scale - d / 2,
-                  y: size / 2 + (n.y + offY) * scale - d / 2,
+                  x: px(n.x + offX) - d / 2,
+                  y: py(n.y + offY) - d / 2,
                   width: d,
                   height: d,
                   scale: isTarget || pulse === n.id ? 1.06 : isDragged ? 1.04 : 1,
@@ -299,15 +306,13 @@ export default function CustomCircles({
                     ? { type: 'spring', stiffness: 650, damping: 40, mass: 0.7 }
                     : { type: 'spring', stiffness: 230, damping: 21, mass: 0.9 }}
                 whileHover={!drag && n.kind === 'custom' ? { scale: 1.025 } : undefined}
-                className={`absolute left-0 top-0 rounded-full border transition-[box-shadow,border-color,background-color] ${tone} ${
-                  isTarget ? '!border-accent ring-4 ring-accent/15' : ''
-                } ${selected === n.id ? 'ring-2 ring-accent' : ''} ${
-                  isDragged ? 'shadow-card cursor-grabbing' : n.kind === 'custom' ? 'cursor-grab shadow-soft' : 'cursor-pointer'
-                } ${drag && !isMoving && !isTarget && n.kind === 'custom' ? 'opacity-90' : ''} focus-visible:ring-2 focus-visible:ring-accent outline-none`}
-                style={{ zIndex: (isMoving ? 40 : 0) + n.depth, touchAction: n.kind === 'custom' ? 'none' : 'auto' }}
+                className={`absolute left-0 top-0 rounded-full outline-none ${
+                  n.kind === 'custom' ? (isDragged ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'
+                }`}
+                style={{ zIndex: (isMoving ? 40 : 0) + n.depth + (n.kind === 'custom' && n.parent === null ? 1 : 0), touchAction: n.kind === 'custom' ? 'none' : 'auto' }}
                 role="button"
                 tabIndex={0}
-                aria-label={n.kind === 'custom' ? `${n.name}, in ${inPhrase(n.parent ?? 'outer')}. Press to choose where it goes.` : n.name}
+                aria-label={n.kind === 'custom' ? `${n.name}, ${whereText(n.id)}. Press to choose where it goes.` : n.name}
                 aria-pressed={selected === n.id}
                 onPointerDown={e => onPointerDown(e, n)}
                 onPointerMove={onPointerMove}
@@ -320,7 +325,27 @@ export default function CustomCircles({
                   if (e.key === 'Escape') setSelected(null)
                 }}
               >
-                {label}
+                {/* The visible circle floats gently on its own (CSS, see tailwind "bob"). */}
+                <span
+                  className={`absolute inset-0 rounded-full border transition-[box-shadow,border-color,background-color] ${tone} ${
+                    isMoving || reduceMotion ? '' : 'animate-bob'
+                  } ${isTarget ? '!border-accent/70 ring-4 ring-accent/10' : ''} ${selected === n.id ? 'ring-2 ring-accent/70' : ''} ${
+                    isDragged ? 'shadow-card' : n.kind === 'custom' ? 'shadow-[0_1px_2px_rgba(43,30,22,0.06)]' : ''
+                  }`}
+                  style={bob(n.id)}
+                >
+                  <span
+                    className={`absolute inset-x-0 flex flex-col items-center leading-tight pointer-events-none ${atTop ? 'top-0 pt-1.5 px-2' : 'inset-y-0 justify-center px-1'}`}
+                    style={{ fontSize: 12 * textScale }}
+                  >
+                    <span className={`max-w-full truncate font-medium ${n.kind === 'custom' ? 'text-text-primary' : 'text-text-secondary'}`}>{n.name}</span>
+                    {!(compact && atTop) && (
+                      <span className="text-text-muted whitespace-nowrap" style={{ fontSize: 10 * textScale }}>
+                        {n.kind === 'outer' ? 'everyone' : `${n.count} ${n.count === 1 ? 'person' : 'people'}`}
+                      </span>
+                    )}
+                  </span>
+                </span>
               </motion.div>
             )
           })}
@@ -328,14 +353,14 @@ export default function CustomCircles({
       </div>
 
       {/* Details of the tapped circle: where it is, who sees what, Move to */}
-      <div className="min-h-[3rem]" aria-live="polite">
+      <div className="min-h-[2.5rem]" aria-live="polite">
         {!sel && (
           <p className="text-sm text-text-muted text-center">Tap a circle to see who sees what.</p>
         )}
         {sel?.kind === 'outer' && (
           <p className="text-sm text-text-secondary leading-relaxed">
-            <b className="text-text-primary">Outer Circle.</b> Everyone who can see your profile. Every other circle is inside it,
-            so everyone sees what you put here.
+            <b className="text-text-primary">Outer Circle.</b> Everyone who can see your profile. Circles inside it also see what you
+            put here; circles on their own outside it don&apos;t.
           </p>
         )}
         {sel?.kind === 'inner' && (
@@ -344,7 +369,7 @@ export default function CustomCircles({
             They also see the Outer Circle. People in a circle placed inside it see the Inner Circle too.
           </p>
         )}
-        {sel?.kind === 'custom' && selCircle && (
+        {sel?.kind === 'custom' && (
           <div className="space-y-3">
             {editing === sel.id ? (
               <form
@@ -369,8 +394,9 @@ export default function CustomCircles({
             ) : (
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <p className="text-sm text-text-secondary leading-relaxed">
-                  <b className="text-text-primary">{sel.name}</b> is in {inPhrase(sel.parent ?? 'outer')}. Its {sel.count}{' '}
-                  {sel.count === 1 ? 'person sees' : 'people see'} {[sel.name, ...around(sel.id).map(n => n.name)].join(', ').replace(/, ([^,]*)$/, ' and $1')}.
+                  <b className="text-text-primary">{sel.name}</b> is {whereText(sel.id)}. Its {sel.count}{' '}
+                  {sel.count === 1 ? 'person sees' : 'people see'} {listText([sel.name, ...around(sel.id).map(n => n.name)])}
+                  {selAlone ? ' (and your Outer Circle too if your profile is Public).' : '.'}
                 </p>
                 <span className="flex gap-3 text-sm">
                   <button type="button" onClick={() => setEditing(sel.id)} className="text-accent hover:underline">Rename</button>
@@ -387,20 +413,20 @@ export default function CustomCircles({
                   onClick={() => void remove(sel.id)}
                   className="px-3 py-1 text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:text-white disabled:opacity-50"
                 >
-                  Yes, delete
+                  Yes, Delete
                 </button>
                 <button type="button" onClick={() => setConfirmDelete(false)} className="text-text-secondary">Cancel</button>
               </p>
             )}
             {targets.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs text-text-muted">Move to</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-text-muted mr-1">Move to</span>
                 {targets.map(t => (
                   <button
                     key={t.id}
                     type="button"
                     onClick={() => void move(sel.id, t.id)}
-                    className="px-3 py-1.5 rounded-full border border-border text-sm text-text-primary hover:border-accent hover:text-accent"
+                    className="h-7 px-3 rounded-full border border-border text-xs font-medium text-text-secondary hover:border-accent hover:text-accent"
                   >
                     {t.name}
                   </button>

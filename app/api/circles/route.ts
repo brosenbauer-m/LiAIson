@@ -4,9 +4,10 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { getPlanLimits } from '@/lib/billing/plan'
 
 // The signed-in owner's own circles (Social Butterfly; see lib/circles.ts).
-// GET → { extraCircles, innerAllowed, circles: [{ id, name, parent_id, in_inner, memberIds }] }
+// GET → { extraCircles, innerAllowed, circles: [{ id, name, parent_id, in_inner, isolated, memberIds }] }
 // POST { name } → create · PATCH { id, name } → rename
-// PATCH { id, parent: 'outer' | 'inner' | <circle id> } → move (circles are
+// PATCH { id, parent: 'outer' | 'inner' | 'alone' | <circle id> } → move ('alone' =
+// on its own outside the Outer Circle, migration 31; circles are
 // nested: members also see every circle around theirs; the database refuses
 // loops, other people's circles and more than 4 levels, migration 30)
 // DELETE { id } → delete: circles inside it move up one level, its sections
@@ -38,10 +39,10 @@ export async function GET() {
     const supabase = createServiceClient()
     const [limits, { data: circles, error }] = await Promise.all([
       getPlanLimits(userId),
-      supabase.from('custom_circles').select('id, name, parent_id, in_inner').eq('owner_id', userId).order('created_at', { ascending: true }),
+      supabase.from('custom_circles').select('id, name, parent_id, in_inner, isolated').eq('owner_id', userId).order('created_at', { ascending: true }),
     ])
     if (error) throw new Error(error.message)
-    const list = (circles as { id: string; name: string; parent_id: string | null; in_inner: boolean }[] | null) ?? []
+    const list = (circles as { id: string; name: string; parent_id: string | null; in_inner: boolean; isolated: boolean }[] | null) ?? []
     const { data: members } = list.length
       ? await supabase.from('custom_circle_members').select('circle_id, member_id').in('circle_id', list.map(c => c.id))
       : { data: [] }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       { status: 409 }
     )
   }
-  const { data, error } = await supabase.from('custom_circles').insert({ owner_id: userId, name }).select('id, name, parent_id, in_inner').single()
+  const { data, error } = await supabase.from('custom_circles').insert({ owner_id: userId, name }).select('id, name, parent_id, in_inner, isolated').single()
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'You already have a circle with this name.' }, { status: 409 })
     console.error('CIRCLE_CREATE_ERROR', error.message)
@@ -103,7 +104,7 @@ export async function PATCH(request: NextRequest) {
   // Move into the Outer Circle, the Inner Circle or another own circle.
   if (body.parent !== undefined) {
     const parent = body.parent
-    if (parent !== 'outer' && parent !== 'inner' && !isUuid(parent)) {
+    if (parent !== 'outer' && parent !== 'inner' && parent !== 'alone' && !isUuid(parent)) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
     }
     if (parent === body.id) return NextResponse.json({ error: MOVE_ERRORS.CIRCLE_PARENT_LOOP }, { status: 409 })
@@ -112,13 +113,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Your own circles are part of Social Butterfly.', locked: true }, { status: 403 })
     }
     if (parent === 'inner' && limits.circles !== 2) return NextResponse.json({ error: 'Your plan has no Inner Circle.' }, { status: 403 })
-    const fields = isUuid(parent) ? { parent_id: parent, in_inner: false } : { parent_id: null, in_inner: parent === 'inner' }
+    const fields = isUuid(parent)
+      ? { parent_id: parent, in_inner: false, isolated: false }
+      : { parent_id: null, in_inner: parent === 'inner', isolated: parent === 'alone' }
     const { data, error } = await supabase
       .from('custom_circles')
       .update(fields)
       .eq('id', body.id)
       .eq('owner_id', userId)
-      .select('id, name, parent_id, in_inner')
+      .select('id, name, parent_id, in_inner, isolated')
       .maybeSingle()
     if (error) {
       const known = Object.keys(MOVE_ERRORS).find(code => error.message?.includes(code))
@@ -153,18 +156,18 @@ export async function DELETE(request: NextRequest) {
   const body = await request.json().catch(() => null) as { id?: unknown } | null
   if (!isUuid(body?.id)) return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   const supabase = createServiceClient()
-  // Circles inside it move up one level (to where it sat). If this step were
-  // skipped they would land directly in the Outer Circle, which shows less.
+  // Circles inside it move up one level (to where it sat, also on its own or in
+  // the Inner Circle). If this step fails, nothing is deleted.
   const { data: circle } = await supabase
     .from('custom_circles')
-    .select('parent_id, in_inner')
+    .select('parent_id, in_inner, isolated')
     .eq('id', body.id)
     .eq('owner_id', userId)
-    .maybeSingle<{ parent_id: string | null; in_inner: boolean }>()
+    .maybeSingle<{ parent_id: string | null; in_inner: boolean; isolated: boolean }>()
   if (!circle) return NextResponse.json({ error: 'Circle not found' }, { status: 404 })
   const { error: moveError } = await supabase
     .from('custom_circles')
-    .update({ parent_id: circle.parent_id, in_inner: circle.parent_id ? false : circle.in_inner })
+    .update({ parent_id: circle.parent_id, in_inner: circle.parent_id ? false : circle.in_inner, isolated: circle.parent_id ? false : circle.isolated })
     .eq('parent_id', body.id)
     .eq('owner_id', userId)
   if (moveError) return NextResponse.json({ error: 'Could not delete the circle. Please try again.' }, { status: 500 })

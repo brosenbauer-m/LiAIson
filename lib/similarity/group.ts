@@ -34,7 +34,7 @@ type Loaded = { people: GroupPerson[]; viewerText: string; texts: string[]; hash
 async function loadGroup(viewerId: string, usernames: string[]): Promise<Loaded> {
   const limits = await getPlanLimits(viewerId)
   if (limits.groupCompare < 2) {
-    throw new SimilarityError('Comparing several people at once is part of Social Butterfly.', 403, { locked: true })
+    throw new SimilarityError('Similarities with several people at once are part of Social Butterfly.', 403, { locked: true })
   }
   const unique = [...new Set(usernames.map(u => u.trim().toLowerCase()).filter(Boolean))]
   if (unique.length < 2 || unique.length > limits.groupCompare) {
@@ -48,7 +48,7 @@ async function loadGroup(viewerId: string, usernames: string[]): Promise<Loaded>
     .in('username', unique)
   const rows = (data as { id: string; username: string; display_name: string; avatar_url: string | null }[] | null) ?? []
   if (rows.length !== unique.length) throw new SimilarityError('One of these profiles was not found.', 404)
-  if (rows.some(r => r.id === viewerId)) throw new SimilarityError('You are always part of the comparison; choose other people.', 400)
+  if (rows.some(r => r.id === viewerId)) throw new SimilarityError('You are always part of the chart; choose other people.', 400)
 
   // Stable order (by id) so the same group always gets the same letters.
   rows.sort((a, b) => a.id.localeCompare(b.id))
@@ -63,7 +63,7 @@ async function loadGroup(viewerId: string, usernames: string[]): Promise<Loaded>
     ...people.map((p, i) => sectionsText(p.id, scopes[i]!, MAX_TEXT_CHARS)),
   ])
   if (!viewerText) {
-    throw new SimilarityError('Add something about yourself to your Vault first, so there is something to compare.', 409, { emptyVault: true })
+    throw new SimilarityError('Add something about yourself to your Vault first, so there is something to find in common.', 409, { emptyVault: true })
   }
   const empty = people.filter((_, i) => !texts[i])
   if (empty.length > 0) throw new SimilarityError(`${empty[0].name} hasn't shared anything you can see yet.`, 409)
@@ -146,7 +146,7 @@ export async function compareGroup(
   if (quota.used + count > quota.quota) {
     const left = Math.max(0, quota.quota - quota.used)
     throw new SimilarityError(
-      `This compares ${count} people, and you have ${left} comparison${left === 1 ? '' : 's'} left this month.`,
+      `This chart has ${count} people, and you have ${left} Similarity check${left === 1 ? '' : 's'} left this month.`,
       429,
       { quotaReached: true }
     )

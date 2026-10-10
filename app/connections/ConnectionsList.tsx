@@ -45,15 +45,29 @@ interface Props {
 
 export default function ConnectionsList({ initialConnections, innerAllowed, customCircles, initialMemberships }: Props) {
   const router = useRouter()
-  // An own circle placed inside the Inner Circle gives its people the Inner
-  // Circle too (lib/access/resolveScope.ts): name it for that person.
-  const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner }] as [string, CircleNode]))
-  const innerThrough = (userId: string): string | null => {
-    for (const id of memberships[userId] ?? []) {
+  // Circles follow the hierarchy (lib/access/resolveScope.ts): being in a
+  // circle includes every circle around it, so those tags show as included
+  // (greyed, not clickable). The Outer Circle is included unless someone is
+  // only in circles that sit on their own outside it.
+  const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner, isolated: !!c.isolated }] as [string, CircleNode]))
+  const tagState = (userId: string, inInner: boolean) => {
+    const chosen = new Set(memberships[userId] ?? [])
+    const included = new Map<string, string>() // circle id → the chosen circle that includes it
+    let innerThrough: string | null = null
+    let inAny = false
+    let insideOuter = false
+    for (const id of chosen) {
       const chain = circleChain(id, nodes)
-      if (chain.length > 0 && chain[chain.length - 1].in_inner) return customCircles.find(c => c.id === id)?.name ?? null
+      if (chain.length === 0) continue
+      const name = customCircles.find(c => c.id === id)?.name ?? ''
+      chain.slice(1).forEach(c => { if (!included.has(c.id)) included.set(c.id, name) })
+      const root = chain[chain.length - 1]
+      inAny = true
+      if (root.in_inner) innerThrough ??= name
+      if (!root.isolated) insideOuter = true
     }
-    return null
+    const outer = inInner || !!innerThrough || !inAny || insideOuter
+    return { chosen, included, innerThrough, outer }
   }
   const [connections, setConnections] = useState(initialConnections)
   const [memberships, setMemberships] = useState(initialMemberships)
@@ -192,16 +206,13 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
 
   return (
     <div className={`space-y-4 ${selectedIds.size > 0 ? 'pb-32' : ''}`}>
-      <p className="text-sm text-text-secondary">
-        {innerAllowed
-          ? customCircles.length > 0
-            ? 'Circles sit inside each other. Everyone you connect with sees your Outer Circle; people in your Inner Circle also see the Inner Circle; people in one of your own circles see it and every circle around it.'
-            : 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'
-          : 'Everyone you connect with sees your Vault (except drafts).'}
-        {!innerAllowed && (
-          <> With Ambivert or Extrovert you can also put people in an Inner Circle. <Link href="/#how-it-works" className="text-accent hover:underline">Learn more</Link></>
-        )}
-      </p>
+      {innerAllowed && (
+        <p className="text-sm text-text-secondary">
+          {customCircles.length > 0
+            ? 'Being in a circle includes every circle around it, so choosing a circle also ticks the ones it sits in.'
+            : 'Everyone you connect with sees your Outer Circle. People in your Inner Circle also see your Inner Circle.'}
+        </p>
+      )}
 
       {connections.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl p-12 text-center shadow-soft">
@@ -213,7 +224,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2" role="group" aria-label="Filter connections by circle">
-                {(innerAllowed ? FILTER_OPTIONS : FILTER_OPTIONS.slice(0, 1)).map(option => {
+                {innerAllowed && FILTER_OPTIONS.map(option => {
                   const count = countFor(option.value)
                   return (
                     <button
@@ -246,7 +257,7 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
               </label>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-text-secondary">
+            {innerAllowed && <label className="flex items-center gap-2 text-sm text-text-secondary">
               <input
                 type="checkbox"
                 checked={allShownSelected}
@@ -254,8 +265,8 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                 onChange={event => handleSelectShown(event.target.checked, shownIds)}
                 className="h-4 w-4 accent-accent"
               />
-              Select all shown
-            </label>
+              Select All Shown
+            </label>}
           </div>
 
           {feedback && (
@@ -272,17 +283,18 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
             <div className="space-y-4">
               {shownConnections.map(connection => {
                 const fromUser = Array.isArray(connection.from_user) ? connection.from_user[0] : connection.from_user
+                const tags = fromUser ? tagState(fromUser.id, connection.in_inner_circle) : null
                 return (
-                  <div key={connection.id} className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
+                  <div key={connection.id} className="bg-card border border-border rounded-2xl p-5 shadow-soft space-y-3">
                     <div className="flex items-center gap-3">
-                      <input
+                      {innerAllowed && <input
                         type="checkbox"
                         checked={selectedIds.has(connection.id)}
                         disabled={bulkSaving}
                         onChange={event => handleSelectShown(event.target.checked, [connection.id])}
                         aria-label={`Select ${fromUser?.display_name ?? 'connection'}`}
                         className="h-4 w-4 accent-accent flex-shrink-0"
-                      />
+                      />}
                       <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="md" />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-text-primary truncate">{fromUser?.display_name ?? 'Unknown'}</p>
@@ -316,49 +328,30 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
                         {fromUser?.display_name ?? 'They'} will lose access to everything beyond your public profile and can&apos;t send you a new request.
                       </p>
                     )}
-                    {fromUser && customCircles.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-text-secondary">Also in:</span>
-                        {customCircles.map(circle => {
-                          const member = (memberships[fromUser.id] ?? []).includes(circle.id)
-                          return (
-                            <button
-                              key={circle.id}
-                              type="button"
-                              onClick={() => toggleCircle(fromUser.id, circle.id)}
-                              disabled={circleSaving === `${fromUser.id}:${circle.id}` || bulkSaving}
-                              aria-pressed={member}
-                              title={circleWhere(circle, customCircles)}
-                              className={`px-3 py-1 rounded-full text-xs font-medium border transition-all disabled:opacity-50 ${
-                                member ? 'border-accent bg-accent text-white' : 'border-border text-text-secondary hover:border-accent/50'
-                              }`}
-                            >
-                              {member ? '✓ ' : ''}{circle.name}
-                            </button>
-                          )
-                        })}
+                    {innerAllowed && fromUser && tags && (
+                      <div className="flex flex-wrap gap-1.5" role="group" aria-label={`Circles of ${fromUser.display_name}`}>
+                        <CircleTag label="Outer Circle" on={tags.outer} included={tags.outer} title={tags.outer ? 'Everyone you connect with sees your Outer Circle' : 'Only in circles that sit on their own'} />
+                        <CircleTag
+                          label="Inner Circle"
+                          on={connection.in_inner_circle}
+                          included={!!tags.innerThrough}
+                          title={tags.innerThrough ? `Included through ${tags.innerThrough}` : undefined}
+                          disabled={savingId === connection.id || bulkSaving}
+                          onClick={() => handleChange(connection.id, !connection.in_inner_circle)}
+                        />
+                        {customCircles.map(circle => (
+                          <CircleTag
+                            key={circle.id}
+                            label={circle.name}
+                            on={tags.chosen.has(circle.id)}
+                            included={tags.included.has(circle.id)}
+                            title={tags.included.has(circle.id) ? `Included through ${tags.included.get(circle.id)}` : circleWhere(circle, customCircles)}
+                            disabled={circleSaving === `${fromUser.id}:${circle.id}` || bulkSaving}
+                            onClick={() => toggleCircle(fromUser.id, circle.id)}
+                          />
+                        ))}
                       </div>
                     )}
-                    {fromUser && !connection.in_inner_circle && innerThrough(fromUser.id) && (
-                      <p className="text-xs text-text-secondary">Sees the Inner Circle through {innerThrough(fromUser.id)}.</p>
-                    )}
-                    {innerAllowed && <div className="flex flex-wrap gap-2">
-                      {CIRCLE_OPTIONS.map(option => (
-                        <button
-                          key={option.label}
-                          type="button"
-                          onClick={() => handleChange(connection.id, option.inner)}
-                          disabled={savingId === connection.id || bulkSaving}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-all disabled:opacity-50 ${
-                            connection.in_inner_circle === option.inner
-                              ? 'border-accent bg-accent-tint text-accent'
-                              : 'border-border text-text-secondary hover:border-accent/50'
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>}
                   </div>
                 )
               })}
@@ -394,5 +387,41 @@ export default function ConnectionsList({ initialConnections, innerAllowed, cust
         </div>
       )}
     </div>
+  )
+}
+
+// One small circle tag on a connection. "included" = ticked because a chosen
+// circle sits inside it (greyed, can't be clicked).
+function CircleTag({ label, on, included, title, disabled, onClick }: {
+  label: string
+  on: boolean
+  included?: boolean
+  title?: string
+  disabled?: boolean
+  onClick?: () => void
+}) {
+  const shown = included ? 'included' : on ? 'on' : 'off'
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || !!included || !onClick}
+      aria-pressed={on || !!included}
+      title={title}
+      className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-full text-[11px] font-medium tracking-wide transition-colors ${
+        shown === 'included'
+          ? 'bg-accent-subtle text-text-muted cursor-default'
+          : shown === 'on'
+            ? 'bg-accent text-white hover:bg-accent-light'
+            : onClick ? 'border border-border text-text-muted hover:border-accent/50 hover:text-text-secondary' : 'border border-border text-text-muted/70 cursor-default'
+      } disabled:cursor-default`}
+    >
+      {shown !== 'off' && (
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m2.5 6.5 2.5 2.5 4.5-5.5" />
+        </svg>
+      )}
+      {label}
+    </button>
   )
 }

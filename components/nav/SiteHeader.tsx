@@ -45,10 +45,8 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/75 backdrop-blur-xl backdrop-saturate-150">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link
-          href={auth === 'signed-in' ? '/dashboard' : '/'}
-          className="font-display text-2xl text-accent"
-        >
+        {/* Always the home page; signed in, the header keeps the signed-in menu. */}
+        <Link href="/" className="font-display text-2xl text-accent">
           LiAIson
         </Link>
 

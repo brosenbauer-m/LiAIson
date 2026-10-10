@@ -16,11 +16,13 @@ interface VaultSectionCardProps {
   innerAllowed: boolean
   // The owner's own circles (Social Butterfly); empty on other plans.
   customCircles: CustomCircle[]
+  // Introvert: no circle words (Visible / Draft).
+  noCircles?: boolean
 }
 
 const countChars = (text: string) => Array.from(text).length
 
-export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft, innerAllowed, customCircles }: VaultSectionCardProps) {
+export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft, innerAllowed, customCircles, noCircles }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [placement, setPlacement] = useState<Placement>(placementOf(section))
   const [saving, setSaving] = useState(false)
@@ -162,7 +164,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
                   placement === p ? 'border-accent bg-accent-tint text-accent' : 'border-border text-text-secondary hover:border-accent/50'
                 }`}
               >
-                {p === 'draft' ? 'Draft' : placementLabel(p, customCircles)}
+                {p === 'draft' ? 'Draft' : noCircles && p === 'outer' ? 'Visible' : placementLabel(p, customCircles)}
               </button>
             ))}
         </div>

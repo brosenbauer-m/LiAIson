@@ -163,7 +163,7 @@ export default function ProfileSection() {
           placeholder="A few words about you"
         />
         <p className="mt-1.5 text-xs text-text-secondary italic">
-          Your bio is always public: everyone who can see your profile sees it, in every circle, and your LiAIson knows it. It is also shown in your Vault. If your profile is Private, only your connections see it.
+          Your bio is always public: everyone who can see your profile sees it, and your LiAIson knows it. It is also shown in your Vault. If your profile is Private, only your connections see it.
         </p>
       </div>
 

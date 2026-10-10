@@ -45,7 +45,7 @@ export default function ProfileBioCard({
         className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none"
       />
       <p className="text-xs text-text-secondary italic">
-        Always public and in every circle: everyone who can see your profile sees your bio, and your LiAIson knows it. If your profile is Private, only your connections see it.
+        Always public: everyone who can see your profile sees your bio, and your LiAIson knows it. If your profile is Private, only your connections see it.
       </p>
       <div className="flex justify-end">
         <button

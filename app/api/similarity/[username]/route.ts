@@ -22,7 +22,7 @@ const PER_MINUTE = 5
 async function load(username: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: NextResponse.json({ error: 'Sign in to compare' }, { status: 401 }) }
+  if (!user) return { error: NextResponse.json({ error: 'Sign in to see Similarities' }, { status: 401 }) }
   const { data: target } = await createServiceClient()
     .from('users')
     .select('id, display_name')
@@ -57,7 +57,7 @@ export async function POST(_request: NextRequest, props: { params: Promise<{ use
 
   // A few comparisons per minute at most (double clicks and scripts).
   if (!(await underLimit(`simq:${loaded.viewerId}`, PER_MINUTE, 60))) {
-    return NextResponse.json({ error: 'Please wait a minute before comparing again.' }, { status: 429 })
+    return NextResponse.json({ error: 'Please wait a minute and try again.' }, { status: 429 })
   }
 
   try {

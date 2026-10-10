@@ -8,6 +8,7 @@ import ConnectionRequests from './ConnectionRequests'
 import CustomCircles from './CustomCircles'
 import { orderCircles } from '@/lib/circles'
 import ProfileCard from '@/components/ui/ProfileCard'
+import CirclesNote from '@/components/ui/CirclesNote'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +40,7 @@ export default async function ConnectionsPage() {
       .order('created_at', { ascending: false }),
     serviceSupabase
       .from('custom_circles')
-      .select('id, name, parent_id, in_inner')
+      .select('id, name, parent_id, in_inner, isolated')
       .eq('owner_id', user.id)
       .order('created_at', { ascending: true }),
   ])
@@ -48,7 +49,7 @@ export default async function ConnectionsPage() {
   const innerAllowed = limits.circles === 2
 
   // Own circles (Social Butterfly) and who is in them.
-  type CircleRow = { id: string; name: string; parent_id: string | null; in_inner: boolean }
+  type CircleRow = { id: string; name: string; parent_id: string | null; in_inner: boolean; isolated: boolean }
   const circles = limits.extraCircles > 0 ? ((circleRows as CircleRow[] | null) ?? []) : []
   const { data: memberRows } = circles.length
     ? await serviceSupabase.from('custom_circle_members').select('circle_id, member_id').in('circle_id', circles.map(c => c.id))
@@ -82,12 +83,19 @@ export default async function ConnectionsPage() {
       <div className="max-w-2xl mx-auto px-4 py-12 space-y-8">
         <div>
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Connections</h1>
-          <p className="text-text-secondary text-lg mt-2">{innerAllowed ? 'Choose who is in your Inner Circle.' : 'People who can talk to your LiAIson.'}</p>
+          <p className="text-text-secondary text-lg mt-2">{innerAllowed ? 'Choose who is in which circle.' : 'People who can talk to your LiAIson.'}</p>
           {limits.groupCompare >= 2 && (
-            <Link href="/compare" className="mt-3 inline-block text-sm text-accent hover:underline font-medium">
-              Compare yourself with several people →
+            <Link
+              href="/similarities"
+              className="mt-5 inline-flex items-center gap-2 px-5 py-3 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-full shadow-card"
+            >
+              <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                <circle cx="6" cy="7" r="5" /><circle cx="12" cy="7" r="5" />
+              </svg>
+              Create a Similarities Chart
             </Link>
           )}
+          {!innerAllowed && <CirclesNote className="mt-3" />}
         </div>
 
         {requests && requests.length > 0 && (

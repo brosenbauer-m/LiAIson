@@ -10,7 +10,9 @@
 // - Circles are nested (owner decision 2026-10-10): everyone in a circle also
 //   sees every circle around it. An own circle sits directly in the Outer
 //   Circle, in the Inner Circle, or inside another own circle (parent_id), so
-//   Outer > Inner > Family, or Outer > Climbing club > Coaches.
+//   Outer > Inner > Family, or Outer > Climbing club > Coaches. An own circle
+//   can also sit on its own outside the Outer Circle (isolated): its people
+//   don't get the Outer Circle through it.
 // - Draft: only the owner; never used by their LiAIson.
 // Replaces the old Professional / Personal flags.
 
@@ -31,8 +33,9 @@ export const CIRCLE_LABEL: Record<BasicCircle, string> = {
 }
 
 // One of the owner's own circles (Social Butterfly); parent_id / in_inner say
-// where it sits (missing = directly in the Outer Circle).
-export type CustomCircle = { id: string; name: string; parent_id?: string | null; in_inner?: boolean }
+// where it sits (missing = directly in the Outer Circle); isolated = on its
+// own outside the Outer Circle.
+export type CustomCircle = { id: string; name: string; parent_id?: string | null; in_inner?: boolean; isolated?: boolean }
 
 // Where an own circle sits (custom_circles.parent_id / in_inner).
 export type CircleNode = { id: string; parent_id: string | null; in_inner: boolean; isolated?: boolean }
@@ -82,7 +85,8 @@ export function orderCircles<T extends CustomCircle>(circles: T[]): T[] {
   }
   const roots = circles.filter(c => !c.parent_id || !ids.has(c.parent_id))
   roots.filter(c => c.in_inner).forEach(add)
-  roots.filter(c => !c.in_inner).forEach(add)
+  roots.filter(c => !c.in_inner && !c.isolated).forEach(add)
+  roots.filter(c => c.isolated).forEach(add)
   circles.forEach(add) // anything left (never expected)
   return out
 }
@@ -91,5 +95,5 @@ export function orderCircles<T extends CustomCircle>(circles: T[]): T[] {
 export function circleWhere(circle: CustomCircle, circles: CustomCircle[]): string {
   const parent = circle.parent_id ? circles.find(c => c.id === circle.parent_id) : undefined
   if (parent) return `Inside ${parent.name}`
-  return circle.in_inner ? 'Inside the Inner Circle' : 'In the Outer Circle'
+  return circle.in_inner ? 'Inside the Inner Circle' : circle.isolated ? 'On its own, outside the Outer Circle' : 'In the Outer Circle'
 }

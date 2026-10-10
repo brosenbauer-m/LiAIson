@@ -48,6 +48,11 @@ const config: Config = {
           to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         // A gentle sideways nudge every few seconds ("there is more").
+        // Circle Studio: circles float up and down very gently.
+        bob: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-2.5px)' },
+        },
         nudge: {
           '0%, 80%, 100%': { transform: 'translateX(0)' },
           '86%': { transform: 'translateX(5px)' },
@@ -65,6 +70,7 @@ const config: Config = {
         'message-in': 'message-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         draw: 'draw 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         nudge: 'nudge 3.2s ease-in-out 1.5s infinite',
+        bob: 'bob 6s ease-in-out infinite',
       },
       boxShadow: {
         'soft': '0 1px 3px rgba(43, 30, 22, 0.06), 0 1px 2px rgba(43, 30, 22, 0.04)',

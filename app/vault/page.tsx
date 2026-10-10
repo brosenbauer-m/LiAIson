@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
 import ProfileBioCard from '@/components/vault/ProfileBioCard'
+import CirclesNote from '@/components/ui/CirclesNote'
 import type { VaultSection, VaultFolder } from '@/types'
 import { circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
@@ -62,7 +63,7 @@ export default function VaultPage() {
       const circlesRes = await fetch('/api/circles', { cache: 'no-store' }).catch(() => null)
       if (circlesRes?.ok) {
         const data = await circlesRes.json() as { extraCircles: number; circles: CustomCircle[] }
-        setCustomCircles(data.extraCircles > 0 ? orderCircles(data.circles.map(c => ({ id: c.id, name: c.name, parent_id: c.parent_id, in_inner: c.in_inner }))) : [])
+        setCustomCircles(data.extraCircles > 0 ? orderCircles(data.circles.map(c => ({ id: c.id, name: c.name, parent_id: c.parent_id, in_inner: c.in_inner, isolated: c.isolated }))) : [])
       }
 
       const { data, error } = await supabase
@@ -202,6 +203,8 @@ export default function VaultPage() {
   // The Profile Bio is shown on its own above the tabs (always public).
   const bioSection = sections.find(s => s.section_type === 'profile_bio')
   const filtered = sections.filter(section => section.section_type !== 'profile_bio' && placementOf(section) === activeTab)
+  // Introvert (one circle): no circle words at all, just Visible and Drafts.
+  const noCircles = !innerAllowed && customCircles.length === 0 && !sections.some(s => s.circle === 'inner')
   const tabs: Tab[] = [
     'outer',
     ...(innerAllowed || sections.some(s => s.circle === 'inner') ? ['inner' as const] : []),
@@ -296,11 +299,11 @@ export default function VaultPage() {
                   : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {placementLabel(tab, customCircles)}
+              {noCircles && tab === 'outer' ? 'Visible' : placementLabel(tab, customCircles)}
             </button>
           ))}
         </div>
-        <div className="mb-8" />
+        {noCircles ? <CirclesNote className="mb-8" /> : <div className="mb-8" />}
 
         {/* Sections */}
         <div className="space-y-5">
@@ -312,6 +315,7 @@ export default function VaultPage() {
               onDelete={deleteSection}
               innerAllowed={innerAllowed}
               customCircles={customCircles}
+              noCircles={noCircles}
               roomLeft={vaultLimit === null ? undefined : vaultLimit - (totalChars - countChars(section.content))}
             />
           ))}
