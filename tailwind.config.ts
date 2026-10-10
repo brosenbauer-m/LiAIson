@@ -47,6 +47,13 @@ const config: Config = {
           from: { opacity: '0', transform: 'translateY(4px) scale(0.98)' },
           to: { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
+        // A gentle sideways nudge every few seconds ("there is more").
+        nudge: {
+          '0%, 80%, 100%': { transform: 'translateX(0)' },
+          '86%': { transform: 'translateX(5px)' },
+          '92%': { transform: 'translateX(0)' },
+          '96%': { transform: 'translateX(3px)' },
+        },
         // Diagram lines draw themselves (paths use pathLength=1).
         draw: {
           from: { strokeDasharray: '1', strokeDashoffset: '1' },
@@ -57,6 +64,7 @@ const config: Config = {
         'page-in': 'page-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         'message-in': 'message-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
         draw: 'draw 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both',
+        nudge: 'nudge 3.2s ease-in-out 1.5s infinite',
       },
       boxShadow: {
         'soft': '0 1px 3px rgba(43, 30, 22, 0.06), 0 1px 2px rgba(43, 30, 22, 0.04)',

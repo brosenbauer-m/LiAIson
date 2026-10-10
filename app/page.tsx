@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import RisingCircles from '@/components/landing/RisingCircles'
 import HowItWorks from '@/components/landing/HowItWorks'
+import { useReveal, useSectionPager } from '@/components/landing/useSectionPager'
 
 // Home page (owner design 2026-10-10): full-screen sections that snap like
 // slides — the story, How it Works (carousel with annotated pictures), On
@@ -22,6 +23,10 @@ const TRUST = [
 
 export default function HomePage() {
   const [signedIn, setSignedIn] = useState(false)
+  const mainRef = useRef<HTMLElement>(null)
+  // Desktop: eased section-by-section paging (CSS snapping off meanwhile).
+  const paging = useSectionPager(mainRef)
+  useReveal(mainRef)
 
   useEffect(() => {
     const supabase = createClient()
@@ -33,9 +38,12 @@ export default function HomePage() {
   const primaryHref = signedIn ? '/dashboard' : '/signup'
 
   return (
-    <main className="h-[calc(100dvh-4rem)] overflow-y-auto snap-y snap-proximity md:snap-mandatory scroll-smooth motion-reduce:scroll-auto">
+    <main
+      ref={mainRef}
+      className={`h-[calc(100dvh-4rem)] overflow-y-auto ${paging ? '' : 'snap-y snap-proximity scroll-smooth motion-reduce:scroll-auto'}`}
+    >
       {/* 1 · The story */}
-      <section className="relative snap-start min-h-full flex items-center overflow-hidden">
+      <section data-section className="relative snap-start min-h-full flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-grid [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden="true" />
         <RisingCircles />
         <div className="relative w-full max-w-3xl mx-auto px-4 pt-12 pb-[22vh] text-center">
@@ -63,18 +71,16 @@ export default function HomePage() {
       </section>
 
       {/* 2 · How it Works */}
-      <section id="how-it-works" className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
-        <div className="w-full max-w-6xl mx-auto px-4">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted mb-3">How it works</p>
+      <section id="how-it-works" data-section className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
+        <div data-reveal className="w-full max-w-6xl mx-auto px-4">
           <h2 className="font-display text-4xl sm:text-5xl font-medium text-text-primary mb-10">How it Works</h2>
           <HowItWorks />
         </div>
       </section>
 
       {/* 3 · On Your Terms */}
-      <section className="snap-start min-h-full flex items-center py-16 border-t border-border">
-        <div className="w-full max-w-6xl mx-auto px-4">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-text-muted mb-3">Privacy</p>
+      <section data-section className="snap-start min-h-full flex items-center py-16 border-t border-border">
+        <div data-reveal className="w-full max-w-6xl mx-auto px-4">
           <h2 className="font-display text-4xl sm:text-6xl font-medium text-text-primary">On Your Terms</h2>
           <p className="mt-5 text-lg text-text-secondary max-w-2xl leading-relaxed">
             Your LiAIson only ever knows what you choose to tell it, and you stay in control of who hears what.
@@ -91,10 +97,10 @@ export default function HomePage() {
       </section>
 
       {/* 4 · Call to action */}
-      <section className="snap-start min-h-full flex flex-col border-t border-border">
+      <section data-section className="snap-start min-h-full flex flex-col border-t border-border">
         <div className="relative flex-1 flex items-center justify-center px-4 py-20 overflow-hidden">
           <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" aria-hidden="true" />
-          <div className="relative text-center">
+          <div data-reveal className="relative text-center">
             <h2 className="font-display text-5xl sm:text-7xl font-medium text-text-primary tracking-tight">Make Yourself Known</h2>
             <p className="mt-5 text-lg text-text-secondary">Every tier starts with a free month.</p>
             <Link
@@ -108,17 +114,7 @@ export default function HomePage() {
         <footer className="border-t border-border py-10">
           <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
             <span className="font-display text-2xl text-accent">LiAIson</span>
-            <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 text-sm text-text-secondary" aria-label="Footer">
-              <Link href="#how-it-works" className="hover:text-accent font-medium">How it Works</Link>
-              <Link href="/discover" className="hover:text-accent font-medium">Discover</Link>
-              <Link href="/privacy" className="hover:text-accent font-medium">Privacy</Link>
-              {!signedIn && (
-                <>
-                  <Link href="/login" className="hover:text-accent font-medium">Log in</Link>
-                  <Link href="/signup" className="hover:text-accent font-medium">Sign up</Link>
-                </>
-              )}
-            </nav>
+            <Link href="/privacy" className="text-sm text-text-secondary hover:text-accent font-medium">Privacy</Link>
             <p className="text-xs text-text-muted">© {new Date().getFullYear()} LiAIson · Vienna, Austria</p>
           </div>
         </footer>
