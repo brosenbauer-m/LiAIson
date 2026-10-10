@@ -46,16 +46,15 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor interactions</h2>
             <p>When someone chats with your LiAIson, their messages are sent to Mistral AI, a French AI provider, and processed only in its data centres in the EU and EFTA countries (Mistral&apos;s EU regional service), to generate responses. We do not store visitor messages. For each question we keep only a short anonymous statement of what was asked about (e.g. &quot;People want to know more about your climbing&quot;) with a category, so owners can see what visitors are interested in. These statements never contain the visitor&apos;s words, identity or contact details and are deleted after about 35 days. Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
-            <p>If you are signed in and chat with someone else&apos;s LiAIson, the non-draft content of your own Vault is also sent to Mistral AI with your message, so answers can relate to you (for example &quot;what do we have in common?&quot;). It is used only to answer you, is never shown to the other person and is not stored. You can turn this off in Settings under &quot;Use my Vault when I chat&quot;.</p>
+            <p>If you are signed in and chat with someone else&apos;s LiAIson, the non-draft content of your own Vault is also sent to Mistral AI with your message, so answers can relate to you (for example &quot;what do we have in common?&quot;). It is used only to answer you, is never shown to the other person and is not stored.</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-text-primary mb-3">Your controls</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, on Ambivert and Extrovert) or kept as a draft that no one sees</li>
+              <li>Each Vault section is in your Outer Circle (everyone who can see your profile), your Inner Circle (only people you put there, from Ambivert up), one of your own circles (Social Butterfly) or kept as a draft that no one sees. Your Profile Bio is always in your Outer Circle</li>
               <li>You choose who can talk to your LiAIson: Public (everyone) or Private (only people whose connection request you accepted), and who is in your Inner Circle</li>
               <li>You can turn Discoverable on or off at any time. When it is off, or your profile is Private, no one can find you by what you share</li>
-              <li>You can switch off &quot;Use my Vault when I chat&quot; at any time</li>
               <li>You can set a monthly spending limit for the messages you send; when it is reached, you can&apos;t send more until the next month or until you raise it</li>
               <li>Files you import (PDF or Word) are only read to extract their text and are not stored; only the text you review and approve is saved to your Vault</li>
               <li>You can delete your account and all associated data at any time from Settings</li>

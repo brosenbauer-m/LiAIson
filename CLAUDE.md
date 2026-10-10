@@ -24,14 +24,15 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 
 ## Code map
 - Shared: `lib/redis.ts` (one client + `underLimit`), `lib/safeRedirect.ts`, `lib/mistral/client.ts` (`messageText`), `components/ui/Avatar.tsx` (only own-storage pictures)
+- `app/page.tsx` + `components/landing/` home (snap slides, RisingCircles, HowItWorks carousel, Annotated diagrams)
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
 - `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access/remove
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
 - `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert+: score + bubble map, cached in similarity_results); `/compare` + `app/api/compare` several people (Butterfly, `group.ts`); chat similarity marker/note → `lib/chat/signals.ts`
 - Own circles (Social Butterfly): `app/api/circles` (+`/members`), `app/connections/CustomCircles.tsx`, sections via `circle='custom'` + `custom_circle_id` (`lib/circles.ts` placements)
 - `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`)
-- `app/settings/`, `components/settings/` Public/Private, Discoverable, email, plan, card, bills
-- `app/plans/`, `lib/plans.ts` (all plan limits + texts; Butterfly sliders, `planLimits(plan, options)`), `lib/billing/plan.ts` (plan state/changes; `plan_changes` incl. `options` is the source of truth)
+- `app/settings/`, `components/settings/` Profile (bio = Vault `profile_bio` section), Profile Privacy, Subscription (TierSection, usage, credits, card, invoices), delete; `/profile` + `/plans` redirect
+- `components/plans/TierPicker.tsx` (sign-up + Settings), `lib/plans.ts` (all plan limits + texts; Butterfly sliders, `planLimits(plan, options)`), `lib/billing/plan.ts` (plan state/changes; `plan_changes` incl. `options` is the source of truth)
 - `lib/billing/*` Mollie, month-end bills (`monthly.ts`), plan fee (`planFee.ts`), card lock (`access.ts`, used by `proxy.ts`), receipts, VAT
 - `lib/ratelimit/trial.ts` free-month limits · `lib/usage/` AI usage log + spend/markup
 - `lib/insights/` visitor insights + Echoes (weekly/monthly) · `app/api/cron/insights` daily

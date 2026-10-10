@@ -123,7 +123,7 @@ export default function CustomCircles({ circles, allowed }: { circles: (CustomCi
           </button>
         </form>
       ) : (
-        <p className="text-xs text-text-secondary">You have all {allowed} circles your plan allows. You can allow more on the <Link href="/settings#subscription" className="text-accent hover:underline">Plans page</Link>.</p>
+        <p className="text-xs text-text-secondary">You have all {allowed} circles your plan allows. You can allow more on the <Link href="/settings#subscription" className="text-accent hover:underline">Settings</Link>.</p>
       )}
       {error && <p className="text-sm text-error" role="alert">{error}</p>}
     </div>

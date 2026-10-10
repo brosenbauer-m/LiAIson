@@ -204,8 +204,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
     }
   }
 
-  // Two-vault chat: a signed-in visitor (not the owner) can have their own
-  // non-draft vault used to answer them, unless they switched it off.
+  // Two-vault chat: a signed-in visitor's own non-draft vault is used to
+  // relate answers to them (always on).
   // It is only added to this request's prompt — never stored or logged.
   const reader: ReaderContext | undefined = visitor.id !== user.id ? await loadReaderContext(supabase, visitor.id) : undefined
   const systemPrompt = await buildSystemPrompt(user.id, circles, reader)

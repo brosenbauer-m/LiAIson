@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   const { count } = await supabase.from('custom_circles').select('id', { count: 'exact', head: true }).eq('owner_id', userId)
   if ((count ?? 0) >= limits.extraCircles) {
     return NextResponse.json(
-      { error: `Your plan allows ${limits.extraCircles} circles of your own. You can allow more on the Plans page.` },
+      { error: `Your plan allows ${limits.extraCircles} circles of your own. You can allow more in Settings → Subscription.` },
       { status: 409 }
     )
   }

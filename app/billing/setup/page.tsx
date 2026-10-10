@@ -16,7 +16,7 @@ type PlanState = {
 }
 
 // Plans that can be chosen here (plus the current one, e.g. Social Butterfly
-// before it is open to everyone). Slider choices are changed on the Plans page.
+// before it is open to everyone). Slider choices are changed in Settings → Subscription.
 function choices(state: PlanState): PlanId[] {
   return PLAN_IDS.filter(id => PLANS[id].available || id === state.plan)
 }
