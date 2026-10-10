@@ -21,7 +21,7 @@ function limitMessage(limit: number): string {
 type Tab = Placement
 
 // Keeps the Discover search index up to date (only Outer Circle content of
-// Public + Discoverable profiles is ever indexed). Fire and forget.
+// Public profiles is ever indexed). Fire and forget.
 const refreshSearchIndex = () => {
   void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
 }

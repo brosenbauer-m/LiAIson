@@ -72,17 +72,17 @@ const SLIDES: Slide[] = [
     short: 'Discover',
     body: (
       <>
-        On <b>Discover</b> everyone can find people by name or @username. Higher tiers can also search <b>By Information</b>, for
-        example &ldquo;people in Vienna who play tennis&rdquo;, and see a short reason for each match. Only people who chose to be
-        findable appear, and only what everyone may see is searched.
+        On <b>Discover</b> everyone can find people by name or @username. Higher tiers can also search <b>By Description</b>, for
+        example &ldquo;people in Vienna who play tennis&rdquo;, and see a short reason for each match. Only Public profiles can be found
+        by description, and only what everyone may see is searched.
       </>
     ),
     mock: <DiscoverMock />,
     callouts: [
       { ax: 244, ay: 70, y: 52, title: 'By Name', text: 'Find anyone by name or @username, on every tier.' },
-      { ax: 392, ay: 117, y: 130, title: 'By Information', text: 'Search by what people share, on higher tiers.' },
+      { ax: 392, ay: 117, y: 130, title: 'By Description', text: 'Search by what people share, on higher tiers.' },
       { ax: 392, ay: 205, y: 212, title: 'A short reason', text: 'Never their Vault text.' },
-      { ax: 260, ay: 360, y: 340, title: 'Only the findable', text: 'People decide whether they can be found.' },
+      { ax: 260, ay: 360, y: 340, title: 'Public profiles only', text: 'Private profiles are found by name only.' },
     ],
   },
   {

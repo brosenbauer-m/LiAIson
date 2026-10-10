@@ -25,6 +25,7 @@ export default function DiscoverPage() {
   const [contentResults, setContentResults] = useState<ContentResult[] | null>(null)
   const [contentLoading, setContentLoading] = useState(false)
   const [contentError, setContentError] = useState<string | null>(null)
+  const [showLocked, setShowLocked] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -105,6 +106,9 @@ export default function DiscoverPage() {
     }
   }, [query])
 
+  // Lower tiers (no AI searches) see the description search greyed out.
+  const locked = !!quota && quota.quota <= 0
+
   return (
     <div className="min-h-screen bg-background">
 
@@ -113,12 +117,12 @@ export default function DiscoverPage() {
         <p className="text-text-secondary text-center mb-8">
           {mode === 'name'
             ? <>Find someone&apos;s LiAIson by name or username.</>
-            : <>Describe who you are looking for, for example &quot;someone who plays tennis in Vienna&quot;.</>}
+            : <>Describe who you are looking for.</>}
         </p>
 
         {quota && (
           <div className="flex justify-center gap-1 mb-6 bg-surface border border-border rounded-lg p-1 w-fit mx-auto shadow-soft" role="group" aria-label="How to search">
-            {([['name', 'By Name'], ['content', 'By Information']] as [Mode, string][]).map(([value, label]) => (
+            {([['name', 'By Name'], ['content', 'By Description']] as [Mode, string][]).map(([value, label]) => (
               <button
                 key={value}
                 type="button"
@@ -135,35 +139,42 @@ export default function DiscoverPage() {
         )}
 
         {mode === 'content' && quota && (
-          quota.quota <= 0 ? (
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-soft text-sm text-text-secondary leading-relaxed">
-              With Ambivert or Extrovert you can find people by what they share, not just by their name, for example someone who plays tennis in Vienna.{' '}
-              <Link href="/settings#subscription" className="text-accent hover:underline">See Tiers</Link>
-            </div>
-          ) : (
             <div className="space-y-4">
-              <form onSubmit={runContentSearch} className="flex gap-2">
+              {/* Lower tiers see the same search, greyed; tapping it explains why. */}
+              <form onSubmit={runContentSearch} className={`flex gap-2 ${locked ? 'opacity-50' : ''}`} onClick={() => { if (locked) setShowLocked(true) }}>
                 <input
                   type="search"
                   value={contentQuery}
                   onChange={e => setContentQuery(e.target.value)}
-                  placeholder="Someone who plays tennis in Vienna"
+                  onFocus={() => { if (locked) setShowLocked(true) }}
+                  readOnly={locked}
+                  placeholder="e.g. find someone who plays tennis and studies psychology in Vienna"
                   maxLength={200}
                   autoComplete="off"
                   aria-label="Describe who you are looking for"
-                  className="flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft"
+                  aria-disabled={locked}
+                  className={`flex-1 min-w-0 bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft ${locked ? 'cursor-not-allowed' : ''}`}
                 />
                 <button
                   type="submit"
-                  disabled={contentLoading || contentQuery.trim().length < 3 || quota.used >= quota.quota}
+                  disabled={locked || contentLoading || contentQuery.trim().length < 3 || quota.used >= quota.quota}
                   className="px-5 rounded-xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50"
                 >
                   Search
                 </button>
               </form>
-              <p className="text-xs text-text-muted text-center">
-                {Math.max(0, quota.quota - quota.used)} of {quota.quota} searches left this month (the same search again today is free). Only people who chose to be findable are searched, and only what everyone can see on their profile.
-              </p>
+              {locked ? (
+                showLocked && (
+                  <p className="text-sm italic text-text-muted text-center">
+                    Available only in{' '}
+                    <Link href="/settings#subscription" className="text-accent hover:underline">higher tiers</Link>
+                  </p>
+                )
+              ) : (
+                <p className="text-xs text-text-muted text-center">
+                  {Math.max(0, quota.quota - quota.used)} of {quota.quota} searches left this month
+                </p>
+              )}
 
               {contentLoading && <p className="text-center text-sm text-text-secondary py-6">Searching...</p>}
               {!contentLoading && contentError && <p className="text-center text-sm text-error py-2" role="alert">{contentError}</p>}
@@ -190,7 +201,6 @@ export default function DiscoverPage() {
                 </ul>
               )}
             </div>
-          )
         )}
 
         {mode === 'name' && (

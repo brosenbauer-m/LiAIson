@@ -118,7 +118,7 @@ export function DiscoverMock() {
       <p className="absolute left-5 top-4 font-display text-xl">Discover</p>
       <div className="absolute left-5 top-[54px] inline-flex rounded-full border border-border bg-background p-0.5 text-[11.5px]">
         <span className="px-3 py-1 text-text-secondary">By Name</span>
-        <span className="rounded-full bg-accent px-3 py-1 text-white">By Information</span>
+        <span className="rounded-full bg-accent px-3 py-1 text-white">By Description</span>
       </div>
       <div className="absolute left-5 right-5 top-[96px] h-[42px] rounded-xl border border-border bg-background flex items-center px-4 text-[12.5px]">
         People in Vienna who play tennis
@@ -126,7 +126,7 @@ export function DiscoverMock() {
       {result(154, 'Anna Berger', '@anna', 'Plays tennis twice a week and lives in Vienna.')}
       {result(240, 'Jonas Weber', '@jonas', 'Lives in Vienna and plays in a tennis club.')}
       <p className="absolute left-5 top-[334px] text-[11px] text-text-muted">18 of 20 searches left this month</p>
-      <p className="absolute left-5 top-[352px] text-[11px] text-text-muted">Only people who chose to be findable</p>
+      <p className="absolute left-5 top-[352px] text-[11px] text-text-muted">Only Public profiles</p>
     </div>
   )
 }
