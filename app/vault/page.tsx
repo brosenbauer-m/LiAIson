@@ -6,10 +6,9 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import VaultSectionCard from '@/components/vault/VaultSectionCard'
 import FolderManager from '@/components/vault/FolderManager'
-import ProfileBioCard from '@/components/vault/ProfileBioCard'
 import CirclesNote from '@/components/ui/CirclesNote'
 import type { VaultSection, VaultFolder } from '@/types'
-import { circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
+import { circleChain, circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -200,11 +199,25 @@ export default function VaultPage() {
   const totalChars = sections.reduce((n, s) => n + countChars(s.content), 0)
   const usedPct = vaultLimit ? Math.min(100, Math.round((totalChars / vaultLimit) * 100)) : 0
 
-  // The Profile Bio is shown on its own above the tabs (always public).
-  const bioSection = sections.find(s => s.section_type === 'profile_bio')
-  const filtered = sections.filter(section => section.section_type !== 'profile_bio' && placementOf(section) === activeTab)
-  // Introvert (one circle): no circle words at all, just Visible and Drafts.
+  // Introvert (one circle): no circle tabs or words at all; one list (drafts
+  // are marked on their card).
   const noCircles = !innerAllowed && customCircles.length === 0 && !sections.some(s => s.circle === 'inner')
+  // The Profile Bio is edited in Settings → Profile, not here.
+  const filtered = sections.filter(section =>
+    section.section_type !== 'profile_bio' && (noCircles || placementOf(section) === activeTab))
+
+  // Circles whose sections the people of the selected circle also see (the
+  // circles around it): their tabs are highlighted in a lighter brown.
+  const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner, isolated: !!c.isolated }]))
+  const included = new Set<Tab>()
+  if (activeTab === 'inner') included.add('outer')
+  if (activeTab.startsWith('c:')) {
+    const chain = circleChain(activeTab.slice(2), nodes)
+    chain.slice(1).forEach(c => included.add(`c:${c.id}`))
+    const root = chain[chain.length - 1]
+    if (root?.in_inner) included.add('inner')
+    if (root && !root.isolated) included.add('outer')
+  }
   const tabs: Tab[] = [
     'outer',
     ...(innerAllowed || sections.some(s => s.circle === 'inner') ? ['inner' as const] : []),
@@ -278,31 +291,28 @@ export default function VaultPage() {
           </p>
         )}
 
-        {bioSection && (
-          <div className="mb-8">
-            <ProfileBioCard key={bioSection.id} section={bioSection} onUpdate={updateSection} />
-          </div>
-        )}
-
         <FolderManager folders={folders} onCreate={createFolder} onUpdate={updateFolder} onDelete={deleteFolder} />
 
-        {/* Tabs: one per circle */}
-        <div className="flex flex-wrap gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit max-w-full shadow-soft">
+        {/* Tabs: one per circle (not on Introvert) */}
+        {!noCircles && <div className="flex flex-wrap gap-1 mb-3 bg-surface border border-border rounded-lg p-1 w-fit max-w-full shadow-soft">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               title={tab.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === tab.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
+              aria-pressed={activeTab === tab}
               className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
                 activeTab === tab
                   ? 'bg-accent text-white shadow-soft'
-                  : 'text-text-secondary hover:text-text-primary'
+                  : included.has(tab)
+                    ? 'bg-accent/15 text-accent'
+                    : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {noCircles && tab === 'outer' ? 'Visible' : placementLabel(tab, customCircles)}
+              {placementLabel(tab, customCircles)}
             </button>
           ))}
-        </div>
+        </div>}
         {noCircles ? <CirclesNote className="mb-8" /> : <div className="mb-8" />}
 
         {/* Sections */}
