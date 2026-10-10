@@ -35,7 +35,7 @@ export const CIRCLE_LABEL: Record<BasicCircle, string> = {
 export type CustomCircle = { id: string; name: string; parent_id?: string | null; in_inner?: boolean }
 
 // Where an own circle sits (custom_circles.parent_id / in_inner).
-export type CircleNode = { id: string; parent_id: string | null; in_inner: boolean }
+export type CircleNode = { id: string; parent_id: string | null; in_inner: boolean; isolated?: boolean }
 
 // The circle and every own circle around it, innermost first. The last one
 // decides (by in_inner) whether the Inner Circle is around them. Unknown ids
