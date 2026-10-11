@@ -2,12 +2,11 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/service'
 import { createClient } from '@/lib/supabase/server'
-import { resolveCircles, visibleSectionsFilter } from '@/lib/access/resolveScope'
+import { resolveCircles } from '@/lib/access/resolveScope'
 import ProfileChatSection from './ProfileChatSection'
 import PrivateProfileCard from './PrivateProfileCard'
 import ContactLinks from '@/components/profile/ContactLinks'
-import TagChip from '@/components/ui/TagChip'
-import type { User, VaultSection } from '@/types'
+import type { User } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
 import { isOwnAvatarUrl } from '@/components/ui/Avatar'
 import SimilarityCard from '@/components/similarity/SimilarityCard'
@@ -72,90 +71,25 @@ export default async function ProfilePage(props: Props) {
   // Social Butterfly: compare with several people at once (/compare).
   const canGroup = (visitorLimits?.groupCompare ?? 0) >= 2
 
-  // Only load vault sections the visitor is allowed to see (their circles).
-  let publicSections: VaultSection[] = []
-  if (circles) {
-    const { data: sections } = await supabase
-      .from('vault_sections')
-      .select('*')
-      .eq('user_id', user.id)
-      .or(visibleSectionsFilter(circles))
-      .order('domain', { ascending: true })
-    publicSections = (sections as VaultSection[] | null) ?? []
-  }
-
-  // Get skills and interests for tags display
-  const skillsSection = publicSections.find(s => s.section_type === 'skills')
-  const hobbiesSection = publicSections.find(s => s.section_type === 'hobbies')
-
-  const skillTags = skillsSection?.content
-    ? skillsSection.content.split(',').map(s => s.trim()).filter(Boolean).slice(0, 6)
-    : []
-
-  const hobbyTags = hobbiesSection?.content
-    ? hobbiesSection.content.split(',').map(s => s.trim()).filter(Boolean).slice(0, 4)
-    : []
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Left column: Profile info */}
           <div className="lg:col-span-2 space-y-5">
-            {/* Avatar + Name - with animation */}
+            {/* Picture, name and bio (owner decision 2026-10-11: no Vault boxes here) */}
             <ProfileHeader
               avatarUrl={user.avatar_url}
               displayName={user.display_name}
               shortBio={user.short_bio}
               plan={user.plan}
-            />
+            >
+              {scope && user.contact_links && user.contact_links.length > 0 && <ContactLinks links={user.contact_links} />}
+            </ProfileHeader>
 
             {canCompare && (
               <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
             )}
-
-            {/* Contact links */}
-            {scope && user.contact_links && user.contact_links.length > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
-                <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Connect</p>
-                <ContactLinks links={user.contact_links} />
-              </div>
-            )}
-
-            {/* Skills */}
-            {skillTags.length > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
-                <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Skills</p>
-                <div className="flex flex-wrap gap-2">
-                  {skillTags.map(tag => (
-                    <TagChip key={tag} label={tag} variant="accent" />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Interests */}
-            {hobbyTags.length > 0 && (
-              <div className="bg-card border border-border rounded-2xl p-6 shadow-soft">
-                <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">Interests</p>
-                <div className="flex flex-wrap gap-2">
-                  {hobbyTags.map(tag => (
-                    <TagChip key={tag} label={tag} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Public section summaries */}
-            {publicSections
-              .filter(s => !['skills', 'hobbies'].includes(s.section_type) && s.content?.trim())
-              .slice(0, 3)
-              .map(section => (
-                <div key={section.id} className="bg-card border border-border rounded-2xl p-6 shadow-soft">
-                  <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-2">{section.label}</p>
-                  <p className="text-sm text-text-primary leading-relaxed line-clamp-4">{section.content}</p>
-                </div>
-              ))}
           </div>
 
           {/* Right column: Chat interface */}

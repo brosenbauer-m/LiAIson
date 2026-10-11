@@ -26,7 +26,7 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - Shared: `lib/redis.ts` (one client + `underLimit`), `lib/safeRedirect.ts`, `lib/mistral/client.ts` (`messageText`), `components/ui/Avatar.tsx` (only own-storage pictures)
 - `app/page.tsx` + `components/landing/` home (snap slides, RisingCircles, HowItWorks carousel, Annotated diagrams)
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
-- `app/api/prompts/[username]/` suggested prompts · `app/api/connections/*` request/status/respond/access/remove
+- `app/api/connections/*` request/status/respond/access/remove
 - `/circles` (tiers with 2+ circles; replaces Connections there): `app/circles/CirclesWorkspace.tsx` = Connections panel + `components/circles/CircleBoard.tsx` + Sections panel, filtered by the selected circle; group move via `app/api/circles/place` (people) and vault_sections updates (sections). `/connections` = Introvert only (redirects otherwise)
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
 - `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert+: score + bubble map, cached in similarity_results); `/similarities` (Similarities Chart, never say "compare" in the UI; `/compare` redirects) + `app/api/compare` several people (Butterfly, `group.ts`); chat similarity marker/note → `lib/chat/signals.ts`

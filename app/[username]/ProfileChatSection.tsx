@@ -68,7 +68,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   const [rateLimited, setRateLimited] = useState(false)
   const [limitMessage, setLimitMessage] = useState('')
   const [paused, setPaused] = useState(false)
-  const [suggestedPrompts, setSuggestedPrompts] = useState<string[]>([])
+  const suggestedPrompts = [`Tell me about ${displayName}.`]
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [connectStatus, setConnectStatus] = useState<'none' | 'requested' | 'connected' | 'self' | 'signed_out' | 'loading'>('loading')
@@ -98,12 +98,6 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   }, [])
 
   useEffect(() => {
-    // Fetch suggested prompts
-    fetch(`/api/prompts/${username}`)
-      .then(r => r.json())
-      .then(d => setSuggestedPrompts(d.prompts ?? []))
-      .catch(() => {})
-
     fetch(`/api/connections/status?username=${encodeURIComponent(username)}`)
       .then(r => r.json())
       .then(d => setConnectStatus(d.status ?? 'none'))
@@ -281,7 +275,6 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
           </div>
           <div>
             <p className="font-semibold text-text-primary">{displayName}&apos;s LiAIson</p>
-            <p className="text-xs text-text-secondary">Ask me anything about {displayName}</p>
           </div>
         </div>
         {connectStatus !== 'self' && <button
@@ -329,11 +322,6 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-3" style={{ maxHeight: '400px' }}>
-        {messages.length === 0 && !loading && (
-          <div className="text-center py-12 text-text-secondary">
-            <p className="text-sm">Start a conversation to learn about {displayName}</p>
-          </div>
-        )}
         {messages.map((msg, i) => (
           <div key={i}>
             <ChatBubble role={msg.role} content={msg.content} />
@@ -360,7 +348,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
       </div>
 
       {/* Suggested prompts */}
-      {messages.length === 0 && isLoggedIn && suggestedPrompts.length > 0 && (
+      {messages.length === 0 && isLoggedIn && (
         <motion.div
           variants={staggerContainer}
           initial="hidden"
