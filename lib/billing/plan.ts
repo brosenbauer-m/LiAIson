@@ -114,20 +114,28 @@ export async function getPlanState(userId: string): Promise<PlanState> {
   const supabase = createServiceClient()
   const now = new Date()
 
-  const { data: user, error } = await supabase
-    .from('users')
-    .select('plan, pending_plan, plan_options, billing_exempt, trial_ends_at')
-    .eq('id', userId)
-    .single<{ plan: string; pending_plan: string | null; plan_options: unknown; billing_exempt: boolean; trial_ends_at: string }>()
+  // The three reads don't depend on each other.
+  const [{ data: user, error }, { data: changes }, { data: account }] = await Promise.all([
+    supabase
+      .from('users')
+      .select('plan, pending_plan, plan_options, billing_exempt, trial_ends_at')
+      .eq('id', userId)
+      .single<{ plan: string; pending_plan: string | null; plan_options: unknown; billing_exempt: boolean; trial_ends_at: string }>(),
+    supabase
+      .from('plan_changes')
+      .select('id, to_plan, options, effective_at')
+      .eq('user_id', userId)
+      .order('effective_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(10),
+    supabase
+      .from('billing_accounts')
+      .select('mandate_status, mandate_id')
+      .eq('user_id', userId)
+      .maybeSingle<{ mandate_status: string; mandate_id: string | null }>(),
+  ])
   if (error || !user) throw new Error(error?.message ?? 'user not found')
 
-  const { data: changes } = await supabase
-    .from('plan_changes')
-    .select('id, to_plan, options, effective_at')
-    .eq('user_id', userId)
-    .order('effective_at', { ascending: false })
-    .order('id', { ascending: false })
-    .limit(10)
   const rows = (changes as ChangeRow[] | null) ?? []
   const currentRow = rows.find(r => new Date(r.effective_at) <= now)
   const futureRow = rows.filter(r => new Date(r.effective_at) > now).pop() ?? null
@@ -138,35 +146,31 @@ export async function getPlanState(userId: string): Promise<PlanState> {
   const pending = future && (future.id !== plan || !samePlanOptions(future.options, current.options)) ? future : null
   const pendingPlan: PlanId | null = pending ? pending.id : null
 
+  const syncs: PromiseLike<unknown>[] = []
   // Keep the cached columns in sync (e.g. after a downgrade took effect).
   if (
     user.plan !== plan ||
     (user.pending_plan ?? null) !== pendingPlan ||
     !samePlanOptions(current.options, user.plan_options == null ? null : planLimits(plan, user.plan_options).options)
   ) {
-    await supabase.from('users').update({ plan, pending_plan: pendingPlan, plan_options: current.options }).eq('id', userId)
+    syncs.push(supabase.from('users').update({ plan, pending_plan: pendingPlan, plan_options: current.options }).eq('id', userId))
   }
 
   // One-circle plan (Introvert): Inner Circle sections become drafts (owner
   // decision). They are already hidden from everyone by resolveCircles.
   if (PLANS[plan].circles === 1) {
-    await supabase.from('vault_sections').update({ circle: 'draft' }).eq('user_id', userId).eq('circle', 'inner')
+    syncs.push(supabase.from('vault_sections').update({ circle: 'draft' }).eq('user_id', userId).eq('circle', 'inner'))
   }
   // No own circles on this plan: their sections become drafts (the circles
   // and their members are kept for a later upgrade).
   if (current.extraCircles === 0) {
-    await supabase
+    syncs.push(supabase
       .from('vault_sections')
       .update({ circle: 'draft', custom_circle_id: null })
       .eq('user_id', userId)
-      .eq('circle', 'custom')
+      .eq('circle', 'custom'))
   }
-
-  const { data: account } = await supabase
-    .from('billing_accounts')
-    .select('mandate_status, mandate_id')
-    .eq('user_id', userId)
-    .maybeSingle<{ mandate_status: string; mandate_id: string | null }>()
+  await Promise.all(syncs)
 
   return {
     plan,
