@@ -23,6 +23,7 @@ State, next steps and how to ship: `claude/roadmap.md`, `claude/handover.md`, `c
 Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgres, Auth, Storage `avatars`) · Mistral EU (`lib/mistral/client.ts`: medium = chat, small = fast tasks, mistral-embed = search) · Upstash Redis · Scaleway email (`lib/email/scaleway.ts`) · Mollie payments · Vercel fra1 (2 crons in `vercel.json`).
 
 ## Code map
+- Phones: bottom tab bar in `components/nav/SiteHeader.tsx` (body `has-tabbar` padding in globals.css); `app/manifest.ts` + `public/icon-*.png` (home-screen app)
 - Shared: `lib/redis.ts` (one client + `underLimit`), `lib/safeRedirect.ts`, `lib/mistral/client.ts` (`messageText`), `components/ui/Avatar.tsx` (only own-storage pictures)
 - `app/page.tsx` + `components/landing/` home (snap slides, RisingCircles, HowItWorks carousel, Annotated diagrams)
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
