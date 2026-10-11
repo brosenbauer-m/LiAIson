@@ -9,9 +9,7 @@ import { play } from '@/components/circles/sound'
 // each other, plus own circles on their own outside the Outer Circle, on a
 // large open area. Circles float like bubbles; tapping one selects it.
 // With own circles (Social Butterfly) a circle can be dragged into another one
-// or out onto the open area. Borders feel like jelly (owner design 2026-10-10):
-// a circle pushed against a border squishes and is held back for a moment,
-// then gives in and goes through; circles it touches are nudged aside.
+// or out onto the open area; the circle it is over grows a little and bends.
 // People and sections dragged from the side panels are dropped via hitTest().
 
 export type BoardHandle = { hitTest: (clientX: number, clientY: number) => string | null }
@@ -24,15 +22,12 @@ type Drag = {
   center: Point // where the pointer wants the circle
   holder: string // where the circle sits now ('alone' = on its own)
   target: string | null
-  since: number // when the circle started pressing into `target`
-  accepted: boolean // the border gave in
   valid: boolean
 }
 
 const MIN_DRAG = 6 // px before a press becomes a drag (a shorter press is a tap)
 const SIDE = 36 // px of open area left and right of the circles
 const ROOM = 110 // px of open area above and below (drop zone for "on its own")
-const GIVE_MS = 320 // how long a border holds before it gives in
 const BLOB = '45% 55% 53% 47% / 56% 44% 56% 44%'
 
 function bob(id: string): React.CSSProperties {
@@ -71,14 +66,13 @@ export default function CircleBoard({
   const canvasRef = useRef<HTMLDivElement>(null)
   const press = useRef<{ id: string; x: number; y: number; dragging: boolean } | null>(null)
   const dragRef = useRef<Drag | null>(null)
-  const giveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const el = wrapRef.current
     if (!el) return
     const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
     ro.observe(el)
-    return () => { ro.disconnect(); if (giveTimer.current) clearTimeout(giveTimer.current) }
+    return () => ro.disconnect()
   }, [])
 
   const full = Math.min(width || 340, maxWidth)
@@ -129,25 +123,13 @@ export default function CircleBoard({
     },
   }))
 
-  // Works out target / resistance for a wanted centre and stores the drag.
-  const update = (id: string, center: Point, inside: boolean, grab: Point, now: number) => {
-    const prev = dragRef.current
+  // Works out the target for a wanted centre and stores the drag.
+  const update = (id: string, center: Point, inside: boolean, grab: Point) => {
     const holder = placeOf(id)
     const hit = circleAt(nodes, center.x, center.y, subtreeIds(nodes, id))
     const target = hit ? hit.id : inside ? 'alone' : null
-    const changed = !prev || prev.target !== target
-    const since = changed ? now : prev.since
-    const accepted = target === holder || target === null || now - since >= GIVE_MS
-    if (accepted && prev && !prev.accepted && target !== holder && target) play('lift')
-    if (!accepted) {
-      if (giveTimer.current) clearTimeout(giveTimer.current)
-      giveTimer.current = setTimeout(() => {
-        const d = dragRef.current
-        if (d) update(d.id, d.center, true, d.grab, d.since + GIVE_MS + 10)
-      }, GIVE_MS - (now - since) + 10)
-    }
     const valid = target === 'alone' || (!!target && canMoveInto(nodes, id, target))
-    const next: Drag = { id, grab, center, holder, target, since, accepted, valid }
+    const next: Drag = { id, grab, center, holder, target, valid }
     dragRef.current = next
     setDrag(next)
   }
@@ -168,18 +150,17 @@ export default function CircleBoard({
       play('lift')
       const start = toLayout(p.x, p.y)
       dragRef.current = null
-      update(p.id, { x: node.x, y: node.y }, true, { x: node.x - start.x, y: node.y - start.y }, e.timeStamp)
+      update(p.id, { x: node.x, y: node.y }, true, { x: node.x - start.x, y: node.y - start.y })
     }
     const grab = dragRef.current?.grab ?? { x: 0, y: 0 }
-    update(p.id, { x: point.x + grab.x, y: point.y + grab.y }, point.inside, grab, e.timeStamp)
+    update(p.id, { x: point.x + grab.x, y: point.y + grab.y }, point.inside, grab)
   }
   const finish = (drop: boolean) => {
     const d = dragRef.current
     dragRef.current = null
-    if (giveTimer.current) clearTimeout(giveTimer.current)
     setDrag(null)
     if (!drop || !d) return
-    if (d.accepted && d.valid && d.target && d.target !== d.holder) {
+    if (d.valid && d.target && d.target !== d.holder) {
       play('drop')
       onMoveCircle(d.id, d.target)
     } else play('back')
@@ -193,60 +174,12 @@ export default function CircleBoard({
   }
   const onPointerCancel = () => { press.current = null; finish(false) }
 
-  // --- Where everything is drawn while dragging -----------------------------
+  // --- Where the dragged circle (and what is inside it) is drawn -------------
   const dragged = drag ? byId.get(drag.id) : undefined
-  let visual: Point | null = null
-  let squish: { angle: number; along: number; across: number } | null = null
-  const resisting = !!drag && !drag.accepted && drag.target !== drag.holder
-  if (drag && dragged) {
-    visual = drag.center
-    if (resisting) {
-      // Held on the border it is pushing against (the nearer of the two).
-      const candidates = [drag.target, drag.holder].map(id => (id ? byId.get(id) : undefined)).filter((n): n is LaidOut => !!n)
-      const border = candidates.sort((a, b) =>
-        Math.abs(Math.hypot(drag.center.x - a.x, drag.center.y - a.y) - a.r) - Math.abs(Math.hypot(drag.center.x - b.x, drag.center.y - b.y) - b.r))[0]
-      if (border) {
-        const dx = drag.center.x - border.x
-        const dy = drag.center.y - border.y
-        const dist = Math.max(0.001, Math.hypot(dx, dy))
-        const edge = { x: border.x + (dx / dist) * border.r, y: border.y + (dy / dist) * border.r }
-        visual = { x: edge.x + (drag.center.x - edge.x) * 0.35, y: edge.y + (drag.center.y - edge.y) * 0.35 }
-        const depth = Math.min(1, Math.abs(dist - border.r) / Math.max(1, dragged.r))
-        squish = { angle: (Math.atan2(dy, dx) * 180) / Math.PI, along: 1 - 0.2 * depth, across: 1 + 0.1 * depth }
-      }
-    }
-  }
-  const dragOffset = visual && dragged ? { x: visual.x - dragged.x, y: visual.y - dragged.y } : { x: 0, y: 0 }
-
-  // Circles the dragged one touches are nudged aside (with what is inside them).
-  const push = new Map<string, Point>()
-  if (visual && dragged && moving) {
-    for (const n of nodes) {
-      if (moving.has(n.id)) continue
-      const dist = Math.hypot(n.x - visual.x, n.y - visual.y)
-      if (dist < n.r) continue // contains the dragged circle
-      const parent = n.parent ? byId.get(n.parent) : undefined
-      if (parent && Math.hypot(parent.x - visual.x, parent.y - visual.y) >= parent.r) continue // its parent gets nudged instead
-      const overlap = dragged.r + n.r - dist
-      if (overlap <= 0) continue
-      const k = Math.min(overlap * 0.4, 18) / Math.max(0.001, dist)
-      push.set(n.id, { x: (n.x - visual.x) * k, y: (n.y - visual.y) * k })
-    }
-  }
-  const nudge = (n: LaidOut): Point => {
-    let x = 0
-    let y = 0
-    for (let m: LaidOut | undefined = n; m; m = m.parent ? byId.get(m.parent) : undefined) {
-      const p = push.get(m.id)
-      if (p) { x += p.x; y += p.y }
-    }
-    return { x, y }
-  }
+  const dragOffset = drag && dragged ? { x: drag.center.x - dragged.x, y: drag.center.y - dragged.y } : { x: 0, y: 0 }
 
   const hint = drag
-    ? resisting && drag.valid && drag.target
-      ? 'Keep pushing…'
-      : drag.accepted && drag.valid && drag.target && drag.target !== drag.holder
+    ? drag.valid && drag.target && drag.target !== drag.holder
         ? drag.target === 'alone'
           ? `Let go to keep ${dragged?.name} on its own, outside the Outer Circle`
           : `Let go to put ${dragged?.name} in ${byId.get(drag.target)?.name}`
@@ -261,17 +194,16 @@ export default function CircleBoard({
       <div
         ref={canvasRef}
         className={`relative mx-auto mt-2 select-none rounded-[3rem] border border-dashed transition-colors [-webkit-touch-callout:none] ${
-          drag?.target === 'alone' && drag.accepted && drag.valid && drag.holder !== 'alone' ? 'border-accent/40 bg-accent-tint/30' : 'border-transparent'
+          drag?.target === 'alone' && drag.valid && drag.holder !== 'alone' ? 'border-accent/40 bg-accent-tint/30' : 'border-transparent'
         }`}
         style={{ width: canvasW, height: canvasH }}
       >
         {nodes.map(n => {
           const isMoving = !!moving?.has(n.id)
           const isDragged = drag?.id === n.id
-          const pressing = !!drag && drag.valid && drag.target === n.id && n.id !== drag.holder
-          const isTarget = (pressing && drag!.accepted) || dropTarget === n.id
+          const isTarget = (!!drag && drag.valid && drag.target === n.id && n.id !== drag.holder) || dropTarget === n.id
           const isSelected = selected === n.id
-          const off = isMoving ? dragOffset : nudge(n)
+          const off = isMoving ? dragOffset : { x: 0, y: 0 }
           const d = n.r * 2 * scale
           const atTop = n.hasChildren || n.kind === 'outer'
           const st = stats[n.id] ?? { people: 0, sections: 0 }
@@ -289,13 +221,13 @@ export default function CircleBoard({
                 y: py(n.y + off.y) - d / 2,
                 width: d,
                 height: d,
-                scale: isTarget ? 1.06 : pressing ? 1.025 : isDragged ? 1.04 : 1,
+                scale: isTarget ? 1.06 : isDragged ? 1.04 : 1,
               }}
               transition={reduceMotion
                 ? { duration: 0 }
                 : isMoving
-                  ? { type: 'spring', stiffness: 520, damping: 30, mass: 0.8 }
-                  : { type: 'spring', stiffness: 200, damping: 14, mass: 1 }}
+                  ? { type: 'spring', stiffness: 650, damping: 40, mass: 0.7 }
+                  : { type: 'spring', stiffness: 220, damping: 18, mass: 0.9 }}
               whileHover={!drag ? { scale: 1.02 } : undefined}
               className={`absolute left-0 top-0 rounded-full outline-none ${
                 canArrange && n.kind === 'custom' ? (isDragged ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-pointer'
@@ -312,23 +244,18 @@ export default function CircleBoard({
               onLostPointerCapture={() => { if (press.current) onPointerCancel() }}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(n.id) } }}
             >
-              {/* Floats on its own (CSS "bob"); the bubble squishes and bends like jelly. */}
+              {/* Floats on its own (CSS "bob"); bends a little when something is dragged onto it. */}
               <span className={`absolute inset-0 ${isMoving || reduceMotion ? '' : 'animate-bob'}`} style={bob(n.id)}>
-                <span
-                  className="absolute inset-0 transition-transform duration-150 ease-out"
-                  style={isDragged && squish ? { transform: `rotate(${squish.angle}deg) scale(${squish.along}, ${squish.across}) rotate(${-squish.angle}deg)` } : undefined}
-                >
                   <motion.span
                     initial={false}
-                    animate={{ borderRadius: (isTarget || pressing) && !reduceMotion ? BLOB : '50%' }}
-                    transition={{ type: 'spring', stiffness: 140, damping: 9 }}
+                    animate={{ borderRadius: isTarget && !reduceMotion ? BLOB : '50%' }}
+                    transition={{ type: 'spring', stiffness: 160, damping: 12 }}
                     className={`absolute inset-0 border transition-[box-shadow,border-color,background-color] ${tone} ${
-                      isTarget ? '!border-accent/70 ring-4 ring-accent/10' : pressing ? '!border-accent/50' : ''
+                      isTarget ? '!border-accent/70 ring-4 ring-accent/10' : ''
                     } ${isSelected ? '!border-accent ring-2 ring-accent/60 shadow-card' : ''} ${
                       isDragged ? 'shadow-card' : n.kind === 'custom' ? 'shadow-[0_2px_6px_rgba(43,30,22,0.07)]' : ''
                     }`}
                   />
-                </span>
                 <span
                   className={`absolute inset-x-0 flex flex-col items-center leading-tight pointer-events-none ${atTop ? 'top-0 pt-3 px-3' : 'inset-y-0 justify-center px-2'}`}
                   style={{ fontSize: 14 * textScale }}

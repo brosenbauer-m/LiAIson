@@ -179,8 +179,7 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
             </p>
             <p>
               <span className="font-semibold text-text-primary">*</span> Buttons and features marked with an asterisk use AI and count
-              towards your usage: messages and Proofread are paid per use; Similarity checks and searches by description use your
-              tier&apos;s monthly allowance.
+              towards your usage.
             </p>
           </div>
         </>

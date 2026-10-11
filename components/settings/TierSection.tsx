@@ -5,9 +5,7 @@ import Link from 'next/link'
 import TierPicker, { feeOfChoice, type TierChoice } from '@/components/plans/TierPicker'
 import {
   PLANS,
-  BUTTERFLY_SLIDERS,
   DEFAULT_PLAN_OPTIONS,
-  SLIDER_KEYS,
   formatEur,
   samePlanOptions,
   type PlanId,
@@ -32,6 +30,7 @@ type PlanState = {
   customCircles: number
   searches: { used: number; quota: number } | null
   similarities: { used: number; quota: number } | null
+  trialMessages: { used: number; quota: number } | null
 }
 
 // One limit of the tier with its bar.
@@ -118,16 +117,6 @@ export default function TierSection() {
       </div>
       <p className="font-display text-3xl text-text-primary">{plan.name}</p>
 
-      {state.options && (
-        <ul className="text-sm text-text-secondary space-y-0.5">
-          {SLIDER_KEYS.map(key => (
-            <li key={key} className="flex justify-between gap-4">
-              <span>{BUTTERFLY_SLIDERS[key].label}</span>
-              <span className="tabular-nums text-text-primary">{state.options![key].toLocaleString('en-GB')}</span>
-            </li>
-          ))}
-        </ul>
-      )}
 
       <div className="space-y-3">
         <LimitBar label="Vault" used={state.vaultChars} limit={state.vaultLimit} unit="characters" />
@@ -138,6 +127,7 @@ export default function TierSection() {
           <LimitBar label="Similarity checks this month" used={state.similarities.used} limit={state.similarities.quota} />
         )}
         {state.extraCircles > 0 && <LimitBar label="Own circles" used={state.customCircles} limit={state.extraCircles} />}
+        {state.trialMessages && <LimitBar label="Free messages today" used={state.trialMessages.used} limit={state.trialMessages.quota} />}
       </div>
 
       {state.pendingPlan && state.pendingFrom && (

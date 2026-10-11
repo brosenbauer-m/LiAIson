@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import EchoesLocked from '@/components/plans/EchoesLocked'
 import LiaisonNote from '@/components/insights/LiaisonNote'
+import EchoEmailSettings from '@/components/insights/EchoEmailSettings'
 
 type Category = { category: string; count: number; examples: string[] }
 type Echoes = 'none' | 'monthly' | 'weekly_monthly'
@@ -30,13 +31,13 @@ export default function VisitorInsights() {
         const body = await res.json().catch(() => null)
         if (cancelled) return
         if (!res.ok || !body) {
-          setError('Could not load insights right now.')
+          setError('Could not load your Echoes right now.')
           setData(null)
         } else {
           setData({ total: body.total ?? 0, categories: body.categories ?? [], locked: body.locked ? body.echoes : undefined, latestNote: body.latestNote ?? null })
         }
       })
-      .catch(() => { if (!cancelled) setError('Could not load insights right now.') })
+      .catch(() => { if (!cancelled) setError('Could not load your Echoes right now.') })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [period])
@@ -118,7 +119,7 @@ export default function VisitorInsights() {
         </div>
       )}
 
-      <Link href="/insights" className="inline-block text-sm font-medium text-accent hover:underline">
+      <Link href="/echoes" className="inline-block text-sm font-medium text-accent hover:underline">
         See Your Weekly and Monthly Echoes →
       </Link>
 
@@ -128,6 +129,10 @@ export default function VisitorInsights() {
           <LiaisonNote note={data.latestNote} compact />
         </div>
       )}
+
+      <div className="border-t border-border pt-5">
+        <EchoEmailSettings compact />
+      </div>
     </div>
   )
 }

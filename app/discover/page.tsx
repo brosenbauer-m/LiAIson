@@ -16,6 +16,12 @@ type SearchResult = {
 type ContentResult = SearchResult & { match: 'full' | 'partial'; reason: string }
 type Mode = 'name' | 'content'
 
+// Both searches (By Name and By Description) look exactly the same.
+const SEARCH_FIELD =
+  'w-full min-h-[60px] bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-base leading-[26px] text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft'
+const SEARCH_ICON = 'pointer-events-none absolute left-4 top-5 h-5 w-5 text-text-muted'
+const SEARCH_BUTTON = 'self-end h-[60px] w-28 flex-shrink-0 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50'
+
 export default function DiscoverPage() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -156,6 +162,10 @@ export default function DiscoverPage() {
             <div className="space-y-4">
               {/* Lower tiers see the same search, greyed; tapping it explains why. */}
               <form onSubmit={runContentSearch} className={`flex gap-2 ${locked ? 'opacity-50' : ''}`} onClick={() => { if (locked) setShowLocked(true) }}>
+                <div className="relative flex-1 min-w-0">
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={SEARCH_ICON}>
+            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+          </svg>
                 <textarea
                   value={contentQuery}
                   onChange={e => { setContentQuery(e.target.value); grow(e.currentTarget) }}
@@ -168,12 +178,13 @@ export default function DiscoverPage() {
                   autoComplete="off"
                   aria-label="Describe who you are looking for"
                   aria-disabled={locked}
-                  className={`flex-1 min-w-0 resize-none overflow-hidden leading-relaxed bg-card border border-border rounded-2xl px-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft ${locked ? 'cursor-not-allowed' : ''}`}
+                  className={`${SEARCH_FIELD} block resize-none overflow-hidden ${locked ? 'cursor-not-allowed' : ''}`}
                 />
+                </div>
                 <button
                   type="submit"
                   disabled={locked || contentLoading || contentQuery.trim().length < 3 || quota.used >= quota.quota}
-                  className="self-end h-[58px] px-6 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50"
+                  className={SEARCH_BUTTON}
                 >
                   Search<span aria-hidden="true">*</span>
                 </button>
@@ -222,12 +233,7 @@ export default function DiscoverPage() {
         <>
         <form className="flex gap-2" onSubmit={e => { e.preventDefault(); (document.activeElement as HTMLElement | null)?.blur() }}>
         <div className="relative flex-1 min-w-0">
-          <svg
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted"
-          >
+          <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" className={SEARCH_ICON}>
             <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
           </svg>
           <input
@@ -239,10 +245,10 @@ export default function DiscoverPage() {
             autoFocus
             autoComplete="off"
             aria-label="Search people"
-            className="w-full bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft"
+            className={`${SEARCH_FIELD} block [&::-webkit-search-cancel-button]:hidden`}
           />
         </div>
-        <button type="submit" disabled={!query.trim()} className="h-[58px] px-6 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50">
+        <button type="submit" disabled={!query.trim()} className={SEARCH_BUTTON}>
           Search
         </button>
         </form>

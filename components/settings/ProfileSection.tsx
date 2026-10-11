@@ -1,16 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/ui/Avatar'
-import Toggle from '@/components/ui/Toggle'
 import AccountEmailCard from '@/components/settings/AccountEmailCard'
 import type { ContactLink } from '@/types'
-import { echoAllowed, isPlanId, type PlanId } from '@/lib/plans'
 
-// Settings → Profile: photo, name, email (+ weekly / monthly Echo emails, as
-// far as the tier has them), bio and links. The bio is stored as the "Profile
+// Settings → Profile: photo, name, email, bio and links (Echo emails are on
+// the Echoes page). The bio is stored as the "Profile
 // Bio" section of the Vault (always public, not shown in the Vault editor);
 // the database keeps users.short_bio in step with it.
 
@@ -30,8 +27,6 @@ export default function ProfileSection() {
   const [contactLinks, setContactLinks] = useState<ContactLink[]>([])
   const [bio, setBio] = useState('')
   const [bioSectionId, setBioSectionId] = useState<string | null>(null)
-  const [echoEmails, setEchoEmails] = useState({ weekly: true, monthly: true })
-  const [plan, setPlan] = useState<PlanId>('introvert')
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -41,20 +36,14 @@ export default function ProfileSection() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const [{ data: profile }, { data: bioRow }, planRes] = await Promise.all([
-        supabase.from('users').select('display_name, avatar_url, contact_links, short_bio, report_emails_weekly, report_emails_monthly').eq('id', user.id).single(),
+      const [{ data: profile }, { data: bioRow }] = await Promise.all([
+        supabase.from('users').select('display_name, avatar_url, contact_links, short_bio').eq('id', user.id).single(),
         supabase.from('vault_sections').select('id, content').eq('user_id', user.id).eq('section_type', 'profile_bio').maybeSingle(),
-        fetch('/api/plan', { cache: 'no-store' }).catch(() => null),
       ])
-      if (planRes?.ok) {
-        const p = ((await planRes.json()) as { plan?: string }).plan
-        if (isPlanId(p)) setPlan(p)
-      }
       if (profile) {
         setDisplayName(profile.display_name ?? '')
         setAvatarUrl(profile.avatar_url)
         setContactLinks(Array.isArray(profile.contact_links) ? profile.contact_links : [])
-        setEchoEmails({ weekly: profile.report_emails_weekly !== false, monthly: profile.report_emails_monthly !== false })
         setBio(bioRow?.content ?? profile.short_bio ?? '')
       }
       setBioSectionId(bioRow?.id ?? null)
@@ -80,14 +69,6 @@ export default function ProfileSection() {
     }
     const { data } = supabase.storage.from('avatars').getPublicUrl(path)
     setAvatarUrl(`${data.publicUrl}?v=${Date.now()}`)
-  }
-
-  const toggleEchoEmails = async (which: 'weekly' | 'monthly') => {
-    if (!userId) return
-    const next = !echoEmails[which]
-    setEchoEmails(prev => ({ ...prev, [which]: next }))
-    const { error } = await supabase.from('users').update({ [`report_emails_${which}`]: next }).eq('id', userId)
-    if (error) setEchoEmails(prev => ({ ...prev, [which]: !next }))
   }
 
   const save = async () => {
@@ -151,32 +132,6 @@ export default function ProfileSection() {
 
       <div className="space-y-4">
         <AccountEmailCard bare />
-        <div className="space-y-3">
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Email me my Echoes. <Link href="/#echoes" className="text-accent hover:underline font-medium">Learn More</Link>
-          </p>
-          {(['monthly', 'weekly'] as const).map(which => {
-            const allowed = echoAllowed(plan, which === 'weekly' ? 'week' : 'month')
-            return (
-              <div key={which} className={`flex items-center justify-between gap-4 ${allowed ? '' : 'opacity-60'}`}>
-                <div>
-                  <p className="text-sm font-medium text-text-primary">{which === 'weekly' ? 'Weekly' : 'Monthly'}</p>
-                  {!allowed && (
-                    <Link href="/settings#subscription" className="text-xs italic text-text-muted hover:text-accent">
-                      Upgrade to a higher tier for this feature
-                    </Link>
-                  )}
-                </div>
-                <Toggle
-                  checked={allowed && echoEmails[which]}
-                  onChange={() => toggleEchoEmails(which)}
-                  disabled={!allowed}
-                  label={`Email me my ${which} Echoes`}
-                />
-              </div>
-            )
-          })}
-        </div>
       </div>
 
       <div>
