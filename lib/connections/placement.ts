@@ -42,10 +42,13 @@ export async function applyPlacement(ownerId: string, memberId: string, placemen
 export async function connectBothWays(a: string, b: string, placementForB: string, placementForA: string): Promise<void> {
   const service = createServiceClient()
   for (const [from, to] of [[a, b], [b, a]] as const) {
+    const accept = () => service.from('connection_interests').update({ status: 'accepted', allowed_scope: 'both' }).eq('from_user_id', from).eq('to_user_id', to)
     const { data: row } = await service.from('connection_interests').select('id').eq('from_user_id', from).eq('to_user_id', to).maybeSingle<{ id: string }>()
-    const { error } = row
-      ? await service.from('connection_interests').update({ status: 'accepted', allowed_scope: 'both' }).eq('id', row.id)
+    let { error } = row
+      ? await accept()
       : await service.from('connection_interests').insert({ from_user_id: from, to_user_id: to, status: 'accepted', allowed_scope: 'both', in_inner_circle: false })
+    // Created at the same moment by another request (one row per pair, migration 37).
+    if (error?.code === '23505') ({ error } = await accept())
     if (error) throw new Error(error.message)
   }
   // b → a is seen by a: a's choice for b; a → b is seen by b: b's choice for a.
