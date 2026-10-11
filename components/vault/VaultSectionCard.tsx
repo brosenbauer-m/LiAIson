@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
-import ProofreadPanel from '@/components/vault/ProofreadPanel'
 import { circleChain, circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
@@ -26,8 +25,6 @@ const countChars = (text: string) => Array.from(text).length
 export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft, innerAllowed, customCircles, noCircles }: VaultSectionCardProps) {
   const [content, setContent] = useState(section.content)
   const [placement, setPlacement] = useState<Placement>(placementOf(section))
-  // Proofread opens once the person starts writing in this section.
-  const [writing, setWriting] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
@@ -36,6 +33,61 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
   const fileRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [importNote, setImportNote] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  // Optimize Text (AI, only on request): asks first, then puts the shorter
+  // text straight into the section; Undo puts the earlier text back.
+  const [confirmingOptimize, setConfirmingOptimize] = useState(false)
+  const [optimizing, setOptimizing] = useState(false)
+  const [beforeOptimize, setBeforeOptimize] = useState<string | null>(null)
+  const [optimizeNote, setOptimizeNote] = useState<{ type: 'ok' | 'error'; text: string } | null>(null)
+
+  const handleOptimize = async () => {
+    setOptimizing(true)
+    setOptimizeNote(null)
+    try {
+      const res = await fetch('/api/vault/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content }),
+      })
+      const data = await res.json().catch(() => ({})) as { optimized?: string; error?: string }
+      if (!res.ok || typeof data.optimized !== 'string') {
+        setOptimizeNote({ type: 'error', text: data.error ?? 'Optimize Text is not available right now.' })
+        return
+      }
+      window.dispatchEvent(new Event('liaison:usage-changed'))
+      setConfirmingOptimize(false)
+      if (data.optimized === content) {
+        setOptimizeNote({ type: 'ok', text: 'This text is already as short as it can be.' })
+        return
+      }
+      const saved = countChars(content) - countChars(data.optimized)
+      setBeforeOptimize(content)
+      setContent(data.optimized)
+      setOptimizeNote({ type: 'ok', text: `${saved.toLocaleString('en-GB')} characters freed up. Review the text, then Save.` })
+    } catch {
+      setOptimizeNote({ type: 'error', text: 'Optimize Text is not available right now.' })
+    } finally {
+      setOptimizing(false)
+    }
+  }
+
+  const undoOptimize = () => {
+    if (beforeOptimize === null) return
+    setContent(beforeOptimize)
+    setBeforeOptimize(null)
+    setOptimizeNote(null)
+  }
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointer = (e: PointerEvent) => { if (e.target instanceof Node && !menuRef.current?.contains(e.target)) setMenuOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false) }
+    document.addEventListener('pointerdown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onPointer); document.removeEventListener('keydown', onKey) }
+  }, [menuOpen])
 
   // Import a PDF or Word file into this section: its text is added below what
   // is already here, ready to review; nothing is saved until you press Save.
@@ -128,16 +180,50 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
   }
   return (
     <div className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft">
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex items-center justify-between gap-3">
         <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={importing}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-sm text-text-secondary hover:border-accent hover:text-text-primary disabled:opacity-60"
-        >
-          <span aria-hidden="true">↑</span> {importing ? 'Reading file…' : 'Import File'}
-        </button>
+        <div ref={menuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="More options"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className={`w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-accent-tint ${menuOpen ? 'bg-accent-tint text-text-primary' : ''}`}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5" aria-hidden="true"><circle cx="4" cy="10" r="1.6" /><circle cx="10" cy="10" r="1.6" /><circle cx="16" cy="10" r="1.6" /></svg>
+          </button>
+          {menuOpen && (
+            <div role="menu" className="absolute right-0 mt-1 w-52 rounded-xl border border-border bg-surface shadow-card p-1 z-20 animate-message-in">
+              <button
+                type="button"
+                role="menuitem"
+                disabled={importing}
+                onClick={() => { setMenuOpen(false); fileRef.current?.click() }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-text-primary hover:bg-accent-tint disabled:opacity-60"
+              >
+                {importing ? 'Reading File…' : 'Import File'}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled={content.trim().length < 20}
+                onClick={() => { setMenuOpen(false); setConfirmingDelete(false); setOptimizeNote(null); setConfirmingOptimize(true) }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-text-primary hover:bg-accent-tint disabled:opacity-50"
+              >
+                Optimize Text<span aria-hidden="true">*</span>
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); setConfirmingOptimize(false); setConfirmingDelete(true) }}
+                className="w-full text-left px-3 py-2 rounded-lg text-sm text-error hover:bg-error/10"
+              >
+                Delete Section
+              </button>
+            </div>
+          )}
+        </div>
         <input
           ref={fileRef}
           type="file"
@@ -152,16 +238,76 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
         </p>
       )}
 
-      <div className={writing ? 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_17rem] items-start' : ''}>
-        <textarea
-          value={content}
-          onChange={e => { setContent(e.target.value); setWriting(true) }}
-          placeholder={`Add information about your ${section.label.toLowerCase()}...`}
-          rows={4}
-          className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all"
-        />
-        <ProofreadPanel text={content} active={writing} onAccept={setContent} />
-      </div>
+      {confirmingDelete && (
+        <div ref={deleteConfirmationRef} className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-error/20 bg-error/5 px-4 py-3">
+          <span className="text-sm text-text-primary">Delete this section?</span>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmingDelete(false)}
+              disabled={deleting}
+              className="px-3 py-1.5 text-sm text-text-secondary border border-border rounded-lg hover:border-text-secondary transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Yes, Delete'}
+            </button>
+          </span>
+        </div>
+      )}
+
+      {confirmingOptimize && (
+        <div className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-accent/20 bg-accent-tint px-4 py-3">
+          <span className="text-sm text-text-primary">Automatically optimize this text to free up Vault storage?</span>
+          <span className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setConfirmingOptimize(false)}
+              disabled={optimizing}
+              className="px-3 py-1.5 text-sm text-text-secondary border border-border rounded-lg hover:border-text-secondary transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleOptimize()}
+              disabled={optimizing}
+              className="px-3 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-light rounded-lg transition-all disabled:opacity-60"
+            >
+              {optimizing ? 'Optimizing…' : <>Optimize Text<span aria-hidden="true">*</span></>}
+            </button>
+          </span>
+        </div>
+      )}
+
+      <textarea
+        value={content}
+        onChange={e => setContent(e.target.value)}
+        placeholder={`Add information about your ${section.label.toLowerCase()}...`}
+        rows={4}
+        readOnly={optimizing}
+        className={`w-full bg-background border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-y transition-all ${optimizing ? 'opacity-60 animate-pulse' : ''}`}
+      />
+      {(optimizeNote || beforeOptimize !== null) && (
+        <div className="-mt-2 flex items-center gap-3 flex-wrap text-xs">
+          {optimizeNote && (
+            <span className={optimizeNote.type === 'error' ? 'text-error' : 'text-success'} role={optimizeNote.type === 'error' ? 'alert' : 'status'}>
+              {optimizeNote.text}
+            </span>
+          )}
+          {beforeOptimize !== null && (
+            <button type="button" onClick={undoOptimize} className="px-3 py-1 rounded-full border border-border text-text-secondary hover:text-text-primary hover:border-accent/50 font-medium">
+              Undo?
+            </button>
+          )}
+        </div>
+      )}
       <p className={`-mt-2 text-xs ${blocked ? 'text-error' : 'text-text-muted'}`}>
         {blocked
           ? <>This is {overBy.toLocaleString('en-GB')} characters more than fits in your Vault. Shorten it, or <Link href="/settings#subscription" className="underline">get more space with a higher plan</Link>.</>
@@ -216,37 +362,6 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
         </div>
       </div>
 
-      <div className="flex justify-end border-t border-border pt-3">
-        {confirmingDelete ? (
-          <div ref={deleteConfirmationRef} className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-text-secondary">Delete this section?</span>
-            <button
-              type="button"
-              onClick={() => setConfirmingDelete(false)}
-              disabled={deleting}
-              className="px-3 py-1.5 text-sm text-text-secondary border border-border rounded-lg hover:border-text-secondary transition-all disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all disabled:opacity-50"
-            >
-              {deleting ? 'Deleting...' : 'Yes, Delete'}
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmingDelete(true)}
-            className="px-3 py-1.5 text-sm text-red-700 border border-red-300 rounded-lg hover:bg-red-600 hover:border-red-600 hover:text-white transition-all"
-          >
-            Delete Section
-          </button>
-        )}
-      </div>
     </div>
   )
 }

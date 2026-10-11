@@ -34,7 +34,7 @@ export function isMeteredFeature(feature: string): boolean {
 }
 
 // Features billed pay-as-you-go (to the sender / the person using them):
-// chat messages and Vault Proofread. 'topic' is legacy (no longer produced). Insight capture and Echoes ('insight', 'echo') are logged to the
+// chat messages and Vault Optimize Text (logged as 'proofread'). 'topic' is legacy (no longer produced). Insight capture and Echoes ('insight', 'echo') are logged to the
 // LiAIson owner but belong to the Echoes feature subscription, so not metered.
 const METERED_FEATURES = new Set(['chat', 'topic', 'proofread'])
 
