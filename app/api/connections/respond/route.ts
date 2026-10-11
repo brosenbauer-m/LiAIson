@@ -41,6 +41,14 @@ export async function POST(request: NextRequest) {
       const mine = await allowedPlacement(user.id, placement ?? (inner === true ? 'inner' : 'outer'))
       const theirs = await allowedPlacement(connection.from_user_id, connection.requester_placement)
       await connectBothWays(user.id, connection.from_user_id, mine, theirs)
+      const { data: me } = await serviceSupabase.from('users').select('display_name').eq('id', user.id).maybeSingle<{ display_name: string }>()
+      await serviceSupabase.from('notifications').insert({
+        user_id: connection.from_user_id,
+        type: 'connection_match',
+        message: `${me?.display_name ?? 'Someone'} accepted your connection request.`,
+        metadata: { connection_id: connectionId },
+        read: false,
+      })
     } catch {
       return NextResponse.json({ error: 'Failed to respond to connection request' }, { status: 500 })
     }

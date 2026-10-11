@@ -4,9 +4,12 @@ import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import CopyButton from '@/components/ui/CopyButton'
 import VisitorInsights from './VisitorInsights'
+import NotificationsWidget from './NotificationsWidget'
+import type { ConnectionRequest } from '../connections/ConnectionRequests'
+import type { Notification } from '@/types'
 
-// Signed-in home: your link and your Echoes. Navigation lives in the header,
-// notifications in the header bell, suggested people on Connections.
+// Signed-in home: your link, your Echoes and your notifications (connection
+// requests can be accepted or ignored here). Navigation lives in the header.
 
 export const dynamic = 'force-dynamic'
 
@@ -15,11 +18,24 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await createServiceClient()
-    .from('users')
-    .select('username, display_name')
-    .eq('id', user.id)
-    .single<{ username: string; display_name: string }>()
+  const service = createServiceClient()
+  const [{ data: profile }, { data: requests }, { data: notifications }] = await Promise.all([
+    service.from('users').select('username, display_name').eq('id', user.id).single<{ username: string; display_name: string }>(),
+    service
+      .from('connection_interests')
+      .select('id, created_at, from_user:users!connection_interests_from_user_id_fkey(id, username, display_name, avatar_url, plan)')
+      .eq('to_user_id', user.id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false }),
+    service
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('read', false)
+      .neq('type', 'connection_interest')
+      .order('created_at', { ascending: false })
+      .limit(20),
+  ])
 
   const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://my-liaison.app'}/${profile?.username ?? ''}`
 
@@ -50,6 +66,11 @@ export default async function DashboardPage() {
         </div>
 
         <VisitorInsights />
+
+        <NotificationsWidget
+          requests={(requests as ConnectionRequest[] | null) ?? []}
+          notifications={(notifications as Notification[] | null) ?? []}
+        />
       </div>
     </div>
   )

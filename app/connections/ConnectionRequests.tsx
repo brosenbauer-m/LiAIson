@@ -32,11 +32,13 @@ export default function ConnectionRequests({
   requests: initialRequests,
   collapsible = false,
   title = 'Requests',
+  compact = false,
   onChange,
 }: {
   requests: ConnectionRequest[]
   collapsible?: boolean
   title?: string
+  compact?: boolean
   onChange?: () => void
 }) {
   const router = useRouter()
@@ -129,7 +131,7 @@ export default function ConnectionRequests({
   if (!collapsible) {
     return (
       <section className="space-y-3">
-        <h2 className="text-xl font-semibold text-text-primary">{title} <span className="text-text-muted font-normal tabular-nums">{requests.length}</span></h2>
+        <h2 className={compact ? 'text-sm font-semibold text-text-primary' : 'text-xl font-semibold text-text-primary'}>{title} <span className="text-text-muted font-normal tabular-nums">{requests.length}</span></h2>
         {list}
       </section>
     )
