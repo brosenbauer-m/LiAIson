@@ -55,13 +55,15 @@ export async function POST(request: NextRequest) {
     const response = await mistral.chat.complete({
       model: FAST_MODEL,
       temperature: 0,
-      maxTokens: Math.min(4000, Math.ceil(text.length / 2) + 200),
+      maxTokens: Math.min(8000, text.length + 200),
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: text },
       ],
     })
     await logAiUsage({ userId: user.id, feature: 'proofread', model: FAST_MODEL, actor: 'owner', usage: response.usage })
+    // A reply cut off at the token cap would lose facts: keep the original then.
+    if (response.choices[0]?.finishReason !== 'stop') return NextResponse.json({ optimized: text })
     const optimized = messageText(response.choices[0]?.message?.content).replace(/^\s*["“]|["”]\s*$/g, '').trim()
     // Safety net: never longer than before, and a reply that drops almost
     // everything has lost information — keep the original then.
