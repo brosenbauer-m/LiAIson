@@ -26,12 +26,13 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - Shared: `lib/redis.ts` (one client + `underLimit`), `lib/safeRedirect.ts`, `lib/mistral/client.ts` (`messageText`), `components/ui/Avatar.tsx` (only own-storage pictures)
 - `app/page.tsx` + `components/landing/` home (snap slides, RisingCircles, HowItWorks carousel, Annotated diagrams)
 - `app/[username]/` profile + chat UI · `app/api/chat/[username]/` chat (sign-in, trial limits, sender pays, reader's own vault as context)
-- `app/api/connections/*` request/status/respond/access/remove
+- `app/api/connections/*` request/status/respond/access/remove — connections are mutual (two rows; each person places the other: `lib/connections/placement.ts`, `components/connections/CirclePicker.tsx`)
 - `/circles` (tiers with 2+ circles; replaces Connections there): `app/circles/CirclesWorkspace.tsx` = Connections panel + `components/circles/CircleBoard.tsx` + Sections panel, filtered by the selected circle; group move via `app/api/circles/place` (people) and vault_sections updates (sections). `/connections` = Introvert only (redirects otherwise)
 - `app/discover/` + `app/api/discover/` name search; `/search` AI search (plan quota); `/index` refresh own index → `lib/search/`
 - `lib/similarity/`, `app/api/similarity/[username]`, `components/similarity/` Similarity (Extrovert+: score + bubble map, cached in similarity_results); `/similarities` (Similarities Chart, never say "compare" in the UI; `/compare` redirects) + `app/api/compare` several people (Butterfly, `group.ts`); chat similarity marker/note → `lib/chat/signals.ts`
 - Own circles (Social Butterfly): `app/api/circles` (+`/members`; PATCH `parent` moves), nested via `custom_circles.parent_id`/`in_inner`/`isolated` (members see every circle around theirs; isolated = outside the Outer Circle; `circleChain` in `lib/circles.ts`); Introvert sees no circles (`components/ui/CirclesNote.tsx`), circle board `components/circles/` (layout, sound), sections via `circle='custom'` + `custom_circle_id`
-- `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`)
+- `app/vault/`, `components/vault/` Vault editor (circles: outer/inner/draft, `lib/circles.ts`; ⋯ menu: Import File, Optimize Text → `app/api/vault/optimize`, Delete Section)
+- Unsaved changes: `useUnsavedChanges(dirty, save)` / `confirmLeave()` in `lib/unsaved.ts`, dialog `components/ui/UnsavedChangesGuard.tsx` (root layout)
 - `app/settings/`, `components/settings/` Profile (bio = Vault `profile_bio` section), Profile Privacy, Subscription (TierSection, usage, credits, card, invoices), delete; `/profile` + `/plans` redirect
 - `components/plans/TierPicker.tsx` (sign-up + Settings), `lib/plans.ts` (all plan limits + texts; Butterfly sliders, `planLimits(plan, options)`), `lib/billing/plan.ts` (plan state/changes; `plan_changes` incl. `options` is the source of truth)
 - `lib/billing/*` Mollie, month-end bills (`monthly.ts`), plan fee (`planFee.ts`), card lock (`access.ts`, used by `proxy.ts`), receipts, VAT
