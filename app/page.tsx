@@ -64,7 +64,7 @@ export default function HomePage() {
   return (
     <main
       ref={mainRef}
-      className={`h-[calc(100dvh-4rem)] overflow-y-auto ${paging ? '' : 'snap-y snap-proximity scroll-smooth motion-reduce:scroll-auto'}`}
+      className={`h-[calc(100dvh-4rem-env(safe-area-inset-top))] overflow-y-auto ${paging ? '' : 'snap-y snap-proximity scroll-smooth motion-reduce:scroll-auto'}`}
     >
       {/* 1 · The story */}
       <section data-section className="relative snap-start min-h-full flex items-center overflow-hidden">

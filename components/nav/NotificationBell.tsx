@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import NotificationItem from '@/components/ui/NotificationItem'
+import { confirmLeave } from '@/lib/unsaved'
 import type { Notification } from '@/types'
 
 // Header bell: shows how many unread notifications there are; a click opens
@@ -77,10 +78,10 @@ export default function NotificationBell() {
     await createClient().from('notifications').update({ read: true }).eq('id', id)
   }
 
-  const openItem = (n: Notification) => {
+  const openItem = async (n: Notification) => {
     setOpen(false)
     void dismiss(n.id)
-    router.push('/dashboard#notifications')
+    if (await confirmLeave()) router.push('/dashboard#notifications')
   }
 
   const fresh = items.filter(n => !seen || Date.parse(n.created_at) > Date.parse(seen)).length
@@ -107,7 +108,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-surface shadow-card p-2 animate-message-in z-50">
+        <div className="max-md:fixed max-md:inset-x-4 max-md:top-[calc(4.5rem+env(safe-area-inset-top))] md:absolute md:right-0 md:mt-2 md:w-[22rem] max-h-[70vh] overflow-y-auto rounded-2xl border border-border bg-surface shadow-card p-2 animate-message-in z-50">
           {items.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-text-secondary">You&apos;re all caught up.</p>
           ) : (

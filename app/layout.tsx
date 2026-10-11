@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/nav/SiteHeader";
@@ -12,6 +12,18 @@ const display = Fraunces({ subsets: ["latin"], variable: "--font-display", displ
 export const metadata: Metadata = {
   title: "LiAIson — Your AI. Your Story. On Your Terms.",
   description: "Meet your personal AI representative. Share your story, be discovered, and connect meaningfully.",
+  applicationName: "LiAIson",
+  appleWebApp: { capable: true, title: "LiAIson", statusBarStyle: "default" },
+  icons: { apple: "/apple-touch-icon.png" },
+};
+
+// Phones: fill the screen edge to edge (safe areas handled in CSS) and tint
+// the browser bar in the page colour.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#FAF6F0",
 };
 
 export default function RootLayout({
