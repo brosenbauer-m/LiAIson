@@ -15,8 +15,9 @@ export default function SignupPage() {
   const [displayName, setDisplayName] = useState('')
   const [username, setUsername] = useState('')
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
-  const [ageConfirmed, setAgeConfirmed] = useState(false)
-  const [privacyAccepted, setPrivacyAccepted] = useState(false)
+  // One tick: minimum age (paid plans are contracts; children's data needs
+  // parental consent under the GDPR) together with the privacy policy.
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [plan, setPlan] = useState<PlanId>('introvert')
   const [planOptions, setPlanOptions] = useState<PlanOptions>(DEFAULT_PLAN_OPTIONS)
   const [error, setError] = useState('')
@@ -130,8 +131,8 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!ageConfirmed || !privacyAccepted) {
-      setError('Please accept the required terms')
+    if (!termsAccepted) {
+      setError('Please confirm your age and accept the privacy policy.')
       return
     }
     if (usernameStatus !== 'available') {
@@ -255,15 +256,14 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">{checkingEmail ? 'Check Your Email' : 'Create Your LiAIson'}</h1>
+    <div className="min-h-screen bg-background flex items-start lg:items-center justify-center px-4 py-8 sm:py-10">
+      <div className={`w-full ${checkingEmail ? 'max-w-md' : 'max-w-5xl'}`}>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-display font-medium tracking-tight text-text-primary">{checkingEmail ? 'Check Your Email' : 'Create Your LiAIson'}</h1>
           <p className="text-text-secondary mt-2">{checkingEmail ? 'Confirm your email to activate your account' : 'Set up your personal AI representative'}</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className={checkingEmail ? 'bg-card border border-border rounded-2xl p-6 sm:p-8' : ''}>
           {checkingEmail ? (
             <div className="space-y-5">
               <p className="text-sm text-text-secondary">
@@ -303,13 +303,14 @@ export default function SignupPage() {
               </button>
             </div>
           ) : (
-          <>
-          {signedInEmail && (
-            <p className="mb-5 text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">
-              You&apos;re currently signed in as {signedInEmail}. Creating a new account will sign you out of it.
-            </p>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="grid gap-5 lg:gap-6 lg:grid-cols-2 items-start">
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-5 shadow-soft lg:rounded-b-none lg:border-b-0 lg:shadow-none lg:pb-3">
+            <h2 className="text-lg font-semibold text-text-primary">Your Details</h2>
+            {signedInEmail && (
+              <p className="text-sm text-text-secondary bg-surface border border-border rounded-lg px-3 py-2">
+                You&apos;re currently signed in as {signedInEmail}. Creating a new account will sign you out of it.
+              </p>
+            )}
             <div>
               <label className="block text-sm font-medium text-text-primary mb-1.5">Display name</label>
               <input
@@ -363,40 +364,30 @@ export default function SignupPage() {
               />
             </div>
 
-            <fieldset>
-              <legend className="block text-sm font-medium text-text-primary mb-1.5">Tier</legend>
+            </div>
+
+            <fieldset className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-soft lg:row-span-2 lg:col-start-2 lg:row-start-1">
+              <legend className="sr-only">Tier</legend>
+              <h2 className="text-lg font-semibold text-text-primary mb-4" aria-hidden="true">Your Tier</h2>
               <TierPicker value={{ plan, options: planOptions }} onChange={c => { setPlan(c.plan); setPlanOptions(c.options) }} />
             </fieldset>
 
-            <p className="text-sm text-text-secondary">
-              Your profile starts Public: people can find you on Discover and talk to your LiAIson. You can make it Private anytime in Settings.
-            </p>
-
-            <div className="space-y-3">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={ageConfirmed}
-                  onChange={e => setAgeConfirmed(e.target.checked)}
-                  className="mt-0.5 accent-accent"
-                />
-                <span className="text-sm text-text-secondary">I am 18 or older</span>
-              </label>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={privacyAccepted}
-                  onChange={e => setPrivacyAccepted(e.target.checked)}
-                  className="mt-0.5 accent-accent"
-                />
-                <span className="text-sm text-text-secondary">
-                  I accept the{' '}
-                  <Link href="/privacy" className="text-accent-light hover:underline" target="_blank">
-                    privacy policy
-                  </Link>
-                </span>
-              </label>
-            </div>
+            {/* On wide screens this joins the details above into one panel. */}
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-5 shadow-soft lg:col-start-1 lg:-mt-6 lg:rounded-t-none lg:border-t-0 lg:pt-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={e => setTermsAccepted(e.target.checked)}
+                className="mt-0.5 h-4 w-4 flex-shrink-0 accent-accent"
+              />
+              <span className="text-sm text-text-secondary">
+                I am 18 or older and accept the{' '}
+                <Link href="/privacy" className="text-accent-light hover:underline" target="_blank">
+                  privacy policy
+                </Link>
+              </span>
+            </label>
 
             {error && (
               <div className="text-error text-sm bg-error/10 border border-error/30 rounded-lg px-3 py-2">
@@ -411,13 +402,13 @@ export default function SignupPage() {
             >
               {loading ? 'Creating your LiAIson...' : 'Create Account'}
             </button>
-          </form>
 
-          <p className="text-center text-text-secondary text-sm mt-6">
-            Already have an account?{' '}
-            <Link href="/login" className="text-accent-light hover:underline">Sign In</Link>
-          </p>
-          </>
+            <p className="text-center text-text-secondary text-sm">
+              Already have an account?{' '}
+              <Link href="/login" className="text-accent-light hover:underline">Sign In</Link>
+            </p>
+            </div>
+          </form>
           )}
         </div>
       </div>
