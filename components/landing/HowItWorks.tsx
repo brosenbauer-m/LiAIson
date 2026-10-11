@@ -16,17 +16,19 @@ const SLIDES: Slide[] = [
     short: 'Your Vault',
     body: (
       <>
-        Everything starts with your <b>Vault</b>: write whatever you want your LiAIson to know about you. Sort it into your own
-        categories, such as hobbies or work experience, and upload files like your CV. The higher your tier, the more your{' '}
-        <b>Vault</b> can hold.
+        Everything starts with your <b>Vault</b>: write whatever you want your LiAIson to know about you, in sections you name
+        yourself, such as hobbies or work experience. Import a file like your CV into any section, and let <b>Optimize Text</b>{' '}
+        shorten a section to free up space. For each section you choose who may hear about it. The higher your tier, the more
+        your <b>Vault</b> can hold.
       </>
     ),
     mock: <VaultMock />,
     callouts: [
-      { ax: 392, ay: 32, y: 44, title: 'More room on higher tiers', text: 'From 1,000 to 60,000 characters.' },
-      { ax: 392, ay: 135, y: 150, title: 'Your Vault', text: 'Anything you want your LiAIson to know.' },
-      { ax: 392, ay: 222, y: 250, title: 'Your own categories', text: 'Hobbies, work experience, anything you like.' },
-      { ax: 300, ay: 394, y: 372, title: 'Import files', text: 'Upload your CV as PDF or Word.' },
+      { ax: 392, ay: 32, y: 34, title: 'More room on higher tiers', text: 'From 1,000 to 60,000 characters.' },
+      { ax: 300, ay: 70, y: 112, title: 'Who hears about it', text: 'Each section sits in a circle or stays a draft.' },
+      { ax: 384, ay: 165, y: 200, title: 'Import File, Optimize Text', text: 'In the ⋯ menu of every section.' },
+      { ax: 392, ay: 262, y: 290, title: 'Your own sections', text: 'Hobbies, work experience, anything you like.' },
+      { ax: 300, ay: 396, y: 384, title: 'Add Section', text: 'With suggestions to get you started.' },
     ],
   },
   {
@@ -34,9 +36,9 @@ const SLIDES: Slide[] = [
     short: 'Your LiAIson',
     body: (
       <>
-        You get a link to your personal <b>LiAIson</b>. Visitors talk to it about you in natural conversation, and it answers only
-        from your <b>Vault</b>, pointing out what they have in common with you. Higher tiers also show <b>Similarity</b>: a
-        score and a map of shared interests.
+        You get a link to your personal <b>LiAIson</b>. Signed-in visitors talk to it about you in natural conversation, and it
+        answers only from what your <b>Vault</b> lets them hear, pointing out what they have in common with you. On Extrovert
+        and Social Butterfly they also see <b>Similarity</b>: a score and a map of shared interests.
       </>
     ),
     mock: <ChatMock />,
@@ -44,7 +46,7 @@ const SLIDES: Slide[] = [
       { ax: 392, ay: 32, y: 34, title: 'Your personal link', text: 'Share it anywhere.' },
       { ax: 322, ay: 190, y: 196, title: 'Only from your Vault', text: 'No guessing, no outside sources.' },
       { ax: 244, ay: 236, y: 276, title: 'What you have in common', text: 'Pointed out during the chat.' },
-      { ax: 392, ay: 350, y: 372, title: 'Similarity map', text: 'A score and shared interests, on higher tiers.' },
+      { ax: 392, ay: 350, y: 372, title: 'Similarity map', text: 'A score and shared interests, on Extrovert and up.' },
     ],
   },
   {
@@ -52,19 +54,20 @@ const SLIDES: Slide[] = [
     short: 'Circles',
     body: (
       <>
-        <b>Circles</b> decide what your LiAIson may tell whom, and they sit inside each other: whoever is in a circle also sees
-        everything in the circles around it. From Ambivert up there is an <b>Outer Circle</b> for everyone and an{' '}
-        <b>Inner Circle</b> for friends; with Social Butterfly you can place your own circles anywhere, even inside the Inner Circle,
-        or on their own outside everything else.
-        You pick someone&apos;s circle when you accept their request.
+        <b>Circles</b> decide what your LiAIson may tell whom, and they sit inside each other: whoever is in a circle also hears
+        about everything in the circles around it. From Ambivert up there is an <b>Outer Circle</b> and an <b>Inner Circle</b>{' '}
+        for people you choose; Social Butterfly adds your own circles, placed anywhere, even on their own outside everything
+        else. Connections go both ways: whoever sends a request and whoever accepts it each choose
+        the other&apos;s circle, and you can drag people between circles on the <b>Circles</b> page anytime.
       </>
     ),
     mock: <CirclesMock />,
     callouts: [
-      { ax: 297, ay: 156, y: 90, title: 'Outer Circle', text: 'Everyone who can see your profile.' },
-      { ax: 237, ay: 215, y: 190, title: 'Inner Circle', text: 'Also sees the Outer Circle.' },
-      { ax: 368, ay: 282, y: 290, title: 'Your own circles', text: 'Placed anywhere, on Social Butterfly.' },
-      { ax: 392, ay: 389, y: 392, title: 'Chosen when you accept', text: 'And changeable at any time.' },
+      { ax: 148, ay: 30, y: 40, title: 'Public or Private', text: 'Public: everyone can talk to your LiAIson.' },
+      { ax: 297, ay: 156, y: 130, title: 'Outer Circle', text: 'Everyone who can see your profile.' },
+      { ax: 237, ay: 215, y: 210, title: 'Inner Circle', text: 'Also hears about the Outer Circle.' },
+      { ax: 368, ay: 282, y: 296, title: 'Your own circles', text: 'Placed anywhere, on Social Butterfly.' },
+      { ax: 392, ay: 380, y: 392, title: 'Chosen when you connect', text: 'By each of you, changeable anytime.' },
     ],
   },
   {
@@ -72,7 +75,7 @@ const SLIDES: Slide[] = [
     short: 'Discover',
     body: (
       <>
-        On <b>Discover</b> everyone can find people by name or @username. Higher tiers can also search <b>By Description</b>, for
+        On <b>Discover</b> everyone can find people by name or @username. From Ambivert up you can also search <b>By Description</b>, for
         example &ldquo;people in Vienna who play tennis&rdquo;, and see a short reason for each match. Only Public profiles can be found
         by description, and only what everyone may see is searched.
       </>
@@ -80,7 +83,7 @@ const SLIDES: Slide[] = [
     mock: <DiscoverMock />,
     callouts: [
       { ax: 244, ay: 70, y: 52, title: 'By Name', text: 'Find anyone by name or @username, on every tier.' },
-      { ax: 392, ay: 117, y: 130, title: 'By Description', text: 'Search by what people share, on higher tiers.' },
+      { ax: 392, ay: 117, y: 130, title: 'By Description', text: 'Search by what people share, from Ambivert up.' },
       { ax: 392, ay: 205, y: 212, title: 'A short reason', text: 'Never their Vault text.' },
       { ax: 260, ay: 360, y: 340, title: 'Public profiles only', text: 'Private profiles are found by name only.' },
     ],
@@ -90,16 +93,16 @@ const SLIDES: Slide[] = [
     short: 'Echoes',
     body: (
       <>
-        You never see who talks to your LiAIson or exactly what they say. With higher tiers you get <b>Echoes</b>: weekly or
-        monthly reports that summarise what people want to know about you and the topics of their conversations, so you know
-        what to add to your <b>Vault</b>.
+        You never see who talks to your LiAIson or exactly what they say. From Ambivert up you get <b>Echoes</b>: monthly reports
+        (weekly too on Extrovert and up) that summarise what people want to know about you, with a note from your LiAIson on
+        what could be worth adding to your <b>Vault</b>.
       </>
     ),
     mock: <EchoesMock />,
     callouts: [
-      { ax: 392, ay: 30, y: 36, title: 'Weekly or monthly', text: 'Depending on your tier, also by email.' },
+      { ax: 392, ay: 30, y: 36, title: 'Monthly or weekly', text: 'Depending on your tier, also by email.' },
       { ax: 392, ay: 126, y: 140, title: 'Topics', text: 'What people ask about most.' },
-      { ax: 392, ay: 302, y: 290, title: 'Summarized', text: 'What they want to know, in a few words.' },
+      { ax: 392, ay: 302, y: 290, title: 'A note from your LiAIson', text: 'What could be worth adding.' },
       { ax: 300, ay: 372, y: 384, title: 'Anonymous', text: 'Never who asked or their exact words.' },
     ],
   },
@@ -108,9 +111,10 @@ const SLIDES: Slide[] = [
     short: 'Cost',
     body: (
       <>
-        You only pay for the messages <b>you</b> send, never for conversations others have with your LiAIson. A message
-        typically costs half a cent to two cents. Your usage is always visible, you set a monthly limit, and you pay once at
-        the end of the month. Higher tiers add a fixed monthly fee.
+        You only pay for the messages <b>you</b> send (and for features marked with *, like Optimize Text), never for
+        conversations others have with your LiAIson. A message typically costs half a cent to two cents. The first month is free
+        with up to 5 messages a day. Your usage is always shown at the top of the page, you set a monthly limit, and you pay once
+        at the end of the month. Ambivert and up add a fixed monthly fee.
       </>
     ),
     mock: <CostMock />,
@@ -226,11 +230,11 @@ export default function HowItWorks() {
           type="button"
           onClick={() => go(index - 1)}
           disabled={index === 0}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border bg-surface text-text-primary font-medium disabled:opacity-0 disabled:pointer-events-none"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-full border border-border bg-surface text-text-primary font-medium whitespace-nowrap disabled:opacity-0 disabled:pointer-events-none"
         >
           <span aria-hidden="true">←</span> Back
         </button>
-        <span className="text-sm text-text-muted tabular-nums" aria-live="polite">{index + 1} of {SLIDES.length}</span>
+        <span className="hidden sm:inline text-sm text-text-muted tabular-nums" aria-live="polite">{index + 1} of {SLIDES.length}</span>
         {last ? (
           <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card">
             See Tiers <span aria-hidden="true">→</span>
@@ -239,7 +243,7 @@ export default function HowItWorks() {
           <button
             type="button"
             onClick={() => go(index + 1)}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card ${index === 0 ? 'animate-nudge' : ''}`}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card whitespace-nowrap ${index === 0 ? 'animate-nudge' : ''}`}
           >
             Next: {SLIDES[index + 1].short} <span aria-hidden="true">→</span>
           </button>

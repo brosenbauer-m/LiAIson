@@ -19,20 +19,33 @@ export function VaultMock() {
         <span className="rounded-full border border-border px-2.5 py-1 text-text-secondary">Inner Circle</span>
         <span className="rounded-full border border-border px-2.5 py-1 text-text-secondary">Drafts</span>
       </div>
-      <div className={card} style={{ top: 100, height: 70 }}>
-        <p className={label}>Profile Bio</p>
-        <p className="mt-1 text-[12.5px] leading-snug">Product designer in Vienna. Tennis, sailing and good coffee.</p>
+      <div className={card} style={{ top: 100, height: 104 }}>
+        <div className="flex items-center justify-between">
+          <p className={label}>Hobbies</p>
+          <span className="h-6 w-6 rounded-full bg-accent-tint flex items-center justify-center text-[13px] leading-none tracking-tighter text-text-secondary">•••</span>
+        </div>
+        <p className="mt-1 text-[12.5px] leading-snug pr-24">Tennis twice a week since I was eight. Sailing on the Attersee every summer.</p>
       </div>
-      <div className={card} style={{ top: 182, height: 80 }}>
-        <p className={label}>Hobbies</p>
-        <p className="mt-1 text-[12.5px] leading-snug">Tennis twice a week since I was eight. Sailing on the Attersee every summer.</p>
+      <div className="absolute right-7 top-[132px] w-36 rounded-lg border border-border bg-surface shadow-card p-1 text-[11.5px]">
+        <p className="px-2 py-1">Import File</p>
+        <p className="px-2 py-1 rounded bg-accent-tint">Optimize Text*</p>
+        <p className="px-2 py-1 text-error">Delete Section</p>
       </div>
-      <div className={card} style={{ top: 274, height: 80 }}>
-        <p className={label}>Work experience</p>
+      <div className={card} style={{ top: 216, height: 80 }}>
+        <div className="flex items-center justify-between">
+          <p className={label}>Work experience</p>
+          <span className="text-[13px] leading-none tracking-tighter text-text-muted">•••</span>
+        </div>
         <p className="mt-1 text-[12.5px] leading-snug">Senior product designer at a Vienna start-up; five years in agencies before that.</p>
       </div>
-      <div className="absolute left-5 right-5 top-[372px] h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center text-[12.5px] text-text-secondary">
-        ↑ Import a File · PDF or Word
+      <div className={card} style={{ top: 308, height: 50 }}>
+        <div className="flex items-center justify-between">
+          <p className={label}>Languages</p>
+          <span className="text-[13px] leading-none tracking-tighter text-text-muted">•••</span>
+        </div>
+      </div>
+      <div className="absolute left-5 right-5 top-[374px] h-11 rounded-xl border-2 border-dashed border-border flex items-center justify-center text-[12.5px] text-text-secondary">
+        + Add Section
       </div>
     </div>
   )
@@ -48,15 +61,14 @@ export function ChatMock() {
         <span className="h-8 w-8 rounded-full bg-accent text-white flex items-center justify-center font-display">A</span>
         <span>
           <span className="block text-[13px] font-semibold leading-tight">Anna&apos;s LiAIson</span>
-          <span className="block text-[11px] text-text-muted">Ask me anything about Anna</span>
         </span>
       </div>
       <div className="absolute left-0 right-0 top-[102px] border-t border-border" />
       <p className="absolute right-5 top-[114px] max-w-[250px] rounded-2xl rounded-br-none bg-accent px-3.5 py-2 text-[12.5px] text-white">
-        What does Anna do outside of work?
+        Tell me about Anna.
       </p>
       <p className="absolute left-5 top-[160px] w-[300px] rounded-2xl rounded-bl-none border border-border bg-background px-3.5 py-2.5 text-[12.5px] leading-snug">
-        Anna plays tennis twice a week and sails on the Attersee every summer. She has played tennis since childhood,{' '}
+        Anna is a product designer in Vienna. She plays tennis twice a week and has since childhood,{' '}
         <span className="underline decoration-accent decoration-2 underline-offset-2">just like you!</span>
       </p>
       <p className="absolute left-6 top-[252px] text-[11px] text-text-secondary">✨ See everything you have in common →</p>
@@ -88,12 +100,11 @@ export function CirclesMock() {
         <text x="320" y="286" textAnchor="middle" fontSize="11" fill="#2B1E16">Family</text>
       </svg>
       <div className="absolute left-5 right-5 top-[352px] h-[74px] rounded-xl border border-border bg-background px-4 py-2.5">
-        <p className="text-[12.5px]"><span className="font-semibold">Lena Berger</span> wants to connect</p>
+        <p className="text-[12.5px]">Add <span className="font-semibold">Lena Berger</span> to which circle?</p>
         <div className="mt-2 flex items-center gap-1.5 text-[11px]">
-          <span className="rounded-full border border-border px-2.5 py-0.5 text-text-secondary">Outer</span>
-          <span className="rounded-full bg-accent px-2.5 py-0.5 text-white">Inner</span>
+          <span className="rounded-full border border-border px-2.5 py-0.5 text-text-secondary">Outer Circle</span>
+          <span className="rounded-full bg-accent px-2.5 py-0.5 text-white">Inner Circle</span>
           <span className="rounded-full border border-dashed border-accent px-2.5 py-0.5">Family</span>
-          <span className="ml-auto rounded-lg bg-accent px-3 py-1 text-white">Accept</span>
         </div>
       </div>
     </div>
@@ -150,8 +161,9 @@ export function EchoesMock() {
           </div>
         ))}
       </div>
-      <div className={card} style={{ top: 266, height: 74 }}>
-        <p className="text-[12.5px] italic leading-snug text-text-secondary">People asked most about your sailing trips and what you look for in a new role.</p>
+      <div className={card} style={{ top: 262, height: 86 }}>
+        <p className={label}>A note from your LiAIson</p>
+        <p className="mt-1 text-[12.5px] leading-snug">People asked most about your sailing trips. A few lines on where you sail could help.</p>
       </div>
       <p className="absolute left-5 top-[364px] text-[11.5px] text-text-secondary">🔒 Never who asked or their exact words</p>
     </div>
