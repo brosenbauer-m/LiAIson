@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { underLimit } from '@/lib/redis'
+import { allowedPlacement, connectBothWays } from '@/lib/connections/placement'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 // Connection requests per person per hour (each one notifies someone).
 const PER_HOUR = 30
+
+// Body { toUserId, placement? }: placement = the circle the requester puts the
+// other person in once they accept ('outer', 'inner' or an own circle id;
+// ignored on one-circle tiers). If the other person already asked you, this
+// accepts both ways at once (connections go both ways, migration 36).
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -17,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await request.json().catch(() => null) as { toUserId?: unknown } | null
+  const body = await request.json().catch(() => null) as { toUserId?: unknown; placement?: unknown } | null
   const toUserId = body?.toUserId
   if (typeof toUserId !== 'string' || !UUID.test(toUserId) || toUserId === user.id) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
@@ -52,6 +58,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: existing.status === 'accepted' ? 'connected' : 'requested' })
   }
 
+  const placement = await allowedPlacement(user.id, body?.placement)
+
+  // They already asked you: accept both ways now.
+  const { data: theirs } = await serviceSupabase
+    .from('connection_interests')
+    .select('id, status, requester_placement')
+    .eq('from_user_id', toUserId)
+    .eq('to_user_id', user.id)
+    .maybeSingle<{ id: string; status: string; requester_placement: string | null }>()
+  if (theirs?.status === 'pending') {
+    try {
+      await connectBothWays(user.id, toUserId, placement, await allowedPlacement(toUserId, theirs.requester_placement))
+    } catch {
+      return NextResponse.json({ error: 'Failed to connect' }, { status: 500 })
+    }
+    await serviceSupabase.from('notifications').update({ read: true }).eq('user_id', user.id).filter('metadata->>connection_id', 'eq', theirs.id)
+    return NextResponse.json({ status: 'connected' })
+  }
+
   const { data: requester, error: requesterError } = await serviceSupabase
     .from('users')
     .select('display_name, username')
@@ -69,6 +94,7 @@ export async function POST(request: NextRequest) {
       to_user_id: toUserId,
       status: 'pending',
       allowed_scope: 'none',
+      requester_placement: placement,
     })
     .select('id')
     .single()

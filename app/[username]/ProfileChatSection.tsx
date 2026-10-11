@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { motion } from 'framer-motion'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
+import CirclePicker from '@/components/connections/CirclePicker'
 import ChatBubble from '@/components/chat/ChatBubble'
 import SuggestedPromptChip from '@/components/ui/SuggestedPromptChip'
 import { readChatSignals } from '@/lib/chat/signals'
@@ -225,12 +226,19 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
     }
   }
 
-  const handleConnect = async () => {
+  // Connect: on tiers with circles, first choose where they go (CirclePicker).
+  const [picking, setPicking] = useState(false)
+  const handleConnect = () => {
     if (!isLoggedIn) {
       router.push(`/signup?redirect=/${username}`)
       return
     }
+    setConnectMessage('')
+    setPicking(true)
+  }
 
+  const sendRequest = async (placement: string) => {
+    setPicking(false)
     setConnectStatus('loading')
     try {
       const supabase = createClient()
@@ -240,7 +248,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
       const res = await fetch('/api/connections/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toUserId: ownerId }),
+        body: JSON.stringify({ toUserId: ownerId, placement }),
       })
 
       if (!res.ok) {
@@ -299,6 +307,17 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
             <button type="button" onClick={handleDisconnect} className="px-3 py-1.5 rounded-lg text-error border border-error/30 hover:bg-error hover:text-white">Disconnect</button>
             <button type="button" onClick={() => setConfirmDisconnect(false)} className="text-text-secondary hover:text-text-primary">Cancel</button>
           </span>
+        </div>
+      )}
+
+      {picking && (
+        <div className="px-6 py-4 bg-accent-tint/60 border-b border-accent/10">
+          <CirclePicker
+            title={`Add ${displayName} to which circle?`}
+            subtext="They will be added there once they accept."
+            onPick={sendRequest}
+            onCancel={() => setPicking(false)}
+          />
         </div>
       )}
 

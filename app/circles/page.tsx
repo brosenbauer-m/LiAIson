@@ -3,9 +3,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { getPlanLimits } from '@/lib/billing/plan'
-import { suggestedPeople } from '@/lib/connections/suggestions'
 import ConnectionRequests from '../connections/ConnectionRequests'
-import ProfileCard from '@/components/ui/ProfileCard'
 import CirclesWorkspace, { type WorkspacePerson, type WorkspaceSection } from './CirclesWorkspace'
 import type { StudioCircle } from '@/components/circles/layout'
 
@@ -79,7 +77,6 @@ export default async function CirclesPage() {
     }))
 
   const circles: StudioCircle[] = ownCircles.map(c => ({ ...c, memberCount: 0 }))
-  const suggestions = await suggestedPeople(user.id, people.map(p => p.userId))
 
   return (
     <div className="min-h-screen bg-background">
@@ -102,12 +99,6 @@ export default async function CirclesPage() {
           )}
         </div>
 
-        {requests && requests.length > 0 && (
-          <div className="max-w-2xl">
-            <ConnectionRequests requests={requests} innerAllowed />
-          </div>
-        )}
-
         <CirclesWorkspace
           initialPeople={people}
           initialSections={sections}
@@ -115,13 +106,10 @@ export default async function CirclesPage() {
           allowed={limits.extraCircles}
         />
 
-        {suggestions.length > 0 && (
-          <section className="space-y-4 pt-4 max-w-3xl">
-            <h2 className="text-xl font-semibold text-text-primary">Suggested Connections</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {suggestions.map(u => <ProfileCard key={u.id} user={u} />)}
-            </div>
-          </section>
+        {requests && requests.length > 0 && (
+          <div className="max-w-3xl mx-auto">
+            <ConnectionRequests requests={requests} collapsible title="Connection Requests" />
+          </div>
         )}
       </div>
     </div>

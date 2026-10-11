@@ -54,7 +54,7 @@ export default async function ConnectionsPage() {
           <CirclesNote className="mt-3" />
         </div>
 
-        {requests && requests.length > 0 && <ConnectionRequests requests={requests} innerAllowed={false} />}
+        {requests && requests.length > 0 && <ConnectionRequests requests={requests} />}
         <ConnectionsList key={(connections ?? []).map(c => c.id).join(',')} initialConnections={connections ?? []} />
 
         {suggestions.length > 0 && (

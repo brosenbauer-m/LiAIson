@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import CirclePicker from '@/components/connections/CirclePicker'
 
 interface Props {
   ownerId: string
@@ -24,14 +25,17 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
       .catch(() => setStatus('none'))
   }, [signedIn, username])
 
-  const handleConnect = async () => {
+  // On tiers with circles, first choose where they go (CirclePicker).
+  const [picking, setPicking] = useState(false)
+  const handleConnect = async (placement: string) => {
+    setPicking(false)
     setError('')
     setStatus('loading')
     try {
       const res = await fetch('/api/connections/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toUserId: ownerId }),
+        body: JSON.stringify({ toUserId: ownerId, placement }),
       })
       if (!res.ok) {
         setStatus('none')
@@ -79,10 +83,17 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
             Log In
           </Link>
         </div>
-      ) : status === 'self' || status === 'connected' ? null : (
+      ) : status === 'self' || status === 'connected' ? null : picking ? (
+        <CirclePicker
+          title={`Add ${displayName} to which circle?`}
+          subtext="They will be added there once they accept."
+          onPick={handleConnect}
+          onCancel={() => setPicking(false)}
+        />
+      ) : (
         <button
           type="button"
-          onClick={handleConnect}
+          onClick={() => setPicking(true)}
           disabled={status === 'loading' || status === 'requested'}
           className={`px-6 py-2.5 text-sm rounded-lg font-medium transition-all shadow-soft disabled:cursor-default ${
             status === 'requested'

@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 
-// End a connection.
-// - Owner side, body { connectionId }: someone who connected to you loses
-//   access (Inner Circle and own circles included). The request is kept as
-//   declined, so they can't send a new one (works like a block).
-// - Your side, body { username }: you disconnect from someone's LiAIson you
-//   were connected to. You can ask again later.
-// Both remove the person from the owner's own circles.
+// End a connection — both ways, since connections are mutual (migration 36).
+// - Body { connectionId } (a connection to you): they lose access to you and
+//   you to them. Their request is kept as declined, so they can't send a new
+//   one (works like a block).
+// - Body { username }: you disconnect from someone. Either of you can ask
+//   again later.
+// Both people leave each other's own circles.
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -43,7 +43,10 @@ export async function POST(request: NextRequest) {
         .update({ status: 'declined', in_inner_circle: false })
         .eq('id', row.id)
       if (error) throw new Error(error.message)
+      const { error: otherError } = await service.from('connection_interests').delete().eq('from_user_id', user.id).eq('to_user_id', row.from_user_id)
+      if (otherError) throw new Error(otherError.message)
       await leaveOwnersCircles(service, user.id, row.from_user_id)
+      await leaveOwnersCircles(service, row.from_user_id, user.id)
       return NextResponse.json({ removed: true })
     }
 
@@ -59,7 +62,10 @@ export async function POST(request: NextRequest) {
         .select('id')
       if (error) throw new Error(error.message)
       if (!data || data.length === 0) return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
+      const { error: otherError } = await service.from('connection_interests').delete().eq('from_user_id', owner.id).eq('to_user_id', user.id).eq('status', 'accepted')
+      if (otherError) throw new Error(otherError.message)
       await leaveOwnersCircles(service, owner.id, user.id)
+      await leaveOwnersCircles(service, user.id, owner.id)
       return NextResponse.json({ removed: true })
     }
   } catch (err) {
