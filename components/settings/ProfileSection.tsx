@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/ui/Avatar'
 import AccountEmailCard from '@/components/settings/AccountEmailCard'
 import type { ContactLink } from '@/types'
+import { useUnsavedChanges } from '@/lib/unsaved'
 
 // Settings → Profile: photo, name, email, bio and links (Echo emails are on
 // the Echoes page). The bio is stored as the "Profile
@@ -30,6 +31,8 @@ export default function ProfileSection() {
   const [saving, setSaving] = useState(false)
   const [status, setStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  // What was last loaded or saved, to tell whether there are unsaved changes.
+  const [savedState, setSavedState] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +48,7 @@ export default function ProfileSection() {
         setAvatarUrl(profile.avatar_url)
         setContactLinks(Array.isArray(profile.contact_links) ? profile.contact_links : [])
         setBio(bioRow?.content ?? profile.short_bio ?? '')
+        setSavedState(JSON.stringify([profile.display_name ?? '', profile.avatar_url, Array.isArray(profile.contact_links) ? profile.contact_links : [], bioRow?.content ?? profile.short_bio ?? '']))
       }
       setBioSectionId(bioRow?.id ?? null)
       setLoading(false)
@@ -71,8 +75,11 @@ export default function ProfileSection() {
     setAvatarUrl(`${data.publicUrl}?v=${Date.now()}`)
   }
 
-  const save = async () => {
-    if (!userId) return
+  const currentState = JSON.stringify([displayName, avatarUrl, contactLinks, bio])
+
+  const save = async (): Promise<boolean> => {
+    if (!userId) return false
+    const snapshot = currentState
     setSaving(true)
     setStatus(null)
     const { error: profileError } = await supabase
@@ -94,12 +101,16 @@ export default function ProfileSection() {
     if (profileError || bioError) {
       const full = /VAULT_LIMIT/.test(bioError?.message ?? '')
       setStatus({ type: 'error', text: full ? 'Your Vault is full, so the bio could not get longer. Shorten something in your Vault first.' : 'Could not save everything. Please check your name and links and try again.' })
-      return
+      return false
     }
+    setSavedState(snapshot)
     void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
     setStatus({ type: 'success', text: 'Saved ✓' })
     window.setTimeout(() => setStatus(s => (s?.type === 'success' ? null : s)), 2500)
+    return true
   }
+
+  useUnsavedChanges(!loading && savedState !== '' && currentState !== savedState, save)
 
   const updateLink = (i: number, field: keyof ContactLink, value: string) =>
     setContactLinks(prev => prev.map((l, idx) => (idx === i ? { ...l, [field]: value } : l)))
@@ -188,7 +199,7 @@ export default function ProfileSection() {
       <div className="flex items-center gap-4">
         <button
           type="button"
-          onClick={save}
+          onClick={() => void save()}
           disabled={saving || !displayName.trim()}
           className="px-6 py-3 bg-accent hover:bg-accent-light text-white font-medium rounded-lg shadow-soft disabled:opacity-50"
         >

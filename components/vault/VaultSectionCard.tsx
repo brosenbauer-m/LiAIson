@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
+import { useUnsavedChanges } from '@/lib/unsaved'
 import { circleChain, circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
@@ -114,18 +115,21 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     setSaving(true)
     try {
       await onUpdate(section.id, { content, ...placementFields(placement) })
       setSaved(true)
       window.setTimeout(() => setSaved(false), 1500)
+      return true
     } catch {
-      return
+      return false
     } finally {
       setSaving(false)
     }
   }
+
+  useUnsavedChanges(content !== section.content || placement !== placementOf(section), handleSave)
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -347,7 +351,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
         <p className="text-xs text-text-muted">{lastUpdated ? `Last updated ${lastUpdated}` : ''}</p>
         <div className="flex gap-2">
           <button
-            onClick={handleSave}
+            onClick={() => void handleSave()}
             disabled={saving || blocked || (
               content === section.content &&
               placement === placementOf(section)

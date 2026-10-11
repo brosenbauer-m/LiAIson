@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useUnsavedChanges } from '@/lib/unsaved'
 import { CURRENCIES, CURRENCY_NAMES, formatMoney, isCurrency, type Currency } from '@/lib/currency'
 
 type Usage = {
@@ -41,11 +42,11 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
 
   const money = (cents: number) => formatMoney(cents / 100, usage?.currency ?? 'EUR', usage?.rate ?? 1)
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     const limitEuros = Number(limitInput)
-    if (!Number.isInteger(limitEuros) || limitEuros < 0 || limitEuros > 500) {
+    if (limitInput.trim() === '' || !Number.isInteger(limitEuros) || limitEuros < 0 || limitEuros > 500) {
       setMessage({ type: 'error', text: 'Please enter a whole number between 0 and 500.' })
-      return
+      return false
     }
     setSaving(true)
     setMessage(null)
@@ -58,18 +59,22 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
       const data = await res.json()
       if (!res.ok) {
         setMessage({ type: 'error', text: data.error ?? 'Could not save the limit.' })
-        return
+        return false
       }
       setUsage(prev => (prev ? { ...prev, limitCents: data.limitCents, paused: prev.costCents >= data.limitCents + prev.creditCents } : prev))
       setMessage({ type: 'success', text: 'Saved ✓' })
       setTimeout(() => setMessage(null), 3000)
       window.dispatchEvent(new Event('liaison:usage-changed'))
+      return true
     } catch {
       setMessage({ type: 'error', text: 'Could not save the limit.' })
+      return false
     } finally {
       setSaving(false)
     }
   }
+
+  useUnsavedChanges(!!usage && (limitInput.trim() === '' || Number(limitInput) !== Math.round(usage.limitCents / 100)), handleSave)
 
   const changeCurrency = async (value: string) => {
     if (!isCurrency(value)) return
@@ -136,7 +141,7 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
                 />
                 <button
                   type="button"
-                  onClick={handleSave}
+                  onClick={() => void handleSave()}
                   disabled={saving}
                   className="px-5 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50"
                 >

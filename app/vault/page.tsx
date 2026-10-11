@@ -9,6 +9,7 @@ import AddSectionDialog from '@/components/vault/AddSectionDialog'
 import CirclesNote from '@/components/ui/CirclesNote'
 import type { VaultSection } from '@/types'
 import { circleChain, circleWhere, orderCircles, placementFields, placementLabel, placementOf, type CustomCircle, type Placement } from '@/lib/circles'
+import { confirmLeave } from '@/lib/unsaved'
 
 const countChars = (text: string | null | undefined) => Array.from(text ?? '').length
 
@@ -258,7 +259,7 @@ export default function VaultPage() {
           {tabs.map(tab => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={async () => { if (tab !== activeTab && await confirmLeave()) setActiveTab(tab) }}
               title={tab.startsWith('c:') ? circleWhere(customCircles.find(c => c.id === tab.slice(2)) ?? { id: '', name: '' }, customCircles) : undefined}
               aria-pressed={activeTab === tab}
               className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all ${
