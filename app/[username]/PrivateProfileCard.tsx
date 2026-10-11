@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import CirclePicker from '@/components/connections/CirclePicker'
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 type Status = 'loading' | 'none' | 'requested' | 'connected' | 'self' | 'signed_out'
 
 export default function PrivateProfileCard({ ownerId, username, displayName, signedIn }: Props) {
+  const router = useRouter()
   const [status, setStatus] = useState<Status>(signedIn ? 'loading' : 'signed_out')
   const [error, setError] = useState('')
 
@@ -44,6 +46,8 @@ export default function PrivateProfileCard({ ownerId, username, displayName, sig
       }
       const data = await res.json()
       setStatus(data.status === 'connected' ? 'connected' : data.status === 'requested' ? 'requested' : 'none')
+      // They had already asked you: you're connected now, so load the chat.
+      if (data.status === 'connected') router.refresh()
     } catch {
       setStatus('none')
       setError('Something went wrong. Please try again.')

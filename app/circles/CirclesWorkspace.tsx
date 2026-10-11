@@ -148,8 +148,9 @@ export default function CirclesWorkspace({
 
   // --- Changes (optimistic; undone if the server says no) -------------------
 
-  const movePeople = async (userIds: string[], target: string) => {
-    if (userIds.length === 0 || target === 'alone' || target === 'draft') return
+  // Both resolve false when the move failed (and was undone).
+  const movePeople = async (userIds: string[], target: string): Promise<boolean> => {
+    if (userIds.length === 0 || target === 'alone' || target === 'draft') return true
     const before = people
     setError('')
     setPeople(prev => prev.map(p => (userIds.includes(p.userId) ? { ...p, inInner: target === 'inner', circles: isOwn(target) ? [target] : [] } : p)))
@@ -159,15 +160,17 @@ export default function CirclesWorkspace({
       const res = await fetch('/api/circles/place', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ memberIds: userIds, target }) })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error ?? 'Could not move them. Please try again.')
+      return true
     } catch (err) {
       setPeople(before)
       play('back')
       setError((err as Error).message)
+      return false
     }
   }
 
-  const moveSections = async (sectionIds: string[], target: string) => {
-    if (sectionIds.length === 0 || target === 'alone') return
+  const moveSections = async (sectionIds: string[], target: string): Promise<boolean> => {
+    if (sectionIds.length === 0 || target === 'alone') return true
     const before = sections
     const fields = target === 'outer' || target === 'inner' || target === 'draft'
       ? { circle: target as WorkspaceSection['circle'], customCircleId: null }
@@ -184,9 +187,10 @@ export default function CirclesWorkspace({
       setSections(before)
       play('back')
       setError('Could not move these sections. Please try again.')
-      return
+      return false
     }
     void fetch('/api/discover/index', { method: 'POST' }).catch(() => {})
+    return true
   }
 
   const circlesApi = async (method: 'POST' | 'PATCH' | 'DELETE', body: Record<string, string>) => {
@@ -251,9 +255,10 @@ export default function CirclesWorkspace({
     setError('')
     try {
       const only = people.filter(p => p.circles.length === 1 && p.circles[0] === id).map(p => p.userId)
-      if (only.length > 0) await movePeople(only, target)
+      // Stop if moving its people or sections failed, so nothing lands elsewhere.
+      if (only.length > 0 && !(await movePeople(only, target))) return
       const secs = sectionsIn(id).map(s => s.id)
-      if (secs.length > 0) await moveSections(secs, target)
+      if (secs.length > 0 && !(await moveSections(secs, target))) return
       await circlesApi('DELETE', { id })
       const gone = circles.find(c => c.id === id)
       const top = !gone?.parent_id
@@ -289,7 +294,15 @@ export default function CirclesWorkspace({
   // With a mouse the whole row drags; on touch screens the grip handle does
   // (so the list still scrolls). The page scrolls along near the screen edges.
 
+  // Touch: tapping a row selects it (mouse presses select in onRowPointerUp).
+  const lastPointer = useRef('mouse')
+  const onRowClick = (e: React.MouseEvent, kind: Kind, id: string) => {
+    if (lastPointer.current === 'mouse' || (e.target as HTMLElement).closest('input, button, a, [data-grip]')) return
+    togglePick(kind, id)
+  }
+
   const onRowPointerDown = (e: React.PointerEvent, kind: Kind, id: string) => {
+    lastPointer.current = e.pointerType
     const fromHandle = !!(e.target as HTMLElement).closest('[data-grip]')
     if (e.button > 0 || (e.pointerType !== 'mouse' && !fromHandle)) return
     if (!fromHandle && (e.target as HTMLElement).closest('input, button, a, select')) return
@@ -401,6 +414,7 @@ export default function CirclesWorkspace({
             <li
               key={p.userId}
               onPointerDown={e => onRowPointerDown(e, 'people', p.userId)}
+              onClick={e => onRowClick(e, 'people', p.userId)}
               onPointerMove={onRowPointerMove}
               onPointerUp={onRowPointerUp}
               onPointerCancel={onRowPointerCancel}
@@ -446,6 +460,7 @@ export default function CirclesWorkspace({
             <li
               key={s.id}
               onPointerDown={e => onRowPointerDown(e, 'sections', s.id)}
+              onClick={e => onRowClick(e, 'sections', s.id)}
               onPointerMove={onRowPointerMove}
               onPointerUp={onRowPointerUp}
               onPointerCancel={onRowPointerCancel}

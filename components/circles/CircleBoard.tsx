@@ -26,6 +26,9 @@ type Drag = {
 }
 
 const MIN_DRAG = 6 // px before a press becomes a drag (a shorter press is a tap)
+// Touch: a circle only starts moving after the finger rests on it this long,
+// so a quick swipe across the screen never moves a circle by accident.
+const TOUCH_HOLD_MS = 280
 const SIDE = 36 // px of open area left and right of the circles
 const ROOM = 110 // px of open area above and below (drop zone for "on its own")
 const BLOB = '45% 55% 53% 47% / 56% 44% 56% 44%'
@@ -64,7 +67,7 @@ export default function CircleBoard({
   const [width, setWidth] = useState(0)
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
-  const press = useRef<{ id: string; x: number; y: number; dragging: boolean } | null>(null)
+  const press = useRef<{ id: string; x: number; y: number; dragging: boolean; touch: boolean; at: number; swiped?: boolean } | null>(null)
   const dragRef = useRef<Drag | null>(null)
 
   useEffect(() => {
@@ -139,12 +142,14 @@ export default function CircleBoard({
   const onPointerDown = (e: React.PointerEvent, node: LaidOut) => {
     if (e.button > 0) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    press.current = { id: node.id, x: e.clientX, y: e.clientY, dragging: false }
+    press.current = { id: node.id, x: e.clientX, y: e.clientY, dragging: false, touch: e.pointerType !== 'mouse', at: e.timeStamp }
   }
   const onPointerMove = (e: React.PointerEvent) => {
     const p = press.current
     if (!p || !canArrange || byId.get(p.id)?.kind !== 'custom') return
+    if (p.swiped) return
     if (!p.dragging && Math.hypot(e.clientX - p.x, e.clientY - p.y) < MIN_DRAG) return
+    if (!p.dragging && p.touch && e.timeStamp - p.at < TOUCH_HOLD_MS) { p.swiped = true; return }
     const point = toLayout(e.clientX, e.clientY)
     const node = byId.get(p.id)!
     if (!p.dragging) {
@@ -171,6 +176,7 @@ export default function CircleBoard({
     const p = press.current
     press.current = null
     if (!p) return
+    if (p.swiped) return
     if (!p.dragging) { onSelect(p.id); return }
     finish(true)
   }

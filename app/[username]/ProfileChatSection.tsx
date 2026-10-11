@@ -76,7 +76,6 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   const [trial, setTrial] = useState<TrialStatus | null>(null)
   // Index of the reply the Similarity note is shown under.
   const [noteAt, setNoteAt] = useState<number | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   // Chat needs an account: the person who sends a message pays for it.
   const signedOut = authChecked && !isLoggedIn
@@ -112,8 +111,13 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
     })
   }, [username, loadTrial])
 
+  // Keep the newest message in view by scrolling the chat box only (not the
+  // page, which would jump past the profile on phones).
+  const messagesBoxRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const box = messagesBoxRef.current
+    if (!box || messages.length === 0) return
+    box.scrollTo({ top: box.scrollHeight, behavior: streamingContent ? 'auto' : 'smooth' })
   }, [messages, streamingContent])
 
   const sendMessage = useCallback(async (text: string) => {
@@ -321,7 +325,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-3" style={{ maxHeight: '400px' }}>
+      <div ref={messagesBoxRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3" style={{ maxHeight: '400px' }}>
         {messages.map((msg, i) => (
           <div key={i}>
             <ChatBubble role={msg.role} content={msg.content} />
@@ -344,7 +348,6 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
             <span className="animate-pulse">Thinking...</span>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggested prompts */}

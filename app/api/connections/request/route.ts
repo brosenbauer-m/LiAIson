@@ -73,7 +73,17 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Failed to connect' }, { status: 500 })
     }
-    await serviceSupabase.from('notifications').update({ read: true }).eq('user_id', user.id).filter('metadata->>connection_id', 'eq', theirs.id)
+    const { data: me } = await serviceSupabase.from('users').select('display_name').eq('id', user.id).maybeSingle<{ display_name: string }>()
+    await Promise.all([
+      serviceSupabase.from('notifications').update({ read: true }).eq('user_id', user.id).filter('metadata->>connection_id', 'eq', theirs.id),
+      serviceSupabase.from('notifications').insert({
+        user_id: toUserId,
+        type: 'connection_match',
+        message: `${me?.display_name ?? 'Someone'} accepted your connection request.`,
+        metadata: { connection_id: theirs.id },
+        read: false,
+      }),
+    ])
     return NextResponse.json({ status: 'connected' })
   }
 
