@@ -124,10 +124,12 @@ export default function CircleBoard({
   }))
 
   // Works out the target for a wanted centre and stores the drag.
-  const update = (id: string, center: Point, inside: boolean, grab: Point) => {
+  // Anywhere outside an outermost circle — even outside the drawing, anywhere
+  // on the screen — means "on its own" (owner decision 2026-10-11).
+  const update = (id: string, center: Point, grab: Point) => {
     const holder = placeOf(id)
     const hit = circleAt(nodes, center.x, center.y, subtreeIds(nodes, id))
-    const target = hit ? hit.id : inside ? 'alone' : null
+    const target = hit ? hit.id : 'alone'
     const valid = target === 'alone' || (!!target && canMoveInto(nodes, id, target))
     const next: Drag = { id, grab, center, holder, target, valid }
     dragRef.current = next
@@ -150,10 +152,10 @@ export default function CircleBoard({
       play('lift')
       const start = toLayout(p.x, p.y)
       dragRef.current = null
-      update(p.id, { x: node.x, y: node.y }, true, { x: node.x - start.x, y: node.y - start.y })
+      update(p.id, { x: node.x, y: node.y }, { x: node.x - start.x, y: node.y - start.y })
     }
     const grab = dragRef.current?.grab ?? { x: 0, y: 0 }
-    update(p.id, { x: point.x + grab.x, y: point.y + grab.y }, point.inside, grab)
+    update(p.id, { x: point.x + grab.x, y: point.y + grab.y }, grab)
   }
   const finish = (drop: boolean) => {
     const d = dragRef.current
@@ -191,11 +193,13 @@ export default function CircleBoard({
   return (
     <div ref={wrapRef} className="w-full">
       <p className="h-4 text-center text-xs text-text-secondary" aria-live="polite">{hint}</p>
+      {/* The whole screen is the open area: a faint frame shows a drop will put the circle on its own. */}
+      {drag?.target === 'alone' && drag.valid && drag.holder !== 'alone' && (
+        <div className="pointer-events-none fixed inset-2 z-30 rounded-[2rem] border-2 border-dashed border-accent/30 bg-accent-tint/20" aria-hidden="true" />
+      )}
       <div
         ref={canvasRef}
-        className={`relative mx-auto mt-2 select-none rounded-[3rem] border border-dashed transition-colors [-webkit-touch-callout:none] ${
-          drag?.target === 'alone' && drag.valid && drag.holder !== 'alone' ? 'border-accent/40 bg-accent-tint/30' : 'border-transparent'
-        }`}
+        className="relative mx-auto mt-2 select-none [-webkit-touch-callout:none]"
         style={{ width: canvasW, height: canvasH }}
       >
         {nodes.map(n => {

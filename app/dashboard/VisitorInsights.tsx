@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import EchoesLocked from '@/components/plans/EchoesLocked'
 import LiaisonNote from '@/components/insights/LiaisonNote'
-import EchoEmailSettings from '@/components/insights/EchoEmailSettings'
 
 type Category = { category: string; count: number; examples: string[] }
 type Echoes = 'none' | 'monthly' | 'weekly_monthly'
@@ -129,10 +128,6 @@ export default function VisitorInsights() {
           <LiaisonNote note={data.latestNote} compact />
         </div>
       )}
-
-      <div className="border-t border-border pt-5">
-        <EchoEmailSettings compact />
-      </div>
     </div>
   )
 }
