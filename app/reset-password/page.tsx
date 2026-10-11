@@ -41,10 +41,9 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Choose a New Password</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-medium tracking-tight text-text-primary">Choose a New Password</h1>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
           {ready === null && <p className="text-sm text-text-secondary">Loading…</p>}
           {ready === false && (
             <div className="space-y-4 text-center">

@@ -20,7 +20,7 @@ type Mode = 'name' | 'content'
 const SEARCH_FIELD =
   'w-full min-h-[60px] bg-card border border-border rounded-2xl pl-12 pr-5 py-4 text-base leading-[26px] text-text-primary placeholder:text-text-muted/60 focus:outline-none focus:border-accent/60 shadow-soft'
 const SEARCH_ICON = 'pointer-events-none absolute left-4 top-5 h-5 w-5 text-text-muted'
-const SEARCH_BUTTON = 'self-end h-[60px] w-28 flex-shrink-0 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50'
+const SEARCH_BUTTON = 'self-end h-[60px] w-20 sm:w-28 flex-shrink-0 rounded-2xl bg-accent hover:bg-accent-light text-white font-medium disabled:opacity-50'
 
 export type SearchQuota = { quota: number; used: number }
 

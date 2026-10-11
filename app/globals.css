@@ -37,6 +37,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iPhone/iPad: text fields under 16px make Safari zoom in when tapped. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select {
+    font-size: max(16px, 1em);
+  }
+}
+
 /* Phones, signed in: room for the tab bar at the bottom (components/nav/SiteHeader.tsx). */
 @media (max-width: 767px) {
   body.has-tabbar {

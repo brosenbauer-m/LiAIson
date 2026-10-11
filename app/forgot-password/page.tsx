@@ -34,11 +34,10 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Forgot Your Password?</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-medium tracking-tight text-text-primary">Forgot Your Password?</h1>
           <p className="text-text-secondary mt-2">We&apos;ll email you a link to choose a new one.</p>
         </div>
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
           {sent ? (
             <div className="space-y-4 text-center">
               <p className="text-text-primary">If an account exists for <span className="font-medium">{email}</span>, a reset link is on its way.</p>

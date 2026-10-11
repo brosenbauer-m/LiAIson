@@ -42,12 +42,11 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="font-display text-3xl text-accent">LiAIson</Link>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-text-primary mt-4">Welcome Back</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-medium tracking-tight text-text-primary">Welcome Back</h1>
           <p className="text-text-secondary mt-2">Sign in to your account</p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-8">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8">
           {searchParams.get('reset') === '1' && (
             <p className="mb-5 text-sm text-success bg-success/10 border border-success/30 rounded-lg px-3 py-2">
               Your password was changed. Please sign in.
