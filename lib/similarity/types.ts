@@ -23,7 +23,12 @@ export type SimilarityInterest = {
 export type SimilarityResult = {
   // One-to-one: the score. Several people: the highest of `levels`.
   level: SimilarityLevel
-  // Several people (Social Butterfly): the score with the viewer per person key.
+  // Several people (Social Butterfly): the score with the viewer per person key
+  // (only when the viewer is part of the chart).
   levels?: Record<string, SimilarityLevel>
+  // Several people: the score between two of the others, keyed "B-C" (letters sorted).
+  pairs?: Record<string, SimilarityLevel>
+  // Several people: whether the viewer ('A') is part of the chart.
+  includesViewer?: boolean
   interests: SimilarityInterest[]
 }
