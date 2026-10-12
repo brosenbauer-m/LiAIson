@@ -70,20 +70,20 @@ export default function HomePage() {
       <section data-section className="relative snap-start min-h-full flex items-center overflow-hidden">
         <div className="absolute inset-0 bg-grid [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" aria-hidden="true" />
         <RisingCircles />
-        <div className="relative w-full max-w-3xl mx-auto px-4 pt-12 pb-[22vh] text-center">
-          <h1 className="font-display text-5xl sm:text-7xl font-medium text-text-primary leading-[1.05] tracking-tight text-balance animate-page-in">
+        <div data-reveal className="relative w-full max-w-3xl mx-auto px-4 pt-12 pb-[22vh] text-center">
+          <h1 data-step style={{ "--i": 0 } as React.CSSProperties} className="font-display text-5xl sm:text-7xl font-medium text-text-primary leading-[1.05] tracking-tight text-balance">
             Tell Your Story a Million Times
           </h1>
-          <p className="mt-8 text-base sm:text-lg text-text-secondary leading-relaxed text-balance animate-page-in" style={{ animationDelay: '120ms' }}>
+          <p data-step style={{ "--i": 1 } as React.CSSProperties} className="mt-8 text-base sm:text-lg text-text-secondary leading-relaxed text-balance">
             The desire to know others and to be known is in our nature. Millennia ago we were few, living in small communities
             with the time, will and opportunity to meet this need naturally. Today we are billions, making it increasingly
             difficult to know, and be known by, so many. Our current lifestyles, biology and infrastructure are not designed to
             sustain this social fulfilment at such a scale. Offload your insignificant interactions and let your LiAIson handle them.
           </p>
-          <p className="mt-5 text-lg sm:text-xl text-text-primary font-medium animate-page-in" style={{ animationDelay: '220ms' }}>
+          <p data-step style={{ "--i": 2 } as React.CSSProperties} className="mt-5 text-lg sm:text-xl text-text-primary font-medium">
             Tell your story once, and let it be told endlessly.
           </p>
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 justify-center animate-page-in" style={{ animationDelay: '320ms' }}>
+          <div data-step style={{ "--i": 3 } as React.CSSProperties} className="mt-10 flex flex-col sm:flex-row gap-3 justify-center">
             <Link href={primaryHref} className="px-7 py-3.5 bg-accent hover:bg-accent-light text-white font-medium rounded-full shadow-card">
               {signedIn ? 'Go to My LiAIson' : 'Create Your Own LiAIson'}
             </Link>
@@ -97,7 +97,7 @@ export default function HomePage() {
       {/* 2 · How it Works */}
       <section id="how-it-works" data-section className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
         <div data-reveal className="w-full max-w-6xl mx-auto px-4">
-          <h2 className="font-display text-4xl sm:text-5xl font-medium text-text-primary mb-10">How it Works</h2>
+          <h2 data-step style={{ "--i": 0 } as React.CSSProperties} className="font-display text-4xl sm:text-5xl font-medium text-text-primary mb-10">How it Works</h2>
           <HowItWorks />
         </div>
       </section>
@@ -105,12 +105,12 @@ export default function HomePage() {
       {/* 3 · On Your Terms: the EU first, then the rest */}
       <section data-section className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
         <div data-reveal className="w-full max-w-6xl mx-auto px-4">
-          <h2 className="font-display text-4xl sm:text-6xl font-medium text-text-primary">On Your Terms</h2>
-          <p className="mt-5 text-lg text-text-secondary max-w-2xl leading-relaxed">
+          <h2 data-step style={{ "--i": 0 } as React.CSSProperties} className="font-display text-4xl sm:text-6xl font-medium text-text-primary">On Your Terms</h2>
+          <p data-step style={{ "--i": 1 } as React.CSSProperties} className="mt-5 text-lg text-text-secondary max-w-2xl leading-relaxed">
             Your LiAIson only ever knows what you choose to tell it, and you stay in control of who hears what.
           </p>
           <div className="mt-10 grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <div className="relative lg:col-span-3 overflow-hidden rounded-3xl bg-gradient-to-br from-accent to-[#3F2819] text-white p-7 sm:p-10 shadow-card">
+            <div data-step style={{ "--i": 2 } as React.CSSProperties} className="relative lg:col-span-3 overflow-hidden rounded-3xl bg-gradient-to-br from-accent to-[#3F2819] text-white p-7 sm:p-10 shadow-card">
               <EuStars className="hidden sm:block absolute -right-16 -top-16 w-72 h-72 text-[#E3C27A] opacity-25" />
               <div className="relative flex flex-col sm:flex-row sm:items-center gap-4">
                 <EuStars className="w-14 h-14 text-[#E3C27A] flex-shrink-0" />
@@ -129,8 +129,8 @@ export default function HomePage() {
               </div>
             </div>
             <div className="lg:col-span-2 grid gap-4">
-              {TRUST.map(t => (
-                <div key={t.title} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+              {TRUST.map((t, i) => (
+                <div key={t.title} data-step style={{ '--i': 3 + i } as React.CSSProperties} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
                   <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
                     <h3 className="font-semibold text-text-primary">{t.title}</h3>
@@ -148,10 +148,11 @@ export default function HomePage() {
         <div className="relative flex-1 flex items-center justify-center px-4 py-20 overflow-hidden">
           <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" aria-hidden="true" />
           <div data-reveal className="relative text-center">
-            <h2 className="font-display text-5xl sm:text-7xl font-medium text-text-primary tracking-tight">Make Yourself Known</h2>
-            <p className="mt-5 text-lg text-text-secondary">Every tier starts with a free month.</p>
+            <h2 data-step style={{ "--i": 0 } as React.CSSProperties} className="font-display text-5xl sm:text-7xl font-medium text-text-primary tracking-tight">Make Yourself Known</h2>
+            <p data-step style={{ "--i": 1 } as React.CSSProperties} className="mt-5 text-lg text-text-secondary">Every tier starts with a free month.</p>
             <Link
               href={primaryHref}
+              data-step style={{ "--i": 2 } as React.CSSProperties}
               className="mt-10 inline-block px-8 py-4 bg-accent hover:bg-accent-light text-white font-medium rounded-full shadow-card"
             >
               {signedIn ? 'Go to My LiAIson' : 'Create Your LiAIson'}

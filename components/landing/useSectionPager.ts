@@ -147,16 +147,20 @@ export function useSectionPager(container: React.RefObject<HTMLElement | null>) 
   return paging
 }
 
-// Marks [data-reveal] blocks as visible when their section comes into view,
-// so their content can ease in (CSS in globals.css).
+// Marks [data-reveal] blocks as "in" when their section comes into view, so
+// their parts ([data-step]) ease in one after another, and "out" once they
+// have left the screen, so it plays again next time (CSS in globals.css).
 export function useReveal(container: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = container.current
     if (!el) return
     const items = Array.from(el.querySelectorAll<HTMLElement>('[data-reveal]'))
     const io = new IntersectionObserver(
-      entries => entries.forEach(entry => { if (entry.isIntersecting) entry.target.setAttribute('data-reveal', 'in') }),
-      { root: el, threshold: 0.25 }
+      entries => entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.2) entry.target.setAttribute('data-reveal', 'in')
+        else if (!entry.isIntersecting) entry.target.setAttribute('data-reveal', 'out')
+      }),
+      { root: el, threshold: [0, 0.2] }
     )
     items.forEach(item => io.observe(item))
     return () => io.disconnect()

@@ -97,19 +97,26 @@ body {
   }
 }
 
-/* Home page: blocks ease in when their section arrives (useReveal). */
-[data-reveal] {
+/* Home page: when a section arrives (useReveal), its parts ease in one after
+   another — each [data-step] waits var(--i) steps. Leaving resets them out of
+   sight, so they play again on the way back. */
+[data-reveal] [data-step] {
   opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 900ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform: translateY(22px);
+  transition: opacity 650ms cubic-bezier(0.2, 0.8, 0.2, 1), transform 750ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: calc(var(--i, 0) * 110ms + 60ms);
 }
-[data-reveal="in"] {
+[data-reveal="in"] [data-step] {
   opacity: 1;
   transform: none;
 }
+[data-reveal="out"] [data-step] {
+  transition-duration: 0ms;
+  transition-delay: 0ms;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
+  [data-reveal] [data-step] {
     opacity: 1;
     transform: none;
   }

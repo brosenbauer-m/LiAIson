@@ -16,19 +16,18 @@ const SLIDES: Slide[] = [
     short: 'Your Vault',
     body: (
       <>
-        Everything starts with your <b>Vault</b>: write whatever you want your LiAIson to know about you, in sections you name
-        yourself, such as hobbies or work experience. Import a file like your CV into any section, and let <b>Optimize Text</b>{' '}
-        shorten a section to free up space. For each section you choose who may hear about it. The higher your tier, the more
-        your <b>Vault</b> can hold.
+        Store in your <b>Vault</b> anything you want your LiAIson to know about you, from hobbies and interests to professional
+        work experience. Your LiAIson knows only what exists in your <b>Vault</b>. For each section in your <b>Vault</b>, you can
+        specify who gets to interact with this information. The higher your tier, the more information your <b>Vault</b> can
+        hold for your LiAIson to work with.
       </>
     ),
     mock: <VaultMock />,
     callouts: [
-      { ax: 392, ay: 32, y: 34, title: 'More room on higher tiers', text: 'From 1,000 to 60,000 characters.' },
-      { ax: 300, ay: 70, y: 112, title: 'Who hears about it', text: 'Each section sits in a circle or stays a draft.' },
-      { ax: 384, ay: 165, y: 200, title: 'Import File, Optimize Text', text: 'In the ⋯ menu of every section.' },
-      { ax: 392, ay: 262, y: 290, title: 'Your own sections', text: 'Hobbies, work experience, anything you like.' },
-      { ax: 300, ay: 396, y: 384, title: 'Add Section', text: 'With suggestions to get you started.' },
+      { ax: 392, ay: 32, y: 34, title: 'Room to Grow', text: 'Store from 1,000 up to 60,000 characters, depending on your tier.' },
+      { ax: 300, ay: 70, y: 124, title: 'Who Can Hear It', text: 'Choose who your LiAIson can share each section with.' },
+      { ax: 384, ay: 165, y: 220, title: 'Section Tools', text: 'Import a file or optimize a section’s text to free up space.' },
+      { ax: 300, ay: 396, y: 330, title: 'Your Sections', text: 'Create sections to categorise your information, with suggestions to start.' },
     ],
   },
   {
@@ -36,17 +35,17 @@ const SLIDES: Slide[] = [
     short: 'Your LiAIson',
     body: (
       <>
-        You get a link to your personal <b>LiAIson</b>. Signed-in visitors talk to it about you in natural conversation, and it
-        answers only from what your <b>Vault</b> lets them hear, pointing out what they have in common with you. On Extrovert
-        and Social Butterfly they also see <b>Similarity</b>: a score and a map of shared interests.
+        You get a link to your personal <b>LiAIson</b>. Users can talk to your LiAIson in natural conversation to learn about you.
+        Responses come only from the information in your <b>Vault</b>. Your LiAIson will even point out what you have in common!
+        On higher tiers, your LiAIson can map out <b>Similarities</b> visually for you across multiple individuals.
       </>
     ),
     mock: <ChatMock />,
     callouts: [
-      { ax: 392, ay: 32, y: 34, title: 'Your personal link', text: 'Share it anywhere.' },
-      { ax: 322, ay: 190, y: 196, title: 'Only from your Vault', text: 'No guessing, no outside sources.' },
-      { ax: 244, ay: 236, y: 276, title: 'What you have in common', text: 'Pointed out during the chat.' },
-      { ax: 392, ay: 350, y: 372, title: 'Similarity map', text: 'A score and shared interests, on Extrovert and up.' },
+      { ax: 392, ay: 32, y: 34, title: 'Your Personal Link', text: 'Share your link anywhere so people can talk to your LiAIson.' },
+      { ax: 322, ay: 190, y: 160, title: 'Only From Your Vault', text: 'Trust that every answer comes only from your Vault.' },
+      { ax: 244, ay: 236, y: 262, title: 'What You Have in Common', text: 'Discover what you share with the person you’re talking to.' },
+      { ax: 392, ay: 350, y: 372, title: 'Similarities Chart', text: 'Map out what you have in common visually, even across several people.' },
     ],
   },
   {
@@ -54,20 +53,19 @@ const SLIDES: Slide[] = [
     short: 'Circles',
     body: (
       <>
-        <b>Circles</b> decide what your LiAIson may tell whom, and they sit inside each other: whoever is in a circle also hears
-        about everything in the circles around it. From Ambivert up there is an <b>Outer Circle</b> and an <b>Inner Circle</b>{' '}
-        for people you choose; Social Butterfly adds your own circles, placed anywhere, even on their own outside everything
-        else. Connections go both ways: whoever sends a request and whoever accepts it each choose
-        the other&apos;s circle, and you can drag people between circles on the <b>Circles</b> page anytime.
+        On higher tiers, <b>Circles</b> let you decide what your LiAIson may tell whom. Drag and drop <b>Circles</b> in and out of
+        each other to set who can access which information. For example, a close friend in your <b>Inner Circle</b> can talk to
+        your LiAIson about everything in both your <b>Inner Circle</b> and your <b>Outer Circle</b>, while an acquaintance in your{' '}
+        <b>Outer Circle</b> only hears about the <b>Outer Circle</b>. The higher your tier, the more <b>Circles</b> you can create.
       </>
     ),
     mock: <CirclesMock />,
     callouts: [
-      { ax: 148, ay: 30, y: 40, title: 'Public or Private', text: 'Public: everyone can talk to your LiAIson.' },
-      { ax: 297, ay: 156, y: 130, title: 'Outer Circle', text: 'Everyone who can see your profile.' },
-      { ax: 237, ay: 215, y: 210, title: 'Inner Circle', text: 'Also hears about the Outer Circle.' },
-      { ax: 368, ay: 282, y: 296, title: 'Your own circles', text: 'Placed anywhere, on Social Butterfly.' },
-      { ax: 392, ay: 380, y: 392, title: 'Chosen when you connect', text: 'By each of you, changeable anytime.' },
+      { ax: 148, ay: 30, y: 40, title: 'Public or Private', text: 'Choose whether everyone or only your connections can talk to your LiAIson.' },
+      { ax: 297, ay: 156, y: 132, title: 'Outer Circle', text: 'Share information with everyone who can see your profile.' },
+      { ax: 237, ay: 215, y: 214, title: 'Inner Circle', text: 'Share more with the people closest to you.' },
+      { ax: 368, ay: 282, y: 300, title: 'Your Own Circles', text: 'Create your own Circles and drag them in and out of each other.' },
+      { ax: 392, ay: 380, y: 392, title: 'Chosen When You Connect', text: 'Pick a Circle for each new connection and change it anytime.' },
     ],
   },
   {
@@ -75,17 +73,16 @@ const SLIDES: Slide[] = [
     short: 'Discover',
     body: (
       <>
-        On <b>Discover</b> everyone can find people by name or @username. From Ambivert up you can also search <b>By Description</b>, for
-        example &ldquo;people in Vienna who play tennis&rdquo;, and see a short reason for each match. Only Public profiles can be found
-        by description, and only what everyone may see is searched.
+        On <b>Discover</b> everyone can find people by name or @username. In higher tiers you can also search{' '}
+        <b>By Description</b>, for example &ldquo;people in Vienna who play tennis&rdquo;. Your profile can only be found if it is
+        set to Public, and the search only scans through the information you have made visible to all.
       </>
     ),
     mock: <DiscoverMock />,
     callouts: [
-      { ax: 244, ay: 70, y: 52, title: 'By Name', text: 'Find anyone by name or @username, on every tier.' },
-      { ax: 392, ay: 117, y: 130, title: 'By Description', text: 'Search by what people share, from Ambivert up.' },
-      { ax: 392, ay: 205, y: 212, title: 'A short reason', text: 'Never their Vault text.' },
-      { ax: 260, ay: 360, y: 340, title: 'Public profiles only', text: 'Private profiles are found by name only.' },
+      { ax: 244, ay: 70, y: 52, title: 'By Name', text: 'Find anyone by their name or @username, on every tier.' },
+      { ax: 392, ay: 117, y: 150, title: 'By Description', text: 'Search by what people share, on higher tiers.' },
+      { ax: 260, ay: 360, y: 300, title: 'Public Profiles Only', text: 'Set your profile to Public to be found by description.' },
     ],
   },
   {
@@ -93,17 +90,17 @@ const SLIDES: Slide[] = [
     short: 'Echoes',
     body: (
       <>
-        You never see who talks to your LiAIson or exactly what they say. From Ambivert up you get <b>Echoes</b>: monthly reports
-        (weekly too on Extrovert and up) that summarise what people want to know about you, with a note from your LiAIson on
-        what could be worth adding to your <b>Vault</b>.
+        You never see who talks to your LiAIson or exactly what they say. However, on higher tiers you can get monthly or weekly
+        summaries, called <b>Echoes</b>, on what people have been asking about you and what they&apos;d like to know more about,
+        with a note from your LiAIson on what could be worth adding to your <b>Vault</b>.
       </>
     ),
     mock: <EchoesMock />,
     callouts: [
-      { ax: 392, ay: 30, y: 36, title: 'Monthly or weekly', text: 'Depending on your tier, also by email.' },
-      { ax: 392, ay: 126, y: 140, title: 'Topics', text: 'What people ask about most.' },
-      { ax: 392, ay: 302, y: 290, title: 'A note from your LiAIson', text: 'What could be worth adding.' },
-      { ax: 300, ay: 372, y: 384, title: 'Anonymous', text: 'Never who asked or their exact words.' },
+      { ax: 392, ay: 30, y: 36, title: 'Monthly or Weekly', text: 'Receive your Echoes monthly or weekly, also by email.' },
+      { ax: 392, ay: 126, y: 140, title: 'Topics', text: 'See what people ask about you most.' },
+      { ax: 392, ay: 302, y: 280, title: 'A Note From Your LiAIson', text: 'Get suggestions on what could be worth adding to your Vault.' },
+      { ax: 300, ay: 372, y: 384, title: 'Anonymous', text: 'Learn what people want to know without seeing who asked.' },
     ],
   },
   {
@@ -111,18 +108,19 @@ const SLIDES: Slide[] = [
     short: 'Cost',
     body: (
       <>
-        You only pay for the messages <b>you</b> send (and for features marked with *, like Optimize Text), never for
-        conversations others have with your LiAIson. A message typically costs half a cent to two cents. The first month is free
-        with up to 5 messages a day. Your usage is always shown at the top of the page, you set a monthly limit, and you pay once
-        at the end of the month. Ambivert and up add a fixed monthly fee.
+        You only pay for the messages you send (and for features marked with *), never for conversations others have with your
+        LiAIson. A message typically costs half a cent to two cents depending on content size. Your first month is free with up
+        to 5 messages a day. Your usage is always shown at the top of the page. You can set a monthly limit and you pay at the end
+        of every month. Higher tiers have an additional fixed monthly fee for the extra features.
       </>
     ),
     mock: <CostMock />,
     callouts: [
-      { ax: 392, ay: 54, y: 46, title: 'Always visible', text: 'Your usage this month.' },
-      { ax: 392, ay: 128, y: 124, title: 'Your monthly limit', text: 'You never pay more than you set.' },
-      { ax: 392, ay: 182, y: 200, title: 'About 1 cent', text: 'Typically ½ to 2 cents per message.' },
-      { ax: 392, ay: 370, y: 376, title: 'Free when others ask', text: 'Their messages are paid by them.' },
+      { ax: 392, ay: 54, y: 46, title: 'Always Visible', text: 'Check your usage at the top of every page.' },
+      { ax: 392, ay: 128, y: 128, title: 'Your Monthly Limit', text: 'Set a limit so you never pay more than you choose.' },
+      { ax: 392, ay: 168, y: 206, title: 'About 1 Cent', text: 'Pay roughly half a cent to two cents per message you send.' },
+      { ax: 392, ay: 282, y: 290, title: 'Free Month', text: 'Start with a free first month of up to 5 messages a day.' },
+      { ax: 392, ay: 370, y: 390, title: 'Free When Others Ask', text: 'Let others chat with your LiAIson at no cost to you.' },
     ],
   },
 ]
@@ -177,7 +175,7 @@ export default function HowItWorks() {
       <span id="circles" aria-hidden="true" />
       <span id="echoes" aria-hidden="true" />
       {/* Steps: always shows where you are and that more follows */}
-      <ol className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Steps">
+      <ol data-step style={{ '--i': 1 } as React.CSSProperties} className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Steps">
         {SLIDES.map((s, i) => (
           <li key={s.title} className="flex-1 min-w-[110px]">
             <button
@@ -200,6 +198,8 @@ export default function HowItWorks() {
 
       <div
         ref={trackRef}
+        data-step
+        style={{ '--i': 2 } as React.CSSProperties}
         className="mt-10 flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="region"
         aria-roledescription="carousel"
@@ -225,7 +225,7 @@ export default function HowItWorks() {
         ))}
       </div>
 
-      <div className="mt-10 flex items-center justify-between gap-4">
+      <div data-step style={{ '--i': 3 } as React.CSSProperties} className="mt-10 flex items-center justify-between gap-4">
         <button
           type="button"
           onClick={() => go(index - 1)}

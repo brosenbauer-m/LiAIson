@@ -74,11 +74,16 @@ export function ChatMock() {
       <p className="absolute left-6 top-[252px] text-[11px] text-text-secondary">✨ See everything you have in common →</p>
       <div className="absolute left-5 right-5 top-[282px] h-[142px] rounded-xl border border-border bg-background px-4 py-3">
         <p className="text-[12px]"><span className="tracking-widest">●●●●○</span> <span className="font-semibold">A lot in common</span></p>
-        <span className="absolute left-[40px] top-[56px] h-14 w-14 rounded-full bg-accent text-white text-[11px] flex items-center justify-center">Tennis</span>
-        <span className="absolute left-[100px] top-[44px] h-12 w-12 rounded-full bg-accent text-white text-[10px] flex items-center justify-center">Vienna</span>
-        <span className="absolute left-[92px] top-[90px] h-10 w-10 rounded-full bg-accent text-white text-[9px] flex items-center justify-center">Design</span>
-        <span className="absolute left-[200px] top-[60px] h-11 w-11 rounded-full border border-accent text-[10px] flex items-center justify-center">Sailing</span>
-        <span className="absolute left-[250px] top-[86px] h-9 w-9 rounded-full bg-accent-subtle text-[9px] flex items-center justify-center">Jazz</span>
+        <span className="absolute left-[40px] top-[46px] h-14 w-14 rounded-full bg-accent text-white text-[11px] flex items-center justify-center">Tennis</span>
+        <span className="absolute left-[100px] top-[34px] h-12 w-12 rounded-full bg-accent text-white text-[10px] flex items-center justify-center">Vienna</span>
+        <span className="absolute left-[92px] top-[78px] h-10 w-10 rounded-full bg-accent text-white text-[9px] flex items-center justify-center">Design</span>
+        <span className="absolute left-[200px] top-[50px] h-11 w-11 rounded-full border border-accent text-[10px] flex items-center justify-center">Sailing</span>
+        <span className="absolute left-[250px] top-[76px] h-9 w-9 rounded-full bg-accent-subtle text-[9px] flex items-center justify-center">Jazz</span>
+        <p className="absolute left-4 bottom-2 flex gap-3 text-[9.5px] text-text-secondary">
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent" />Shared</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-subtle" />Only You</span>
+          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full border border-accent" />Only Anna</span>
+        </p>
       </div>
     </div>
   )
@@ -98,6 +103,9 @@ export function CirclesMock() {
         <text x="175" y="219" textAnchor="middle" fontSize="11" fill="#FFFFFF" letterSpacing="1.5">INNER</text>
         <circle cx="320" cy="282" r="48" fill="#FFFDF9" stroke="#5C3B28" strokeDasharray="5 3" />
         <text x="320" y="286" textAnchor="middle" fontSize="11" fill="#2B1E16">Family</text>
+        <path d="M290 248 C 272 226, 252 222, 236 226" fill="none" stroke="#5C3B28" strokeOpacity="0.5" strokeWidth="1.5" strokeDasharray="3 3" />
+        <path d="M242 220 L 234 226 L 243 231" fill="none" stroke="#5C3B28" strokeOpacity="0.5" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M333 296 l0 15 l4 -4 l3 7 l3 -1.4 l-3 -7 l5.5 0 z" fill="#2B1E16" stroke="#FFFDF9" strokeWidth="1" />
       </svg>
       <div className="absolute left-5 right-5 top-[352px] h-[74px] rounded-xl border border-border bg-background px-4 py-2.5">
         <p className="text-[12.5px]">Add <span className="font-semibold">Lena Berger</span> to which circle?</p>
@@ -186,9 +194,10 @@ export function CostMock() {
         <div className="flex justify-between text-[12px]"><span className="text-text-secondary">Spending limit</span><span className="tabular-nums">€1.24 of €15</span></div>
         <div className="mt-1.5 h-2 rounded-full bg-accent-subtle"><div className="h-full w-[8%] rounded-full bg-accent" /></div>
       </div>
-      {row(172, 'Average per message', '1.1 ct')}
-      {row(214, 'Charged on', '1 November')}
-      {row(256, 'Extrovert', '€6 / month')}
+      {row(160, 'Average per message', '1.1 ct')}
+      {row(198, 'Charged on', '1 November')}
+      {row(236, 'Extrovert', '€6 / month')}
+      {row(274, 'First month', 'Free · 5 messages a day')}
       <div className="absolute left-5 right-5 top-[320px] h-[86px] rounded-xl bg-accent-tint px-4 py-3">
         <p className="text-[12px] text-text-secondary">Others talking to your LiAIson</p>
         <p className="font-display text-3xl mt-1">€0.00</p>
