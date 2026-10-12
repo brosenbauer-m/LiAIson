@@ -2,18 +2,20 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import SimilarityMap from '@/components/similarity/SimilarityMap'
+import BubbleChart from '@/components/similarity/BubbleChart'
 import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 
 // "What you have in common" on someone's profile (Extrovert; see
-// lib/similarity/compare.ts). Worked out only when the viewer taps the
-// button; a kept result that is still up to date shows right away.
+// lib/similarity/compare.ts). Nothing shows until the viewer taps the button
+// (owner decision 2026-10-12): a kept result that is still up to date is
+// shown for free, otherwise a new check is made (counts towards the limit).
 
 type State = { quota: number; used: number; result: SimilarityResult | null }
 
 export default function SimilarityCard({ username, displayName, groupCompare }: { username: string; displayName: string; groupCompare: boolean }) {
   const [state, setState] = useState<State | null>(null)
   const [busy, setBusy] = useState(false)
+  const [shown, setShown] = useState(false)
   const [error, setError] = useState<{ text: string; link?: { href: string; label: string } } | null>(null)
 
   useEffect(() => {
@@ -24,6 +26,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
   }, [username])
 
   const compare = async () => {
+    if (state?.result) { setShown(true); return }
     setBusy(true)
     setError(null)
     try {
@@ -39,6 +42,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
         return
       }
       setState({ quota: data.quota, used: data.used, result: data.result })
+      setShown(true)
     } catch {
       setError({ text: 'Something went wrong. Please try again.' })
     } finally {
@@ -47,8 +51,10 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
   }
 
   if (!state || state.quota <= 0) return null
-  const { result } = state
+  const result = shown ? state.result : null
+  const kept = !!state.result
   const left = Math.max(0, state.quota - state.used)
+  const first = displayName.split(' ')[0] || displayName
 
   return (
     <div id="similarity" className="bg-card border border-border rounded-2xl p-6 shadow-soft scroll-mt-6">
@@ -64,25 +70,29 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
           </p>
           {result.interests.length > 0 && (
             <div className="mt-4">
-              <SimilarityMap
-                people={[{ key: 'A', name: 'You' }, { key: 'B', name: displayName }]}
+              <BubbleChart
+                people={[{ key: 'A', name: 'You', you: true }, { key: 'B', name: displayName }]}
                 interests={result.interests}
               />
             </div>
           )}
-          <p className="mt-4 text-xs text-text-muted">
-            Based on what you both shared, using only what {displayName} lets you see. Only you see this; {displayName} is not told.
-          </p>
+          <p className="mt-3 text-xs text-text-muted text-center">Only you see this; {first} is not notified.</p>
           {groupCompare && (
-            <Link href={`/similarities?u=${encodeURIComponent(username)}`} className="mt-2 inline-block text-sm text-accent hover:underline">
-              Add More People to a Similarities Chart
+            <Link
+              href={`/similarities?u=${encodeURIComponent(username)}`}
+              className="mt-4 flex w-full items-center justify-center gap-2 px-5 py-2.5 rounded-lg border border-accent/40 text-accent hover:bg-accent-tint text-sm font-medium transition-colors"
+            >
+              <span aria-hidden="true">+</span> Add More People to a Similarities Chart
             </Link>
           )}
+          <button type="button" onClick={() => setShown(false)} className="mt-3 block mx-auto text-xs text-text-muted hover:text-text-secondary">
+            Hide
+          </button>
         </>
       ) : (
         <>
           <p className="text-sm text-text-secondary leading-relaxed">
-            See what you have in common with {displayName}, based on what you both share. Only you see the result.
+            See a chart of what you have in common with {first}. Only you see it.
           </p>
           <button
             type="button"
@@ -90,11 +100,13 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
             disabled={busy}
             className="mt-4 w-full px-5 py-2.5 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-lg transition-all shadow-soft disabled:opacity-50"
           >
-            {busy ? 'Checking…' : 'See What We Have in Common*'}
+            {busy ? 'Checking…' : kept ? 'Show What We Have in Common' : 'See What We Have in Common*'}
           </button>
-          <p className="mt-2 text-xs text-text-muted text-center">
-            {left} of {state.quota} Similarity checks left this month
-          </p>
+          {!kept && (
+            <p className="mt-2 text-xs text-text-muted text-center">
+              {left} of {state.quota} Similarity checks left this month
+            </p>
+          )}
         </>
       )}
 

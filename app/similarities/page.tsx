@@ -3,14 +3,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import SimilarityMap from '@/components/similarity/SimilarityMap'
+import BubbleChart, { type ChartPerson } from '@/components/similarity/BubbleChart'
 import TierMark from '@/components/ui/TierMark'
 import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 
 // Similarities with several people at once (Social Butterfly). Find people
 // by name or @username (Discover search, plus your connections), then see one
-// bubble map for everyone and how much each person has in common with you.
-// Only you see it; nobody is told.
+// floating bubble chart of everything they have in common, with each other
+// and, if you switch on Include Me, with you (off by default; owner decision
+// 2026-10-12). Only what each person lets you see is used. Only you see it.
 
 type Candidate = { username: string; display_name: string; avatar_url: string | null; plan?: string | null }
 type Person = { key: string; username: string; name: string; avatarUrl: string | null }
@@ -18,6 +19,7 @@ type Loaded = {
   groupCompare: number
   quota: number
   used: number
+  me: { name: string; avatarUrl: string | null }
   candidates: Candidate[]
   people: Person[] | null
   result: SimilarityResult | null
@@ -38,10 +40,14 @@ export default function SimilaritiesPage() {
   const [error, setError] = useState<{ text: string; link?: { href: string; label: string } } | null>(null)
   const [people, setPeople] = useState<Person[] | null>(null)
   const [result, setResult] = useState<SimilarityResult | null>(null)
+  const [includeMe, setIncludeMe] = useState(false)
 
   const load = useCallback(async () => {
-    const fromUrl = (new URLSearchParams(window.location.search).get('u') ?? '').split(',').map(u => u.trim()).filter(Boolean)
-    const res = await fetch(`/api/compare?u=${encodeURIComponent(fromUrl.join(','))}`, { cache: 'no-store' }).catch(() => null)
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = (params.get('u') ?? '').split(',').map(u => u.trim()).filter(Boolean)
+    const me = params.get('me') === '1'
+    setIncludeMe(me)
+    const res = await fetch(`/api/compare?u=${encodeURIComponent(fromUrl.join(','))}${me ? '&me=1' : ''}`, { cache: 'no-store' }).catch(() => null)
     if (res?.status === 401) {
       router.push('/login?redirect=/similarities')
       return
@@ -109,7 +115,7 @@ export default function SimilaritiesPage() {
       const res = await fetch('/api/compare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usernames: selected }),
+        body: JSON.stringify({ usernames: selected, includeMe }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -126,7 +132,7 @@ export default function SimilaritiesPage() {
       setPeople(d.people)
       setResult(d.result)
       setData(prev => (prev ? { ...prev, quota: d.quota, used: d.used } : prev))
-      router.replace(`/similarities?u=${encodeURIComponent(selected.join(','))}`)
+      router.replace(`/similarities?u=${encodeURIComponent(selected.join(','))}${includeMe ? '&me=1' : ''}`)
     } catch {
       setError({ text: 'Something went wrong. Please try again.' })
     } finally {
@@ -147,21 +153,21 @@ export default function SimilaritiesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-12 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-6">
         <div>
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Similarities</h1>
           <p className="text-text-secondary text-lg mt-2">See what you have in common with several people at once.</p>
         </div>
 
         {locked ? (
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-3">
+          <div className="max-w-3xl bg-card border border-border rounded-2xl p-6 shadow-soft space-y-3">
             <p className="text-sm text-text-secondary leading-relaxed">
               Similarities with several people at once are part of Social Butterfly. With Extrovert you can see your Similarities with one person on their profile.
             </p>
             <Link href="/settings#subscription" className="text-sm text-accent hover:underline font-medium">See Social Butterfly</Link>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
+          <div className="max-w-3xl bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} People</h2>
               <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
@@ -210,6 +216,22 @@ export default function SimilaritiesPage() {
               )}
             </div>
 
+            <label className="flex items-center justify-between gap-4 cursor-pointer">
+              <span>
+                <span className="block text-sm font-medium text-text-primary">Include Me</span>
+                <span className="block text-xs text-text-secondary">Also show what you have in common with them.</span>
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={includeMe}
+                onClick={() => setIncludeMe(v => !v)}
+                className={`relative h-6 w-11 flex-shrink-0 rounded-full transition-colors ${includeMe ? 'bg-accent' : 'bg-border'}`}
+              >
+                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-soft transition-all ${includeMe ? 'left-[22px]' : 'left-0.5'}`} />
+              </button>
+            </label>
+
             <div>
               <button
                 type="button"
@@ -233,34 +255,39 @@ export default function SimilaritiesPage() {
           </div>
         )}
 
-        {people && result && (
-          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
-            <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide">What You Have in Common</p>
-            <ul className="space-y-2">
-              {people.map(p => {
-                const level = result.levels?.[p.key] ?? 1
-                return (
-                  <li key={p.key} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                    <Link href={`/${p.username}`} className="font-medium text-text-primary hover:underline">{p.name}</Link>
-                    <span className="flex items-center gap-2 text-sm text-text-primary">
-                      <span aria-hidden="true" className="tracking-widest">{dots(level)}</span>
-                      <span>{LEVEL_LABEL[level]}</span>
-                    </span>
-                  </li>
-                )
-              })}
-            </ul>
-            {result.interests.length > 0 && (
-              <SimilarityMap
-                people={[{ key: 'A', name: 'You' }, ...people.map(p => ({ key: p.key, name: p.name }))]}
-                interests={result.interests}
-              />
-            )}
-            <p className="text-xs text-text-muted">
-              Based on what you all shared, using only what each person lets you see. Only you see this; nobody is told.
-            </p>
-          </div>
-        )}
+        {people && result && (() => {
+          const chartPeople: ChartPerson[] = [
+            ...(result.includesViewer ? [{ key: 'A', name: data.me.name, avatarUrl: data.me.avatarUrl, you: true }] : []),
+            ...people.map(p => ({ key: p.key, name: p.name, avatarUrl: p.avatarUrl })),
+          ]
+          const nameOf = (k: string) => (k === 'A' ? 'You' : people.find(p => p.key === k)?.name.split(' ')[0] ?? k)
+          const scores: { label: string; level: number }[] = [
+            ...(result.includesViewer ? people.map(p => ({ label: `You & ${nameOf(p.key)}`, level: result.levels?.[p.key] ?? 1 })) : []),
+            ...Object.entries(result.pairs ?? {}).map(([pair, level]) => {
+              const [a, b] = pair.split('-')
+              return { label: `${nameOf(a)} & ${nameOf(b)}`, level }
+            }),
+          ]
+          return (
+            <section className="pt-4 space-y-6" aria-label="Similarities Chart">
+              {result.interests.length > 0 && <BubbleChart people={chartPeople} interests={result.interests} />}
+              {scores.length > 0 && (
+                <ul className="flex flex-wrap justify-center gap-2">
+                  {scores.map(sc => (
+                    <li key={sc.label} className="flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3.5 py-1.5 text-sm">
+                      <span className="font-medium text-text-primary">{sc.label}</span>
+                      <span aria-hidden="true" className="tracking-widest text-[11px] text-accent">{dots(sc.level)}</span>
+                      <span className="text-text-secondary">{LEVEL_LABEL[sc.level as keyof typeof LEVEL_LABEL]}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-xs text-text-muted text-center">
+                Uses only what each person lets you see. Only you see this; nobody is notified.
+              </p>
+            </section>
+          )
+        })()}
       </div>
     </div>
   )
