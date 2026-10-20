@@ -15,7 +15,9 @@ export type SimilarityInterest = {
   label: string
   // Person keys: 'A' = the viewer, 'B' (and 'C', 'D', ... in a group) = the others.
   people: string[]
-  strength: 1 | 2 | 3
+  // How much the texts say about it: 1 = a passing mention … 5 = a lot
+  // (older results use 1 to 3). Drives the bubble size.
+  strength: number
   // Only for interests shared by more than one person.
   reason?: string
 }

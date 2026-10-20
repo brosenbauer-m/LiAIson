@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         .eq('from_user_id', user.id)
         .eq('status', 'accepted')
         .limit(500),
-      service.from('users').select('display_name, avatar_url').eq('id', user.id).maybeSingle<{ display_name: string; avatar_url: string | null }>(),
+      service.from('users').select('username, display_name, avatar_url').eq('id', user.id).maybeSingle<{ username: string; display_name: string; avatar_url: string | null }>(),
     ])
     type Candidate = { username: string; display_name: string; avatar_url: string | null; plan: string | null }
     const candidates = ((rows as { to_user: Candidate | Candidate[] | null }[] | null) ?? [])
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
         groupCompare: limits.groupCompare,
         quota: quota.quota,
         used: quota.used,
-        me: { name: me?.display_name ?? 'You', avatarUrl: me?.avatar_url ?? null },
+        me: { username: me?.username ?? '', name: me?.display_name ?? 'You', avatarUrl: me?.avatar_url ?? null },
         candidates,
         people: cached?.people ?? null,
         result: cached?.result ?? null,

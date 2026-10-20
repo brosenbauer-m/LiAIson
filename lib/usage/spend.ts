@@ -34,9 +34,9 @@ export function isMeteredFeature(feature: string): boolean {
 }
 
 // Features billed pay-as-you-go (to the sender / the person using them):
-// chat messages and Vault Optimize Text (logged as 'proofread'). 'topic' is legacy (no longer produced). Insight capture and Echoes ('insight', 'echo') are logged to the
+// chat messages (incl. the Similarities LiAIson), Vault Optimize Text (logged as 'proofread') and Learn More on the Similarities Chart ('similarity_topic'). 'topic' is legacy (no longer produced). Insight capture and Echoes ('insight', 'echo') are logged to the
 // LiAIson owner but belong to the Echoes feature subscription, so not metered.
-const METERED_FEATURES = new Set(['chat', 'topic', 'proofread'])
+const METERED_FEATURES = new Set(['chat', 'topic', 'proofread', 'similarity_topic'])
 
 export const DEFAULT_SPEND_LIMIT_CENTS = 1500
 export const MAX_SPEND_LIMIT_CENTS = 50000
