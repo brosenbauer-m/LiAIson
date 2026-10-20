@@ -157,10 +157,14 @@ export function useReveal(container: React.RefObject<HTMLElement | null>) {
     const items = Array.from(el.querySelectorAll<HTMLElement>('[data-reveal]'))
     const io = new IntersectionObserver(
       entries => entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.2) entry.target.setAttribute('data-reveal', 'in')
+        // Starts once the section fills most of the screen (or is mostly in
+        // view), so its parts rise in one by one as it settles.
+        const screen = entry.rootBounds?.height || 1
+        const arrived = entry.intersectionRatio >= 0.45 || entry.intersectionRect.height / screen >= 0.6
+        if (entry.isIntersecting && arrived) entry.target.setAttribute('data-reveal', 'in')
         else if (!entry.isIntersecting) entry.target.setAttribute('data-reveal', 'out')
       }),
-      { root: el, threshold: [0, 0.2] }
+      { root: el, threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
     )
     items.forEach(item => io.observe(item))
     return () => io.disconnect()

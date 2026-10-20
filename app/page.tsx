@@ -96,7 +96,7 @@ export default function HomePage() {
 
       {/* 2 · How it Works */}
       <section id="how-it-works" data-section className="snap-start min-h-full flex items-center py-16 border-t border-border bg-surface/40">
-        <div data-reveal className="w-full max-w-6xl mx-auto px-4">
+        <div data-reveal className="w-full max-w-7xl mx-auto px-4">
           <h2 data-step style={{ "--i": 0 } as React.CSSProperties} className="font-display text-4xl sm:text-5xl font-medium text-text-primary mb-10">How it Works</h2>
           <HowItWorks />
         </div>
@@ -120,8 +120,8 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="relative mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
-                {EU_POINTS.map(p => (
-                  <div key={p.title} className="border-t border-white/15 pt-4">
+                {EU_POINTS.map((p, i) => (
+                  <div key={p.title} data-step style={{ '--i': 3 + i } as React.CSSProperties} className="border-t border-white/15 pt-4">
                     <h4 className="font-semibold text-[#F3E3C0]">{p.title}</h4>
                     <p className="mt-1.5 text-sm text-white/75 leading-relaxed">{p.text}</p>
                   </div>
@@ -130,7 +130,7 @@ export default function HomePage() {
             </div>
             <div className="lg:col-span-2 grid gap-4">
               {TRUST.map((t, i) => (
-                <div key={t.title} data-step style={{ '--i': 3 + i } as React.CSSProperties} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
+                <div key={t.title} data-step style={{ '--i': 4 + i } as React.CSSProperties} className="rounded-3xl border border-border bg-card p-6 shadow-soft">
                   <div className="flex items-center gap-3">
                     <span className="w-2 h-2 rounded-full bg-accent" aria-hidden="true" />
                     <h3 className="font-semibold text-text-primary">{t.title}</h3>

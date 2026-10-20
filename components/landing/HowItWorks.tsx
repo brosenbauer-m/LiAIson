@@ -16,10 +16,9 @@ const SLIDES: Slide[] = [
     short: 'Your Vault',
     body: (
       <>
-        Store in your <b>Vault</b> anything you want your LiAIson to know about you, from hobbies and interests to professional
-        work experience. Your LiAIson knows only what exists in your <b>Vault</b>. For each section in your <b>Vault</b>, you can
-        specify who gets to interact with this information. The higher your tier, the more information your <b>Vault</b> can
-        hold for your LiAIson to work with.
+        Store anything you want your LiAIson to know about you in your <b>Vault</b>, from hobbies to work experience. Your
+        LiAIson knows only what is in your <b>Vault</b>, and for each section you choose who it may share it with. Higher tiers
+        hold more.
       </>
     ),
     mock: <VaultMock />,
@@ -35,9 +34,9 @@ const SLIDES: Slide[] = [
     short: 'Your LiAIson',
     body: (
       <>
-        You get a link to your personal <b>LiAIson</b>. Users can talk to your LiAIson in natural conversation to learn about you.
-        Responses come only from the information in your <b>Vault</b>. Your LiAIson will even point out what you have in common!
-        On higher tiers, your LiAIson can map out <b>Similarities</b> visually for you across multiple individuals.
+        Share the link to your <b>LiAIson</b>. People chat with it to learn about you, and every answer comes only from your{' '}
+        <b>Vault</b>. It even points out what you have in common, and on higher tiers maps out <b>Similarities</b> across
+        several people.
       </>
     ),
     mock: <ChatMock />,
@@ -53,10 +52,9 @@ const SLIDES: Slide[] = [
     short: 'Circles',
     body: (
       <>
-        On higher tiers, <b>Circles</b> let you decide what your LiAIson may tell whom. Drag and drop <b>Circles</b> in and out of
-        each other to set who can access which information. For example, a close friend in your <b>Inner Circle</b> can talk to
-        your LiAIson about everything in both your <b>Inner Circle</b> and your <b>Outer Circle</b>, while an acquaintance in your{' '}
-        <b>Outer Circle</b> only hears about the <b>Outer Circle</b>. The higher your tier, the more <b>Circles</b> you can create.
+        On higher tiers, <b>Circles</b> decide what your LiAIson may tell whom. Drag them in and out of each other: a friend in
+        your <b>Inner Circle</b> hears about your Inner and Outer Circle, an acquaintance in the <b>Outer Circle</b> only about
+        the Outer Circle. Higher tiers let you create more <b>Circles</b>.
       </>
     ),
     mock: <CirclesMock />,
@@ -73,9 +71,9 @@ const SLIDES: Slide[] = [
     short: 'Discover',
     body: (
       <>
-        On <b>Discover</b> everyone can find people by name or @username. In higher tiers you can also search{' '}
-        <b>By Description</b>, for example &ldquo;people in Vienna who play tennis&rdquo;. Your profile can only be found if it is
-        set to Public, and the search only scans through the information you have made visible to all.
+        Find anyone on <b>Discover</b> by name or @username. Higher tiers can also search <b>By Description</b>, like
+        &ldquo;people in Vienna who play tennis&rdquo;. Only Public profiles are found this way, and only what you share with
+        everyone is searched.
       </>
     ),
     mock: <DiscoverMock />,
@@ -90,9 +88,8 @@ const SLIDES: Slide[] = [
     short: 'Echoes',
     body: (
       <>
-        You never see who talks to your LiAIson or exactly what they say. However, on higher tiers you can get monthly or weekly
-        summaries, called <b>Echoes</b>, on what people have been asking about you and what they&apos;d like to know more about,
-        with a note from your LiAIson on what could be worth adding to your <b>Vault</b>.
+        You never see who talks to your LiAIson or their exact words. On higher tiers, <b>Echoes</b> summarise monthly or
+        weekly what people ask about you, with a note from your LiAIson on what to add to your <b>Vault</b>.
       </>
     ),
     mock: <EchoesMock />,
@@ -108,10 +105,9 @@ const SLIDES: Slide[] = [
     short: 'Cost',
     body: (
       <>
-        You only pay for the messages you send (and for features marked with *), never for conversations others have with your
-        LiAIson. A message typically costs half a cent to two cents depending on content size. Your first month is free with up
-        to 5 messages a day. Your usage is always shown at the top of the page. You can set a monthly limit and you pay at the end
-        of every month. Higher tiers have an additional fixed monthly fee for the extra features.
+        You only pay for the messages you send and features marked with *, never for others talking to your LiAIson. A
+        message costs about half a cent to two cents. Your first month is free (5 messages a day); after that you set a
+        monthly limit and pay at the end of the month. Higher tiers add a fixed monthly fee.
       </>
     ),
     mock: <CostMock />,
@@ -124,6 +120,23 @@ const SLIDES: Slide[] = [
     ],
   },
 ]
+
+// A tall, slim arrow beside the cards (tablets and computers).
+function SideArrow({ dir, disabled, onClick }: { dir: 1 | -1; disabled: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={dir === 1 ? 'Next' : 'Back'}
+      className="hidden md:flex flex-shrink-0 h-44 w-12 items-center justify-center rounded-full border border-border bg-surface text-text-primary shadow-card hover:bg-accent hover:text-white hover:border-accent transition-colors disabled:opacity-0 disabled:pointer-events-none"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
+        <path d={dir === 1 ? 'M9 5l7 7-7 7' : 'M15 5l-7 7 7 7'} />
+      </svg>
+    </button>
+  )
+}
 
 export default function HowItWorks() {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -196,36 +209,46 @@ export default function HowItWorks() {
         ))}
       </ol>
 
-      <div
-        ref={trackRef}
-        data-step
-        style={{ '--i': 2 } as React.CSSProperties}
-        className="mt-10 flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="region"
-        aria-roledescription="carousel"
-        aria-label="How LiAIson works"
-        tabIndex={0}
-      >
-        {SLIDES.map((slide, i) => (
-          <div
-            key={slide.title}
-            className="w-full flex-shrink-0 snap-center px-1"
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${SLIDES.length}: ${slide.title}`}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] gap-10 lg:gap-20 items-center">
-              <div className={`transition-all duration-700 ${i === index ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
-                <h3 className="font-display text-3xl sm:text-4xl text-text-primary">{slide.title}</h3>
-                <p className="mt-5 text-[17px] text-text-secondary leading-relaxed [&_b]:font-semibold [&_b]:text-text-primary">{slide.body}</p>
+      {/* Each slide is a card; tall arrows on either side (phones: buttons below). */}
+      <div data-step style={{ '--i': 2 } as React.CSSProperties} className="mt-6 flex items-center gap-3 lg:gap-5">
+        <SideArrow dir={-1} disabled={index === 0} onClick={() => go(index - 1)} />
+        <div
+          ref={trackRef}
+          className="min-w-0 flex-1 flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="How LiAIson works"
+          tabIndex={0}
+        >
+          {SLIDES.map((slide, i) => (
+            <div
+              key={slide.title}
+              className="w-full flex-shrink-0 snap-center p-2 sm:p-4"
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${SLIDES.length}: ${slide.title}`}
+            >
+              <div className={`rounded-3xl border border-border bg-card shadow-[0_18px_40px_-12px_rgba(43,30,22,0.18),0_2px_8px_rgba(43,30,22,0.06)] p-6 sm:p-10 transition-all duration-700 ${i === index ? 'opacity-100 scale-100' : 'opacity-60 scale-[0.97]'}`}>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] gap-8 lg:gap-12 items-center">
+                  <div className={`transition-all duration-700 ${i === index ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
+                    <h3 className="font-display text-3xl sm:text-4xl text-text-primary">{slide.title}</h3>
+                    <p className="mt-5 text-[17px] text-text-secondary leading-relaxed [&_b]:font-semibold [&_b]:text-text-primary">{slide.body}</p>
+                    {i === SLIDES.length - 1 && (
+                      <Link href="/signup" className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card">
+                        See Tiers <span aria-hidden="true">→</span>
+                      </Link>
+                    )}
+                  </div>
+                  <Annotated mock={slide.mock} callouts={slide.callouts} active={i === index} />
+                </div>
               </div>
-              <Annotated mock={slide.mock} callouts={slide.callouts} active={i === index} />
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <SideArrow dir={1} disabled={last} onClick={() => go(index + 1)} />
       </div>
 
-      <div data-step style={{ '--i': 3 } as React.CSSProperties} className="mt-10 flex items-center justify-between gap-4">
+      <div data-step style={{ '--i': 3 } as React.CSSProperties} className="mt-6 flex md:hidden items-center justify-between gap-4">
         <button
           type="button"
           onClick={() => go(index - 1)}
