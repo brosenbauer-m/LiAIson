@@ -1,18 +1,23 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Avatar from '@/components/ui/Avatar'
 import type { SimilarityInterest } from '@/lib/similarity/types'
 
-// Similarities as floating bubbles (owner design 2026-10-12, same feel as the
-// Circles board: soft bubbles that drift gently on their own).
+// Similarities as floating bubbles (owner design 2026-10-12/20, same feel as
+// the Circles board: soft bubbles that drift gently on their own). A bubble's
+// size shows how much the people's texts say about that topic.
 // - Two people (a profile): you on the left, them on the right; shared
-//   bubbles (dark) in the middle, yours (beige) and theirs (white) on each side.
+//   bubbles (dark) in the middle, yours (beige) and theirs (white) on each
+//   side. Only shared bubbles can be tapped (they show why they match).
 // - A group (Similarities Chart): every person is a picture on a ring. Shared
 //   by everyone = dark, in the middle. Shared by some = brown, between those
 //   people, with lines to each of them. Only one person = light, next to them
-//   with a faint line. Tapping a person or a bubble highlights its links.
+//   with a faint line. Tapping people selects them: what they all share is
+//   highlighted, the rest greyed, and a faint line between every two of them
+//   carries their stars. Hovering (or tapping) a bubble shows Learn More*,
+//   which grows the bubble over the chart with a short comparison.
 
 export type ChartPerson = { key: string; name: string; avatarUrl?: string | null; you?: boolean }
 
@@ -93,8 +98,9 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
     }
     const lines = splitLabel(interest.label)
     const longest = Math.max(...lines.map(l => l.length))
-    const base = interest.strength === 3 ? 38 : interest.strength === 2 ? 32 : 27
-    const r = Math.min(58, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0))
+    // Size: how much the texts say about it (1 to 5).
+    const base = 24 + Math.min(5, Math.max(1, interest.strength || 1)) * 6.5
+    const r = Math.min(62, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0))
     const angle = i * 2.399963
     return { interest, lines, r, x: tx + Math.cos(angle) * 10, y: ty + Math.sin(angle) * 10, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined }
   })
@@ -162,13 +168,33 @@ const STYLE: Record<Kind | 'mine', string> = {
   mine: 'bg-accent-subtle text-text-primary border-accent/15 shadow-[0_2px_8px_rgba(43,30,22,0.08)]',
 }
 
-export default function BubbleChart({ people, interests, height }: { people: ChartPerson[]; interests: SimilarityInterest[]; height?: number }) {
+
+const STARS = (level: number) => '★★★★★'.slice(0, level) + '☆☆☆☆☆'.slice(0, 5 - level)
+
+export type LearnMore = (interest: SimilarityInterest) => Promise<{ summary?: string; error?: string }>
+
+export default function BubbleChart({
+  people,
+  interests,
+  height,
+  pairLevel,
+  onLearnMore,
+}: {
+  people: ChartPerson[]
+  interests: SimilarityInterest[]
+  height?: number
+  // Groups: the stars between two people (1 to 5), if known.
+  pairLevel?: (a: string, b: string) => number | undefined
+  // Groups: Learn More* on a bubble (paid per use).
+  onLearnMore?: LearnMore
+}) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const reduceMotion = useReducedMotion()
   const pair = people.length === 2
-  const [selected, setSelected] = useState<string | null>(null)
-  const [focusPerson, setFocusPerson] = useState<string | null>(null)
+  const [active, setActive] = useState<string | null>(null)
+  const [picked, setPicked] = useState<string[]>([])
+  const [zoom, setZoom] = useState<{ label: string; summary?: string; error?: string } | null>(null)
 
   useEffect(() => {
     const el = wrapRef.current
@@ -178,32 +204,87 @@ export default function BubbleChart({ people, interests, height }: { people: Cha
     return () => ro.disconnect()
   }, [])
 
+  useEffect(() => {
+    if (!zoom) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setZoom(null) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [zoom])
+
   const W = width
-  const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.35) : Math.round(Math.min(680, Math.max(480, W * 0.58))))
+  const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.35) : Math.round(Math.min(720, Math.max(500, W * 0.6))))
   const { bubbles, nodes } = useMemo(
     () => (W > 0 ? layout(people, interests, W, H, pair) : { bubbles: [], nodes: [] }),
     [people, interests, W, H, pair]
   )
   const nodeAt = new Map(nodes.map(n => [n.key, n]))
-  const chosen = interests.find(i => i.label === selected)
+  const chosen = interests.find(i => i.label === active)
+  const zoomed = bubbles.find(b => b.interest.label === zoom?.label)
   const other = people.find(p => !p.you) ?? people[1]
 
-  // What is highlighted: the chosen bubble, or everything of the chosen person.
+  // Highlighted: the tapped bubble, or what every picked person shares.
   const lit = (b: Bubble) =>
-    chosen ? b.interest.label === chosen.label : focusPerson ? b.interest.people.includes(focusPerson) : true
+    chosen ? b.interest.label === chosen.label : picked.length ? picked.every(k => b.interest.people.includes(k)) : true
+  const focusing = !!chosen || picked.length > 0
+
+  const togglePerson = (key: string) => {
+    setActive(null)
+    setPicked(prev => (prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]))
+  }
+
+  const learnMore = async (b: Bubble) => {
+    if (!onLearnMore) return
+    setActive(null)
+    setZoom({ label: b.interest.label })
+    const out = await onLearnMore(b.interest).catch(() => ({ error: 'Learn More is not available right now.' }))
+    setZoom(z => (z && z.label === b.interest.label ? { label: z.label, ...out } : z))
+  }
+
+  // Faint lines between every two picked people, bent outwards around the
+  // bubbles, with their stars in the middle.
+  const pairLines: { id: string; d: string; x: number; y: number; level?: number }[] = []
+  if (!pair && picked.length >= 2) {
+    for (let i = 0; i < picked.length; i++) {
+      for (let j = i + 1; j < picked.length; j++) {
+        const a = nodeAt.get(picked[i])
+        const b = nodeAt.get(picked[j])
+        if (!a || !b) continue
+        const mx = (a.x + b.x) / 2
+        const my = (a.y + b.y) / 2
+        let ox = mx - W / 2
+        let oy = my - H / 2
+        const len = Math.hypot(ox, oy)
+        if (len < 40) { ox = -(b.y - a.y); oy = b.x - a.x }
+        const ol = Math.hypot(ox, oy) || 1
+        const bend = Math.min(W, H) * 0.32
+        const cx = mx + (ox / ol) * bend
+        const cy = my + (oy / ol) * bend
+        pairLines.push({
+          id: `${picked[i]}-${picked[j]}`,
+          d: `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,
+          x: 0.25 * a.x + 0.5 * cx + 0.25 * b.x,
+          y: 0.25 * a.y + 0.5 * cy + 0.25 * b.y,
+          level: pairLevel?.(picked[i], picked[j]),
+        })
+      }
+    }
+  }
 
   return (
     <div>
-      <div ref={wrapRef} className="relative w-full select-none" style={{ height: W ? H : pair ? 280 : 480 }}>
+      <div ref={wrapRef} className="relative w-full select-none" style={{ height: W ? H : pair ? 280 : 500 }}>
         {W > 0 && (
-          <>
-            {/* Lines from bubbles to the people who have them (groups). They drift with their bubble. */}
+          <motion.div className="absolute inset-0" animate={{ opacity: zoom ? 0.12 : 1 }} transition={{ duration: 0.35 }}>
+            {/* Lines from bubbles to the people who have them, and between picked people. */}
             {!pair && (
               <svg className="absolute inset-0 pointer-events-none overflow-visible" width={W} height={H} aria-hidden="true">
+                {pairLines.map(l => (
+                  <path key={l.id} d={l.d} fill="none" stroke="#5C3B28" strokeOpacity={0.18} strokeWidth={1.2} strokeDasharray="2 5" strokeLinecap="round" />
+                ))}
                 {bubbles.map(b => {
                   if (b.kind === 'all') return null
                   const on = lit(b)
-                  const highlighted = on && (!!chosen || !!focusPerson)
+                  const highlighted = on && focusing
                   return (
                     <g key={b.interest.label} className={reduceMotion ? undefined : 'animate-bob'} style={drift(b.interest.label)}>
                       {b.interest.people.map(k => {
@@ -222,7 +303,7 @@ export default function BubbleChart({ people, interests, height }: { people: Cha
                             strokeLinecap="round"
                             stroke="#5C3B28"
                             strokeWidth={highlighted ? 1.6 : 1}
-                            strokeOpacity={highlighted ? 0.55 : on ? (b.kind === 'one' ? 0.12 : 0.22) : 0.05}
+                            strokeOpacity={highlighted ? 0.55 : on ? (b.kind === 'one' ? 0.12 : 0.22) : 0.04}
                             strokeDasharray={b.kind === 'one' ? '3 4' : undefined}
                             className="transition-[stroke-opacity] duration-300"
                           />
@@ -233,6 +314,18 @@ export default function BubbleChart({ people, interests, height }: { people: Cha
                 })}
               </svg>
             )}
+
+            {/* Stars between picked people */}
+            {pairLines.map(l => l.level ? (
+              <span
+                key={l.id}
+                className="absolute z-[6] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/90 px-2 py-0.5 text-[13px] leading-none tracking-[0.12em] text-accent shadow-soft pointer-events-none"
+                style={{ left: l.x, top: l.y }}
+                aria-label={`${l.level} of 5`}
+              >
+                {STARS(l.level)}
+              </span>
+            ) : null)}
 
             {/* Names (two people) */}
             {pair && (
@@ -248,57 +341,125 @@ export default function BubbleChart({ people, interests, height }: { people: Cha
               const owner = b.owner ? people.find(p => p.key === b.owner) : undefined
               const tone = b.kind === 'one' && owner?.you ? STYLE.mine : STYLE[b.kind]
               const on = lit(b)
-              const active = selected === b.interest.label
+              const isActive = active === b.interest.label
+              // Profile: only shared bubbles do something. Groups: every bubble.
+              const tappable = pair ? isShared : true
               const d = b.r * 2
+              const label = `${b.interest.label}: ${isShared ? `shared by ${namesOf(b.interest.people, people)}` : `only ${namesOf(b.interest.people, people)}`}`
+              const face = (
+                <>
+                  {b.lines.map((line, k) => <span key={k} className="block max-w-full truncate">{line}</span>)}
+                </>
+              )
+              const faceClass = `absolute inset-0 rounded-full border flex flex-col items-center justify-center text-center leading-tight px-1 transition-[box-shadow,transform] duration-300 ${tappable ? 'group-hover:scale-[1.14]' : ''} ${tone} ${isActive ? 'ring-4 ring-accent/20 scale-[1.14]' : ''}`
               return (
                 <motion.div
                   key={b.interest.label}
-                  className="absolute"
-                  style={{ left: b.x - b.r, top: b.y - b.r, width: d, height: d, zIndex: active ? 5 : 1 }}
+                  className="absolute group"
+                  style={{ left: b.x - b.r, top: b.y - b.r, width: d, height: d, zIndex: isActive ? 8 : 2 }}
                   initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: on ? 1 : 0.28, scale: active ? 1.08 : 1 }}
+                  animate={{ opacity: on ? 1 : 0.25, scale: 1 }}
+                  whileHover={{ zIndex: 9 }}
                   transition={{ type: 'spring', stiffness: 220, damping: 18, delay: reduceMotion ? 0 : Math.min(i * 0.035, 0.6) }}
                 >
                   <span className={`absolute inset-0 ${reduceMotion ? '' : 'animate-bob'}`} style={drift(b.interest.label)}>
-                    <button
-                      type="button"
-                      onClick={() => { setFocusPerson(null); setSelected(active ? null : b.interest.label) }}
-                      aria-pressed={active}
-                      aria-label={`${b.interest.label}: ${isShared ? `shared by ${namesOf(b.interest.people, people)}` : `only ${namesOf(b.interest.people, people)}`}`}
-                      className={`absolute inset-0 rounded-full border flex flex-col items-center justify-center text-center leading-tight px-1 transition-[box-shadow,transform] hover:scale-[1.04] ${tone} ${active ? 'ring-4 ring-accent/20' : ''}`}
-                      style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: isShared ? 600 : 500 }}
-                    >
-                      {b.lines.map((line, k) => <span key={k} className="block max-w-full truncate">{line}</span>)}
-                    </button>
+                    {tappable ? (
+                      <button
+                        type="button"
+                        onClick={() => setActive(isActive ? null : b.interest.label)}
+                        aria-pressed={isActive}
+                        aria-label={label}
+                        className={faceClass}
+                        style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: isShared ? 600 : 500 }}
+                      >
+                        {face}
+                      </button>
+                    ) : (
+                      <span className={faceClass} style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: 500 }} aria-label={label} role="img">
+                        {face}
+                      </span>
+                    )}
+                    {onLearnMore && (
+                      <button
+                        type="button"
+                        onClick={() => void learnMore(b)}
+                        className={`absolute left-1/2 top-full -translate-x-1/2 mt-2.5 whitespace-nowrap rounded-full bg-surface border border-accent/30 px-3 py-1 text-[11px] font-medium text-accent shadow-card transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto'}`}
+                      >
+                        Learn More*
+                      </button>
+                    )}
                   </span>
                 </motion.div>
               )
             })}
 
-            {/* People (groups) */}
+            {/* People (groups): tap to select */}
             {!pair && nodes.map(n => {
               const p = people.find(x => x.key === n.key)!
-              const focused = focusPerson === n.key
+              const on = picked.includes(n.key)
               return (
                 <button
                   key={n.key}
                   type="button"
-                  onClick={() => { setSelected(null); setFocusPerson(focused ? null : n.key) }}
-                  aria-pressed={focused}
+                  onClick={() => togglePerson(n.key)}
+                  aria-pressed={on}
+                  aria-label={`${on ? 'Deselect' : 'Select'} ${p.you ? 'yourself' : p.name}`}
                   className="absolute z-10 flex flex-col items-center gap-1 w-24 -ml-12"
                   style={{ left: n.x, top: n.y - NODE_R }}
                 >
-                  <span className={`rounded-full p-0.5 transition-shadow ${focused ? 'bg-accent shadow-card' : p.you ? 'bg-accent-subtle' : 'bg-card shadow-soft'}`}>
+                  <span className={`rounded-full p-0.5 transition-all duration-300 ${on ? 'bg-accent shadow-card scale-110' : p.you ? 'bg-accent-subtle' : 'bg-card shadow-soft'}`}>
                     <Avatar url={p.avatarUrl ?? null} name={p.name} size="md" />
                   </span>
-                  <span className={`max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium ${focused ? 'bg-accent text-white' : 'bg-background/80 text-text-primary'}`}>
+                  <span className={`max-w-full truncate rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${on ? 'bg-accent text-white' : 'bg-background/80 text-text-primary'}`}>
                     {p.you ? 'You' : firstName(p.name)}
                   </span>
                 </button>
               )
             })}
-          </>
+          </motion.div>
         )}
+
+        {/* Learn More: the bubble grows over the chart (like zooming in). */}
+        <AnimatePresence>
+          {zoom && zoomed && (
+            <motion.div
+              key={zoom.label}
+              className={`absolute z-20 overflow-hidden border ${zoomed.kind === 'one' && people.find(p => p.key === zoomed.owner)?.you ? STYLE.mine : STYLE[zoomed.kind]}`}
+              initial={{ left: zoomed.x - zoomed.r, top: zoomed.y - zoomed.r, width: zoomed.r * 2, height: zoomed.r * 2, borderRadius: 9999 }}
+              animate={{ left: 0, top: 0, width: W, height: H, borderRadius: 32 }}
+              exit={{ left: zoomed.x - zoomed.r, top: zoomed.y - zoomed.r, width: zoomed.r * 2, height: zoomed.r * 2, borderRadius: 9999, opacity: 0 }}
+              transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22 }}
+              role="dialog"
+              aria-label={`${zoom.label}: Learn More`}
+            >
+              <motion.div
+                className="h-full w-full flex flex-col items-center justify-center text-center px-6 sm:px-16 py-10 gap-5"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: reduceMotion ? 0 : 0.35 }}
+              >
+                <button type="button" onClick={() => setZoom(null)} className="absolute right-4 top-4 h-10 w-10 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center text-xl leading-none" aria-label="Close">
+                  ×
+                </button>
+                <h3 className="font-display text-3xl sm:text-5xl">{zoom.label}</h3>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {zoomed.interest.people.map(k => {
+                    const p = people.find(x => x.key === k)
+                    return p ? (
+                      <span key={k} className="flex items-center gap-2 rounded-full bg-black/10 pl-1 pr-3 py-1 text-sm font-medium">
+                        <Avatar url={p.avatarUrl ?? null} name={p.name} size="sm" />
+                        {p.you ? 'You' : firstName(p.name)}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+                <div className="max-w-2xl min-h-[6rem] text-base sm:text-lg leading-relaxed opacity-90" aria-live="polite">
+                  {zoom.summary ?? zoom.error ?? <span className="inline-block animate-pulse">Thinking…</span>}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Legend */}
@@ -320,19 +481,18 @@ export default function BubbleChart({ people, interests, height }: { people: Cha
       </div>
 
       <p className="mt-3 text-sm text-text-secondary text-center min-h-[1.25rem]" aria-live="polite">
-        {chosen ? (
-          <>
-            <span className="font-medium text-text-primary">{chosen.label}</span>
-            {chosen.people.length > 1
-              ? <> · {chosen.reason || 'Shared.'} <span className="text-text-muted">({namesOf(chosen.people, people)})</span></>
-              : <> · Only {namesOf(chosen.people, people)}</>}
-          </>
-        ) : focusPerson ? (
-          <>Showing everything that includes {namesOf([focusPerson], people)}. Tap again to show all.</>
-        ) : pair ? (
-          'Tap a dark bubble to see more.'
+        {pair ? (
+          chosen && chosen.people.length > 1
+            ? <><span className="font-medium text-text-primary">{chosen.label}</span> · {chosen.reason || 'Shared.'}</>
+            : 'Tap a dark bubble to see more.'
+        ) : chosen ? (
+          chosen.people.length > 1
+            ? <><span className="font-medium text-text-primary">{chosen.label}</span> · {chosen.reason || 'Shared.'} <span className="text-text-muted">({namesOf(chosen.people, people)})</span></>
+            : <span className="font-medium text-text-primary">{chosen.label}</span>
+        ) : picked.length ? (
+          <>Showing what {namesOf(picked, people)} {picked.length > 1 ? 'share' : 'has'}. Tap a picture again to deselect.</>
         ) : (
-          'Tap a bubble or a person to see more.'
+          'Tap people to select them, or a bubble to learn more.'
         )}
       </p>
 

@@ -4,8 +4,9 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import BubbleChart, { type ChartPerson } from '@/components/similarity/BubbleChart'
+import GroupTalk from '@/components/similarity/GroupTalk'
 import TierMark from '@/components/ui/TierMark'
-import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
+import type { SimilarityResult } from '@/lib/similarity/types'
 
 // Similarities with several people at once (Social Butterfly). Find people
 // by name or @username (Discover search, plus your connections), then see one
@@ -19,14 +20,10 @@ type Loaded = {
   groupCompare: number
   quota: number
   used: number
-  me: { name: string; avatarUrl: string | null }
+  me: { username: string; name: string; avatarUrl: string | null }
   candidates: Candidate[]
   people: Person[] | null
   result: SimilarityResult | null
-}
-
-function dots(level: number): string {
-  return [1, 2, 3, 4, 5].map(n => (n <= level ? '●' : '○')).join('')
 }
 
 export default function SimilaritiesPage() {
@@ -88,14 +85,15 @@ export default function SimilaritiesPage() {
       const t = setTimeout(() => setFound([]), 0)
       return () => clearTimeout(t)
     }
-    const local = (data?.candidates ?? []).filter(c => c.username.toLowerCase().startsWith(q) || c.display_name.toLowerCase().includes(q))
+    const local = (data?.candidates ?? []).filter(c => c.username.toLowerCase() !== (data?.me.username ?? '').toLowerCase() && (c.username.toLowerCase().startsWith(q) || c.display_name.toLowerCase().includes(q)))
     const controller = new AbortController()
     const t = setTimeout(async () => {
       setFound(local.slice(0, 6))
       const res = await fetch(`/api/discover?q=${encodeURIComponent(q)}`, { signal: controller.signal }).catch(() => null)
       if (!res?.ok) return
       const { results } = (await res.json()) as { results: Candidate[] }
-      const seen = new Set(local.map(c => c.username.toLowerCase()))
+      // You are added only with the Include Me switch, never from the search.
+      const seen = new Set([...local.map(c => c.username.toLowerCase()), (data?.me.username ?? '').toLowerCase()])
       setFound([...local, ...results.filter(r => !seen.has(r.username.toLowerCase()))].slice(0, 6))
     }, 200)
     return () => { clearTimeout(t); controller.abort() }
@@ -153,21 +151,21 @@ export default function SimilaritiesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-12 space-y-6">
-        <div>
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-8">
+        <div className="text-center">
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Similarities</h1>
-          <p className="text-text-secondary text-lg mt-2">See what you have in common with several people at once.</p>
+          <p className="text-text-secondary text-lg mt-2">See what several people have in common.</p>
         </div>
 
         {locked ? (
-          <div className="max-w-3xl bg-card border border-border rounded-2xl p-6 shadow-soft space-y-3">
+          <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-6 shadow-soft space-y-3 text-center">
             <p className="text-sm text-text-secondary leading-relaxed">
               Similarities with several people at once are part of Social Butterfly. With Extrovert you can see your Similarities with one person on their profile.
             </p>
             <Link href="/settings#subscription" className="text-sm text-accent hover:underline font-medium">See Social Butterfly</Link>
           </div>
         ) : (
-          <div className="max-w-3xl bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
+          <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} People</h2>
               <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
@@ -260,31 +258,35 @@ export default function SimilaritiesPage() {
             ...(result.includesViewer ? [{ key: 'A', name: data.me.name, avatarUrl: data.me.avatarUrl, you: true }] : []),
             ...people.map(p => ({ key: p.key, name: p.name, avatarUrl: p.avatarUrl })),
           ]
-          const nameOf = (k: string) => (k === 'A' ? 'You' : people.find(p => p.key === k)?.name.split(' ')[0] ?? k)
-          const scores: { label: string; level: number }[] = [
-            ...(result.includesViewer ? people.map(p => ({ label: `You & ${nameOf(p.key)}`, level: result.levels?.[p.key] ?? 1 })) : []),
-            ...Object.entries(result.pairs ?? {}).map(([pair, level]) => {
-              const [a, b] = pair.split('-')
-              return { label: `${nameOf(a)} & ${nameOf(b)}`, level }
-            }),
-          ]
+          const usernames = people.map(p => p.username)
+          const includesViewer = !!result.includesViewer
+          const pairLevel = (a: string, b: string) =>
+            a === 'A' ? result.levels?.[b] : b === 'A' ? result.levels?.[a] : result.pairs?.[[a, b].sort().join('-')]
+          const learnMore = async (interest: { label: string; people: string[] }) => {
+            const res = await fetch('/api/compare/topic', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ usernames, includeMe: includesViewer, label: interest.label, people: interest.people }),
+            }).catch(() => null)
+            const d = await res?.json().catch(() => ({})) ?? {}
+            if (!res?.ok) return { error: d.error ?? 'Learn More is not available right now.' }
+            window.dispatchEvent(new Event('liaison:usage-changed'))
+            return { summary: d.summary as string }
+          }
           return (
-            <section className="pt-4 space-y-6" aria-label="Similarities Chart">
-              {result.interests.length > 0 && <BubbleChart people={chartPeople} interests={result.interests} />}
-              {scores.length > 0 && (
-                <ul className="flex flex-wrap justify-center gap-2">
-                  {scores.map(sc => (
-                    <li key={sc.label} className="flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3.5 py-1.5 text-sm">
-                      <span className="font-medium text-text-primary">{sc.label}</span>
-                      <span aria-hidden="true" className="tracking-widest text-[11px] text-accent">{dots(sc.level)}</span>
-                      <span className="text-text-secondary">{LEVEL_LABEL[sc.level as keyof typeof LEVEL_LABEL]}</span>
-                    </li>
-                  ))}
-                </ul>
+            <section className="space-y-10" aria-label="Similarities Chart">
+              {result.interests.length > 0 && (
+                <BubbleChart people={chartPeople} interests={result.interests} pairLevel={pairLevel} onLearnMore={learnMore} />
               )}
               <p className="text-xs text-text-muted text-center">
                 Uses only what each person lets you see. Only you see this; nobody is notified.
               </p>
+              <GroupTalk
+                key={`${usernames.join(',')}|${includesViewer}`}
+                usernames={usernames}
+                includeMe={includesViewer}
+                names={people.map(p => p.name)}
+              />
             </section>
           )
         })()}

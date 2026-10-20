@@ -73,27 +73,21 @@ export default async function ProfilePage(props: Props) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Left column: Profile info */}
-          <div className="lg:col-span-2 space-y-5">
-            {/* Picture, name and bio (owner decision 2026-10-11: no Vault boxes here) */}
-            <ProfileHeader
-              avatarUrl={user.avatar_url}
-              displayName={user.display_name}
-              shortBio={user.short_bio}
-              plan={user.plan}
-            >
-              {scope && user.contact_links && user.contact_links.length > 0 && <ContactLinks links={user.contact_links} />}
-            </ProfileHeader>
+      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
+        {/* Owner layout 2026-10-20: profile beside the chat, the same height;
+            What You Have in Common under the chat. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6 lg:gap-8">
+          <ProfileHeader
+            avatarUrl={user.avatar_url}
+            displayName={user.display_name}
+            shortBio={user.short_bio}
+            plan={user.plan}
+            className="lg:h-full"
+          >
+            {scope && user.contact_links && user.contact_links.length > 0 && <ContactLinks links={user.contact_links} />}
+          </ProfileHeader>
 
-            {canCompare && (
-              <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
-            )}
-          </div>
-
-          {/* Right column: Chat interface */}
-          <div className="lg:col-span-3">
+          <div className="min-w-0">
             {scope ? (
               <ProfileChatSection
                 ownerId={user.id}
@@ -110,6 +104,12 @@ export default async function ProfilePage(props: Props) {
               />
             )}
           </div>
+
+          {canCompare && (
+            <div className="lg:col-start-2 min-w-0">
+              <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
+            </div>
+          )}
         </div>
       </div>
     </div>
