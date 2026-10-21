@@ -37,7 +37,6 @@ type Node = { key: string; x: number; y: number }
 
 const FONT = 12
 const CHAR_W = 6.7
-const PAD = 5
 const NODE_R = 30
 
 function splitLabel(label: string): string[] {
@@ -66,83 +65,121 @@ function drift(id: string): React.CSSProperties {
 
 function personNodes(people: ChartPerson[], W: number, H: number, pair: boolean): Node[] {
   if (pair) return people.map((p, i) => ({ key: p.key, x: i === 0 ? W * 0.14 : W * 0.86, y: H / 2 }))
-  const rx = W / 2 - NODE_R - 24
-  const ry = H / 2 - NODE_R - 30
+  const rx = W / 2 - NODE_R - 30
+  const ry = H / 2 - NODE_R - 34
   return people.map((p, i) => {
     const a = -Math.PI / 2 + (2 * Math.PI * i) / people.length
     return { key: p.key, x: W / 2 + rx * Math.cos(a), y: H / 2 + ry * Math.sin(a) }
   })
 }
 
-// Deterministic layout: each bubble is pulled towards the people who have it
-// and pushed away from other bubbles and from the pictures.
-function layout(people: ChartPerson[], interests: SimilarityInterest[], W: number, H: number, pair: boolean): { bubbles: Bubble[]; nodes: Node[] } {
+// Deterministic layout (owner 2026-10-21): every bubble sits where its people
+// are — shared by everyone in the middle, shared by some between exactly those
+// people (two people: on the line between them), only one person next to
+// them — so the more people share a topic, the nearer the middle it is.
+// Bubbles are then pushed apart until none overlap (shrinking all a little if
+// the space is too tight).
+function layout(people: ChartPerson[], interests: SimilarityInterest[], W: number, H: number, pair: boolean, minR = 0): { bubbles: Bubble[]; nodes: Node[] } {
   const nodes = personNodes(people, W, H, pair)
   const at = new Map(nodes.map(n => [n.key, n]))
   const small = W < 520
-  const scale = (small ? 0.82 : 1) * (interests.length > 14 ? 0.88 : 1)
   const cx = W / 2
   const cy = H / 2
-  const bubbles: Bubble[] = interests.map((interest, i) => {
+  // Room between bubbles; a little more on big screens.
+  const gap = pair ? 6 : small ? 10 : 18
+
+  const make = (scale: number): Bubble[] => interests.map((interest, i) => {
     const members = interest.people.filter(k => at.has(k))
     const kind: Kind = members.length >= people.length && people.length > 1 ? 'all' : members.length > 1 ? 'some' : 'one'
     let tx = cx
     let ty = cy
-    if (members.length) {
+    if (members.length && kind !== 'all') {
       const mx = members.reduce((s, k) => s + at.get(k)!.x, 0) / members.length
       const my = members.reduce((s, k) => s + at.get(k)!.y, 0) / members.length
-      // One person: between them and the middle; some: their middle, drawn in a little.
-      const t = kind === 'one' ? (pair ? 0.82 : 0.6) : kind === 'some' ? 0.78 : 0
+      // One person: between them and the middle, closer to them.
+      const t = kind === 'one' ? (pair ? 0.82 : 0.72) : 1
       tx = cx + (mx - cx) * t
       ty = cy + (my - cy) * t
+      // Two people opposite each other: their middle is the chart's middle,
+      // so move it off to one side, still on the line between them.
+      if (kind === 'some' && Math.hypot(tx - cx, ty - cy) < 30 && members.length === 2) {
+        const a = at.get(members[0])!
+        const b = at.get(members[1])!
+        const len = Math.hypot(b.x - a.x, b.y - a.y) || 1
+        const side = i % 2 ? 1 : -1
+        tx = cx + (-(b.y - a.y) / len) * 70 * side
+        ty = cy + ((b.x - a.x) / len) * 70 * side
+      }
     }
     const lines = splitLabel(interest.label)
     const longest = Math.max(...lines.map(l => l.length))
     // Size: how much the texts say about it (1 to 5).
     const base = 24 + Math.min(5, Math.max(1, interest.strength || 1)) * 6.5
-    const r = Math.min(62, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0))
+    const r = Math.min(66, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0, minR * scale))
     const angle = i * 2.399963
-    return { interest, lines, r, x: tx + Math.cos(angle) * 10, y: ty + Math.sin(angle) * 10, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined }
+    return { interest, lines, r, x: tx + Math.cos(angle) * 6, y: ty + Math.sin(angle) * 6, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined }
   })
-  const obstacles = pair ? [] : nodes.map(n => ({ x: n.x, y: n.y, r: NODE_R + 22 }))
-  for (let step = 0; step < 360; step++) {
-    for (const b of bubbles) {
-      b.x += (b.tx - b.x) * 0.05
-      b.y += (b.ty - b.y) * 0.05
+
+  const obstacles = pair ? [] : nodes.map(n => ({ x: n.x, y: n.y, r: NODE_R + 26 }))
+  const top = pair ? 26 : 8
+  const settle = (bubbles: Bubble[]): number => {
+    for (let step = 0; step < 500; step++) {
+      // Pull towards their place (gently, so pushing apart wins).
+      const pull = step < 350 ? 0.06 : 0.015
+      for (const b of bubbles) {
+        b.x += (b.tx - b.x) * pull
+        b.y += (b.ty - b.y) * pull
+      }
+      for (let i = 0; i < bubbles.length; i++) {
+        const a = bubbles[i]
+        for (let j = i + 1; j < bubbles.length; j++) {
+          const b = bubbles[j]
+          const dx = b.x - a.x
+          const dy = b.y - a.y
+          const dist = Math.hypot(dx, dy) || 0.01
+          const overlap = a.r + b.r + gap - dist
+          if (overlap > 0) {
+            const ux = dx / dist
+            const uy = dy / dist
+            a.x -= (ux * overlap) / 2
+            a.y -= (uy * overlap) / 2
+            b.x += (ux * overlap) / 2
+            b.y += (uy * overlap) / 2
+          }
+        }
+        for (const o of obstacles) {
+          const dx = a.x - o.x
+          const dy = a.y - o.y
+          const dist = Math.hypot(dx, dy) || 0.01
+          const overlap = a.r + o.r - dist
+          if (overlap > 0) {
+            a.x += (dx / dist) * overlap
+            a.y += (dy / dist) * overlap
+          }
+        }
+      }
+      for (const b of bubbles) {
+        b.x = Math.min(W - b.r - 4, Math.max(b.r + 4, b.x))
+        b.y = Math.min(H - b.r - 8, Math.max(b.r + top, b.y))
+      }
     }
+    // The worst overlap left (0 = none).
+    let worst = 0
     for (let i = 0; i < bubbles.length; i++) {
-      const a = bubbles[i]
       for (let j = i + 1; j < bubbles.length; j++) {
+        const a = bubbles[i]
         const b = bubbles[j]
-        const dx = b.x - a.x
-        const dy = b.y - a.y
-        const dist = Math.hypot(dx, dy) || 0.01
-        const overlap = a.r + b.r + PAD - dist
-        if (overlap > 0) {
-          const ux = dx / dist
-          const uy = dy / dist
-          a.x -= (ux * overlap) / 2
-          a.y -= (uy * overlap) / 2
-          b.x += (ux * overlap) / 2
-          b.y += (uy * overlap) / 2
-        }
-      }
-      for (const o of obstacles) {
-        const dx = a.x - o.x
-        const dy = a.y - o.y
-        const dist = Math.hypot(dx, dy) || 0.01
-        const overlap = a.r + o.r - dist
-        if (overlap > 0) {
-          a.x += (dx / dist) * overlap
-          a.y += (dy / dist) * overlap
-        }
+        worst = Math.max(worst, a.r + b.r + 2 - Math.hypot(b.x - a.x, b.y - a.y))
       }
     }
-    for (const b of bubbles) {
-      const top = pair ? 26 : 8
-      b.x = Math.min(W - b.r - 4, Math.max(b.r + 4, b.x))
-      b.y = Math.min(H - b.r - 8, Math.max(b.r + top, b.y))
-    }
+    return worst
+  }
+
+  let scale = (small ? 0.82 : 1) * (interests.length > 14 ? 0.9 : 1)
+  let bubbles = make(scale)
+  for (let tries = 0; tries < 6 && settle(bubbles) > 0; tries++) {
+    scale *= 0.9
+    bubbles = make(scale)
   }
   return { bubbles, nodes }
 }
@@ -212,10 +249,11 @@ export default function BubbleChart({
   }, [zoom])
 
   const W = width
-  const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.35) : Math.round(Math.min(720, Math.max(500, W * 0.6))))
+  const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.85) : Math.round(Math.min(860, Math.max(580, W * 0.68))))
   const { bubbles, nodes } = useMemo(
-    () => (W > 0 ? layout(people, interests, W, H, pair) : { bubbles: [], nodes: [] }),
-    [people, interests, W, H, pair]
+    // With Learn More, bubbles are big enough for the button inside.
+    () => (W > 0 ? layout(people, interests, W, H, pair, onLearnMore ? 44 : 0) : { bubbles: [], nodes: [] }),
+    [people, interests, W, H, pair, onLearnMore]
   )
   const nodeAt = new Map(nodes.map(n => [n.key, n]))
   const chosen = interests.find(i => i.label === active)
@@ -284,12 +322,14 @@ export default function BubbleChart({
                 {bubbles.map(b => {
                   if (b.kind === 'all') return null
                   const on = lit(b)
-                  const highlighted = on && focusing
                   return (
                     <g key={b.interest.label} className={reduceMotion ? undefined : 'animate-bob'} style={drift(b.interest.label)}>
                       {b.interest.people.map(k => {
                         const n = nodeAt.get(k)
                         if (!n) return null
+                        // People picked: only the strings to them stand out. Bubble tapped: all of its strings.
+                        const highlighted = on && (chosen ? true : picked.length ? picked.includes(k) : false)
+                        const faint = focusing && !highlighted
                         // A soft curve, bent a little towards the middle.
                         const mx = (b.x + n.x) / 2
                         const my = (b.y + n.y) / 2
@@ -303,7 +343,7 @@ export default function BubbleChart({
                             strokeLinecap="round"
                             stroke="#5C3B28"
                             strokeWidth={highlighted ? 1.6 : 1}
-                            strokeOpacity={highlighted ? 0.55 : on ? (b.kind === 'one' ? 0.12 : 0.22) : 0.04}
+                            strokeOpacity={highlighted ? 0.6 : faint ? 0.04 : b.kind === 'one' ? 0.12 : 0.22}
                             strokeDasharray={b.kind === 'one' ? '3 4' : undefined}
                             className="transition-[stroke-opacity] duration-300"
                           />
@@ -351,7 +391,7 @@ export default function BubbleChart({
                   {b.lines.map((line, k) => <span key={k} className="block max-w-full truncate">{line}</span>)}
                 </>
               )
-              const faceClass = `absolute inset-0 rounded-full border flex flex-col items-center justify-center text-center leading-tight px-1 transition-[box-shadow,transform] duration-300 ${tappable ? 'group-hover:scale-[1.14]' : ''} ${tone} ${isActive ? 'ring-4 ring-accent/20 scale-[1.14]' : ''}`
+              const faceClass = `absolute inset-0 rounded-full border flex flex-col items-center justify-center text-center leading-tight px-1 transition-shadow duration-300 ${tone} ${isActive ? 'ring-4 ring-accent/20' : ''}`
               return (
                 <motion.div
                   key={b.interest.label}
@@ -363,31 +403,36 @@ export default function BubbleChart({
                   transition={{ type: 'spring', stiffness: 220, damping: 18, delay: reduceMotion ? 0 : Math.min(i * 0.035, 0.6) }}
                 >
                   <span className={`absolute inset-0 ${reduceMotion ? '' : 'animate-bob'}`} style={drift(b.interest.label)}>
-                    {tappable ? (
-                      <button
-                        type="button"
-                        onClick={() => setActive(isActive ? null : b.interest.label)}
-                        aria-pressed={isActive}
-                        aria-label={label}
-                        className={faceClass}
-                        style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: isShared ? 600 : 500 }}
-                      >
-                        {face}
-                      </button>
-                    ) : (
-                      <span className={faceClass} style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: 500 }} aria-label={label} role="img">
-                        {face}
-                      </span>
-                    )}
-                    {onLearnMore && (
-                      <button
-                        type="button"
-                        onClick={() => void learnMore(b)}
-                        className={`absolute left-1/2 top-full -translate-x-1/2 mt-2.5 whitespace-nowrap rounded-full bg-surface border border-accent/30 px-3 py-1 text-[11px] font-medium text-accent shadow-card transition-opacity duration-200 ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto'}`}
-                      >
-                        Learn More*
-                      </button>
-                    )}
+                    {/* Grows on hover; Learn More* appears inside, under the topic. */}
+                    <span className={`absolute inset-0 transition-transform duration-300 ${tappable ? 'group-hover:scale-[1.16]' : ''} ${isActive ? 'scale-[1.16]' : ''}`}>
+                      {tappable ? (
+                        <button
+                          type="button"
+                          onClick={() => setActive(isActive ? null : b.interest.label)}
+                          aria-pressed={isActive}
+                          aria-label={label}
+                          className={faceClass}
+                          style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: isShared ? 600 : 500 }}
+                        >
+                          <span className={`flex flex-col items-center max-w-full transition-transform duration-300 ${onLearnMore ? `group-hover:-translate-y-2.5 ${isActive ? '-translate-y-2.5' : ''}` : ''}`}>{face}</span>
+                        </button>
+                      ) : (
+                        <span className={faceClass} style={{ fontSize: FONT * (W < 520 ? 0.95 : 1), fontWeight: 500 }} aria-label={label} role="img">
+                          {face}
+                        </span>
+                      )}
+                      {onLearnMore && (
+                        <button
+                          type="button"
+                          onClick={() => void learnMore(b)}
+                          className={`absolute left-1/2 top-[66%] -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight transition-opacity duration-200 ${
+                            b.kind === 'one' ? 'bg-accent text-white' : 'bg-white/90 text-accent'
+                          } ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto'}`}
+                        >
+                          Learn More*
+                        </button>
+                      )}
+                    </span>
                   </span>
                 </motion.div>
               )

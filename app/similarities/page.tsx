@@ -38,6 +38,8 @@ export default function SimilaritiesPage() {
   const [people, setPeople] = useState<Person[] | null>(null)
   const [result, setResult] = useState<SimilarityResult | null>(null)
   const [includeMe, setIncludeMe] = useState(false)
+  // The people picker folds away once there is a chart (owner 2026-10-21).
+  const [chooserOpen, setChooserOpen] = useState(true)
 
   const load = useCallback(async () => {
     const params = new URLSearchParams(window.location.search)
@@ -58,6 +60,7 @@ export default function SimilaritiesPage() {
     setSelected(fromUrl.slice(0, Math.max(d.groupCompare, 0)))
     setNames(Object.fromEntries(d.candidates.map(c => [c.username.toLowerCase(), c.display_name])))
     if (d.people && d.result) {
+      setChooserOpen(false)
       setPeople(d.people)
       setResult(d.result)
     }
@@ -129,6 +132,7 @@ export default function SimilaritiesPage() {
       }
       setPeople(d.people)
       setResult(d.result)
+      setChooserOpen(false)
       setData(prev => (prev ? { ...prev, quota: d.quota, used: d.used } : prev))
       router.replace(`/similarities?u=${encodeURIComponent(selected.join(','))}${includeMe ? '&me=1' : ''}`)
     } catch {
@@ -151,7 +155,7 @@ export default function SimilaritiesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-4 py-12 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 py-12 space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Similarities</h1>
           <p className="text-text-secondary text-lg mt-2">See what several people have in common.</p>
@@ -166,11 +170,29 @@ export default function SimilaritiesPage() {
           </div>
         ) : (
           <div className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-6 shadow-soft space-y-5">
-            <div className="flex items-baseline justify-between gap-4">
-              <h2 className="font-semibold text-text-primary">Choose 2 to {data.groupCompare} People</h2>
-              <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
-            </div>
+            <button
+              type="button"
+              onClick={() => setChooserOpen(o => !o)}
+              aria-expanded={chooserOpen}
+              className="w-full flex items-center justify-between gap-4 text-left"
+            >
+              <span className="min-w-0">
+                <span className="block font-semibold text-text-primary">Choose 2 to {data.groupCompare} People</span>
+                {!chooserOpen && selected.length > 0 && (
+                  <span className="block text-sm text-text-secondary truncate">
+                    {selected.map(u => names[u.toLowerCase()] ?? `@${u}`).join(', ')}{includeMe ? ' and you' : ''}
+                  </span>
+                )}
+              </span>
+              <span className="flex items-center gap-3 flex-shrink-0">
+                <span className="text-xs text-text-secondary tabular-nums">{selected.length} of {data.groupCompare}</span>
+                <span className="w-7 h-7 rounded-full border border-border flex items-center justify-center text-text-secondary text-lg leading-none" aria-hidden="true">
+                  {chooserOpen ? '−' : '+'}
+                </span>
+              </span>
+            </button>
 
+            {chooserOpen && (<>
             {selected.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {selected.map(u => (
@@ -250,6 +272,7 @@ export default function SimilaritiesPage() {
                 {error.link && <Link href={error.link.href} className="text-accent hover:underline font-medium">{error.link.label}</Link>}
               </p>
             )}
+            </>)}
           </div>
         )}
 

@@ -59,11 +59,11 @@ export default function GroupTalk({ usernames, includeMe, names }: { usernames: 
   }
 
   return (
-    <div className="max-w-3xl mx-auto bg-card border border-border rounded-2xl shadow-card overflow-hidden">
+    <div className="w-full bg-card border border-border rounded-2xl shadow-card overflow-hidden">
       <div className="border-b border-border px-6 py-4 bg-surface/30 text-center">
         <p className="font-semibold text-text-primary">Ask a LiAIson About {list}</p>
       </div>
-      <div ref={boxRef} className="max-h-[420px] min-h-[160px] overflow-y-auto p-4 sm:p-6 space-y-3">
+      <div ref={boxRef} className="max-h-[640px] min-h-[320px] overflow-y-auto p-4 sm:p-6 space-y-3">
         {messages.map((m, i) => <ChatBubble key={i} role={m.role} content={m.content} />)}
         {busy && <p className="pl-12 text-sm text-text-secondary animate-pulse">Thinking...</p>}
         {messages.length === 0 && !busy && (

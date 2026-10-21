@@ -106,7 +106,7 @@ export default async function ProfilePage(props: Props) {
           </div>
 
           {canCompare && (
-            <div className="lg:col-start-2 min-w-0">
+            <div className="lg:col-span-2 min-w-0">
               <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
             </div>
           )}
