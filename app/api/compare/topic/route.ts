@@ -35,6 +35,6 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     if (err instanceof SimilarityError) return NextResponse.json({ error: err.message, ...err.extra }, { status: err.status })
     console.error('SIMILARITY_TOPIC_ERROR', err)
-    return NextResponse.json({ error: 'Learn More is not available right now.' }, { status: 500 })
+    return NextResponse.json({ error: 'Elaborate is not available right now.' }, { status: 500 })
   }
 }

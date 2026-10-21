@@ -36,7 +36,8 @@ function useWidth<T extends HTMLElement>() {
 export default function Annotated({ mock, callouts, active = true }: { mock: React.ReactNode; callouts: Callout[]; active?: boolean }) {
   const { ref, width } = useWidth<HTMLDivElement>()
   const wide = width >= 600
-  const scale = width ? Math.min(1, width / (wide ? W : MOCK_W + 2 * MOCK_X)) : 0
+  // Grows a little on wide screens (owner 2026-10-21: less condensed).
+  const scale = width ? Math.min(wide ? 1.2 : 1, width / (wide ? W : MOCK_W + 2 * MOCK_X)) : 0
 
   return (
     <div ref={ref} className="w-full">

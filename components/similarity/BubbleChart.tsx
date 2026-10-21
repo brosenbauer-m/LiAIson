@@ -16,7 +16,7 @@ import type { SimilarityInterest } from '@/lib/similarity/types'
 //   people, with lines to each of them. Only one person = light, next to them
 //   with a faint line. Tapping people selects them: what they all share is
 //   highlighted, the rest greyed, and a faint line between every two of them
-//   carries their stars. Hovering (or tapping) a bubble shows Learn More*,
+//   carries their stars. Hovering (or tapping) a bubble shows Elaborate*,
 //   which grows the bubble over the chart with a short comparison.
 
 export type ChartPerson = { key: string; name: string; avatarUrl?: string | null; you?: boolean }
@@ -32,6 +32,8 @@ type Bubble = {
   ty: number
   kind: Kind
   owner?: string
+  // Groups: how far out from the middle it may sit (share of the people's ring).
+  band: [number, number]
 }
 type Node = { key: string; x: number; y: number }
 
@@ -87,13 +89,47 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
   const cy = H / 2
   // Room between bubbles; a little more on big screens.
   const gap = pair ? 6 : small ? 10 : 18
+  // The ring the people sit on (see personNodes).
+  const rx = Math.max(1, W / 2 - NODE_R - 30)
+  const ry = Math.max(1, H / 2 - NODE_R - 34)
 
   const make = (scale: number): Bubble[] => interests.map((interest, i) => {
     const members = interest.people.filter(k => at.has(k))
     const kind: Kind = members.length >= people.length && people.length > 1 ? 'all' : members.length > 1 ? 'some' : 'one'
     let tx = cx
     let ty = cy
-    if (members.length && kind !== 'all') {
+    let band: [number, number] = [0, 2]
+    if (!pair) {
+      // Groups (owner 2026-10-21): three layers on the way out from the
+      // middle — shared by everyone (a cluster in the middle), then shared by
+      // some (between exactly those people), then only one person (next to them).
+      const n = people.length
+      let angle = 0
+      let rho = 0
+      if (kind === 'all') {
+        band = [0, 0.3]
+      } else if (kind === 'some') {
+        const u = members.reduce((s, k) => s + (at.get(k)!.x - cx) / rx, 0) / members.length
+        const v = members.reduce((s, k) => s + (at.get(k)!.y - cy) / ry, 0) / members.length
+        if (Math.hypot(u, v) < 0.15 && members.length === 2) {
+          // Opposite each other: beside the middle, still between them.
+          const a = at.get(members[0])!
+          const b = at.get(members[1])!
+          angle = Math.atan2((b.x - a.x) / rx, -(b.y - a.y) / ry) + (i % 2 ? Math.PI : 0)
+        } else {
+          angle = Math.atan2(v, u)
+        }
+        rho = 0.48 + (0.16 * (n - members.length)) / Math.max(1, n - 2)
+        band = [0.38, 0.7]
+      } else if (members.length) {
+        const p = at.get(members[0])!
+        angle = Math.atan2((p.y - cy) / ry, (p.x - cx) / rx)
+        rho = 0.84
+        band = [0.76, 1]
+      }
+      tx = cx + Math.cos(angle) * rho * rx
+      ty = cy + Math.sin(angle) * rho * ry
+    } else if (members.length && kind !== 'all') {
       const mx = members.reduce((s, k) => s + at.get(k)!.x, 0) / members.length
       const my = members.reduce((s, k) => s + at.get(k)!.y, 0) / members.length
       // One person: between them and the middle, closer to them.
@@ -115,9 +151,9 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
     const longest = Math.max(...lines.map(l => l.length))
     // Size: how much the texts say about it (1 to 5).
     const base = 24 + Math.min(5, Math.max(1, interest.strength || 1)) * 6.5
-    const r = Math.min(66, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0, minR * scale))
+    const r = Math.min(minR ? 80 : 66, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0, minR * scale))
     const angle = i * 2.399963
-    return { interest, lines, r, x: tx + Math.cos(angle) * 6, y: ty + Math.sin(angle) * 6, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined }
+    return { interest, lines, r, x: tx + Math.cos(angle) * 6, y: ty + Math.sin(angle) * 6, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined, band }
   })
 
   const obstacles = pair ? [] : nodes.map(n => ({ x: n.x, y: n.y, r: NODE_R + 26 }))
@@ -155,6 +191,20 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
           if (overlap > 0) {
             a.x += (dx / dist) * overlap
             a.y += (dy / dist) * overlap
+          }
+        }
+      }
+      // Keep each bubble in its layer.
+      if (!pair) {
+        for (const b of bubbles) {
+          const u = (b.x - cx) / rx
+          const v = (b.y - cy) / ry
+          const rho = Math.hypot(u, v)
+          const want = rho < b.band[0] ? b.band[0] : rho > b.band[1] ? b.band[1] : rho
+          if (want !== rho) {
+            const f = rho > 0.001 ? (rho + (want - rho) * 0.5) / rho : 1
+            b.x = cx + (b.x - cx) * f
+            b.y = cy + (b.y - cy) * f
           }
         }
       }
@@ -252,7 +302,7 @@ export default function BubbleChart({
   const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.85) : Math.round(Math.min(860, Math.max(580, W * 0.68))))
   const { bubbles, nodes } = useMemo(
     // With Learn More, bubbles are big enough for the button inside.
-    () => (W > 0 ? layout(people, interests, W, H, pair, onLearnMore ? 44 : 0) : { bubbles: [], nodes: [] }),
+    () => (W > 0 ? layout(people, interests, W, H, pair, onLearnMore ? 56 : 0) : { bubbles: [], nodes: [] }),
     [people, interests, W, H, pair, onLearnMore]
   )
   const nodeAt = new Map(nodes.map(n => [n.key, n]))
@@ -274,7 +324,7 @@ export default function BubbleChart({
     if (!onLearnMore) return
     setActive(null)
     setZoom({ label: b.interest.label })
-    const out = await onLearnMore(b.interest).catch(() => ({ error: 'Learn More is not available right now.' }))
+    const out = await onLearnMore(b.interest).catch(() => ({ error: 'Elaborate is not available right now.' }))
     setZoom(z => (z && z.label === b.interest.label ? { label: z.label, ...out } : z))
   }
 
@@ -320,8 +370,9 @@ export default function BubbleChart({
                   <path key={l.id} d={l.d} fill="none" stroke="#5C3B28" strokeOpacity={0.18} strokeWidth={1.2} strokeDasharray="2 5" strokeLinecap="round" />
                 ))}
                 {bubbles.map(b => {
-                  if (b.kind === 'all') return null
                   const on = lit(b)
+                  // Shared by everyone: strings only while highlighted.
+                  if (b.kind === 'all' && !(on && focusing)) return null
                   return (
                     <g key={b.interest.label} className={reduceMotion ? undefined : 'animate-bob'} style={drift(b.interest.label)}>
                       {b.interest.people.map(k => {
@@ -403,7 +454,7 @@ export default function BubbleChart({
                   transition={{ type: 'spring', stiffness: 220, damping: 18, delay: reduceMotion ? 0 : Math.min(i * 0.035, 0.6) }}
                 >
                   <span className={`absolute inset-0 ${reduceMotion ? '' : 'animate-bob'}`} style={drift(b.interest.label)}>
-                    {/* Grows on hover; Learn More* appears inside, under the topic. */}
+                    {/* Grows on hover; Elaborate* appears inside, under the topic. */}
                     <span className={`absolute inset-0 transition-transform duration-300 ${tappable ? 'group-hover:scale-[1.16]' : ''} ${isActive ? 'scale-[1.16]' : ''}`}>
                       {tappable ? (
                         <button
@@ -425,11 +476,11 @@ export default function BubbleChart({
                         <button
                           type="button"
                           onClick={() => void learnMore(b)}
-                          className={`absolute left-1/2 top-[66%] -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight transition-opacity duration-200 ${
+                          className={`absolute left-1/2 top-[64%] -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-px text-[9px] font-semibold leading-tight transition-opacity duration-200 ${
                             b.kind === 'one' ? 'bg-accent text-white' : 'bg-white/90 text-accent'
                           } ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto'}`}
                         >
-                          Learn More*
+                          Elaborate*
                         </button>
                       )}
                     </span>
@@ -475,7 +526,7 @@ export default function BubbleChart({
               exit={{ left: zoomed.x - zoomed.r, top: zoomed.y - zoomed.r, width: zoomed.r * 2, height: zoomed.r * 2, borderRadius: 9999, opacity: 0 }}
               transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 140, damping: 22 }}
               role="dialog"
-              aria-label={`${zoom.label}: Learn More`}
+              aria-label={`${zoom.label}: Elaborate`}
             >
               <motion.div
                 className="h-full w-full flex flex-col items-center justify-center text-center px-6 sm:px-16 py-10 gap-5"
@@ -518,7 +569,7 @@ export default function BubbleChart({
         ) : (
           <>
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-accent" />Shared by Everyone</span>
-            <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#8C6A52]" />Shared by Some (lines show who)</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-[#8C6A52]" />Shared by Some</span>
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-card border border-accent/40" />Only One Person</span>
             {people.some(p => p.you) && <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-accent-subtle border border-accent/15" />Only You</span>}
           </>

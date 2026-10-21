@@ -129,7 +129,7 @@ function SideArrow({ dir, disabled, onClick }: { dir: 1 | -1; disabled: boolean;
       onClick={onClick}
       disabled={disabled}
       aria-label={dir === 1 ? 'Next' : 'Back'}
-      className="hidden md:flex flex-shrink-0 h-44 w-12 items-center justify-center rounded-full border border-border bg-surface text-text-primary shadow-card hover:bg-accent hover:text-white hover:border-accent transition-colors disabled:opacity-0 disabled:pointer-events-none"
+      className="hidden md:flex flex-shrink-0 h-52 w-14 items-center justify-center rounded-full border border-border bg-surface text-text-primary shadow-card hover:bg-accent hover:text-white hover:border-accent transition-colors disabled:opacity-0 disabled:pointer-events-none"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden="true">
         <path d={dir === 1 ? 'M9 5l7 7-7 7' : 'M15 5l-7 7 7 7'} />
@@ -200,7 +200,7 @@ export default function HowItWorks() {
               <span className="block h-1 rounded-full bg-border overflow-hidden">
                 <span className={`block h-full rounded-full bg-accent transition-all duration-500 ${i <= index ? 'w-full' : 'w-0'}`} />
               </span>
-              <span className={`mt-2.5 flex items-baseline gap-2 text-sm ${i === index ? 'text-text-primary font-semibold' : 'text-text-muted group-hover:text-text-secondary'}`}>
+              <span className={`mt-3 flex items-baseline gap-2 text-sm sm:text-base ${i === index ? 'text-text-primary font-semibold' : 'text-text-muted group-hover:text-text-secondary'}`}>
                 <span className="font-mono text-xs">{String(i + 1).padStart(2, '0')}</span>
                 {s.short}
               </span>
@@ -210,7 +210,7 @@ export default function HowItWorks() {
       </ol>
 
       {/* Each slide is a card; tall arrows on either side (phones: buttons below). */}
-      <div data-step style={{ '--i': 2 } as React.CSSProperties} className="mt-6 flex items-center gap-3 lg:gap-5">
+      <div data-step style={{ '--i': 2 } as React.CSSProperties} className="mt-8 sm:mt-10 flex items-center gap-3 lg:gap-6">
         <SideArrow dir={-1} disabled={index === 0} onClick={() => go(index - 1)} />
         <div
           ref={trackRef}
@@ -223,16 +223,16 @@ export default function HowItWorks() {
           {SLIDES.map((slide, i) => (
             <div
               key={slide.title}
-              className="w-full flex-shrink-0 snap-center p-2 sm:p-4"
+              className="w-full flex-shrink-0 snap-center p-2 sm:p-5"
               role="group"
               aria-roledescription="slide"
               aria-label={`${i + 1} of ${SLIDES.length}: ${slide.title}`}
             >
-              <div className={`rounded-3xl border border-border bg-card shadow-[0_18px_40px_-12px_rgba(43,30,22,0.18),0_2px_8px_rgba(43,30,22,0.06)] p-6 sm:p-10 transition-all duration-700 ${i === index ? 'opacity-100 scale-100' : 'opacity-60 scale-[0.97]'}`}>
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] gap-8 lg:gap-12 items-center">
+              <div className={`rounded-3xl border border-border bg-card shadow-[0_18px_40px_-12px_rgba(43,30,22,0.18),0_2px_8px_rgba(43,30,22,0.06)] p-6 sm:p-12 lg:p-14 transition-all duration-700 ${i === index ? 'opacity-100 scale-100' : 'opacity-60 scale-[0.97]'}`}>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] gap-10 lg:gap-16 items-center">
                   <div className={`transition-all duration-700 ${i === index ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}>
-                    <h3 className="font-display text-3xl sm:text-4xl text-text-primary">{slide.title}</h3>
-                    <p className="mt-5 text-[17px] text-text-secondary leading-relaxed [&_b]:font-semibold [&_b]:text-text-primary">{slide.body}</p>
+                    <h3 className="font-display text-3xl sm:text-5xl text-text-primary leading-tight">{slide.title}</h3>
+                    <p className="mt-6 text-[17px] sm:text-[19px] text-text-secondary leading-relaxed [&_b]:font-semibold [&_b]:text-text-primary">{slide.body}</p>
                     {i === SLIDES.length - 1 && (
                       <Link href="/signup" className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-accent hover:bg-accent-light text-white font-medium shadow-card">
                         See Tiers <span aria-hidden="true">→</span>

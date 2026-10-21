@@ -68,7 +68,7 @@ export async function topicSummary(
   })
   await logAiUsage({ userId: viewerId, feature: 'similarity_topic', model: FAST_MODEL, actor: 'member', usage: response.usage })
   const summary = messageText(response.choices[0]?.message?.content).replace(/^\s*["“]|["”]\s*$/g, '').trim().slice(0, 900)
-  if (!summary) throw new SimilarityError('Learn More is not available right now.', 502)
+  if (!summary) throw new SimilarityError('Elaborate is not available right now.', 502)
   await getRedis().set(cacheKey, summary, { ex: TOPIC_TTL }).catch(() => {})
   return { summary, reused: false }
 }

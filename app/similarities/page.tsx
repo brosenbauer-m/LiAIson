@@ -292,7 +292,7 @@ export default function SimilaritiesPage() {
               body: JSON.stringify({ usernames, includeMe: includesViewer, label: interest.label, people: interest.people }),
             }).catch(() => null)
             const d = await res?.json().catch(() => ({})) ?? {}
-            if (!res?.ok) return { error: d.error ?? 'Learn More is not available right now.' }
+            if (!res?.ok) return { error: d.error ?? 'Elaborate is not available right now.' }
             window.dispatchEvent(new Event('liaison:usage-changed'))
             return { summary: d.summary as string }
           }
