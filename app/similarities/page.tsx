@@ -283,8 +283,6 @@ export default function SimilaritiesPage() {
           ]
           const usernames = people.map(p => p.username)
           const includesViewer = !!result.includesViewer
-          const pairLevel = (a: string, b: string) =>
-            a === 'A' ? result.levels?.[b] : b === 'A' ? result.levels?.[a] : result.pairs?.[[a, b].sort().join('-')]
           const learnMore = async (interest: { label: string; people: string[] }) => {
             const res = await fetch('/api/compare/topic', {
               method: 'POST',
@@ -299,7 +297,7 @@ export default function SimilaritiesPage() {
           return (
             <section className="space-y-10" aria-label="Similarities Chart">
               {result.interests.length > 0 && (
-                <BubbleChart people={chartPeople} interests={result.interests} pairLevel={pairLevel} onLearnMore={learnMore} />
+                <BubbleChart people={chartPeople} interests={result.interests} onLearnMore={learnMore} />
               )}
               <p className="text-xs text-text-muted text-center">
                 Uses only what each person lets you see. Only you see this; nobody is notified.

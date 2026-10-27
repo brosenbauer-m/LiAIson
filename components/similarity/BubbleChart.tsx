@@ -14,10 +14,12 @@ import type { SimilarityInterest } from '@/lib/similarity/types'
 // - A group (Similarities Chart): every person is a picture on a ring. Shared
 //   by everyone = dark, in the middle. Shared by some = brown, between those
 //   people, with lines to each of them. Only one person = light, next to them
-//   with a faint line. Tapping people selects them: what they all share is
-//   highlighted, the rest greyed, and a faint line between every two of them
-//   carries their stars. Hovering (or tapping) a bubble shows Elaborate*,
-//   which grows the bubble over the chart with a short comparison.
+//   with a faint line. Every bubble has a line to every person who has it.
+//   Tapping people selects them: what they all share is highlighted, the rest
+//   greyed (no scores between people, owner 2026-10-27). Hovering (or tapping)
+//   a bubble shows Elaborate*, which grows the bubble over the chart with a
+//   short comparison. Bubbles can be dragged (mouse or touch); their lines
+//   follow, and they spring back on release. A tap outside closes a bubble.
 
 export type ChartPerson = { key: string; name: string; avatarUrl?: string | null; you?: boolean }
 
@@ -256,23 +258,21 @@ const STYLE: Record<Kind | 'mine', string> = {
 }
 
 
-const STARS = (level: number) => '★★★★★'.slice(0, level) + '☆☆☆☆☆'.slice(0, 5 - level)
-
+// Dragging a bubble: how far it is moved, and whether it is springing back.
+type Pull = { label: string; x: number; y: number }
+const DRAG_START = 6
 export type LearnMore = (interest: SimilarityInterest) => Promise<{ summary?: string; error?: string }>
 
 export default function BubbleChart({
   people,
   interests,
   height,
-  pairLevel,
   onLearnMore,
 }: {
   people: ChartPerson[]
   interests: SimilarityInterest[]
   height?: number
-  // Groups: the stars between two people (1 to 5), if known.
-  pairLevel?: (a: string, b: string) => number | undefined
-  // Groups: Learn More* on a bubble (paid per use).
+  // Groups: Elaborate* on a bubble (paid per use).
   onLearnMore?: LearnMore
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -282,6 +282,11 @@ export default function BubbleChart({
   const [active, setActive] = useState<string | null>(null)
   const [picked, setPicked] = useState<string[]>([])
   const [zoom, setZoom] = useState<{ label: string; summary?: string; error?: string } | null>(null)
+  const [pull, setPull] = useState<Pull | null>(null)
+  const press = useRef<{ label: string; x: number; y: number; moved: boolean; id: number } | null>(null)
+  const justDragged = useRef(false)
+  const springFrame = useRef(0)
+  const zoomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const el = wrapRef.current
@@ -290,6 +295,24 @@ export default function BubbleChart({
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // A click or tap anywhere outside the open bubble (or the opened
+  // Elaborate view) closes it.
+  useEffect(() => {
+    if (!active && !zoom) return
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Element | null
+      if (zoom) {
+        if (!zoomRef.current?.contains(t)) setZoom(null)
+        return
+      }
+      if (!t?.closest?.('[data-bubble]')) setActive(null)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [active, zoom])
+
+  useEffect(() => () => cancelAnimationFrame(springFrame.current), [])
 
   useEffect(() => {
     if (!zoom) return
@@ -328,34 +351,65 @@ export default function BubbleChart({
     setZoom(z => (z && z.label === b.interest.label ? { label: z.label, ...out } : z))
   }
 
-  // Faint lines between every two picked people, bent outwards around the
-  // bubbles, with their stars in the middle.
-  const pairLines: { id: string; d: string; x: number; y: number; level?: number }[] = []
-  if (!pair && picked.length >= 2) {
-    for (let i = 0; i < picked.length; i++) {
-      for (let j = i + 1; j < picked.length; j++) {
-        const a = nodeAt.get(picked[i])
-        const b = nodeAt.get(picked[j])
-        if (!a || !b) continue
-        const mx = (a.x + b.x) / 2
-        const my = (a.y + b.y) / 2
-        let ox = mx - W / 2
-        let oy = my - H / 2
-        const len = Math.hypot(ox, oy)
-        if (len < 40) { ox = -(b.y - a.y); oy = b.x - a.x }
-        const ol = Math.hypot(ox, oy) || 1
-        const bend = Math.min(W, H) * 0.32
-        const cx = mx + (ox / ol) * bend
-        const cy = my + (oy / ol) * bend
-        pairLines.push({
-          id: `${picked[i]}-${picked[j]}`,
-          d: `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`,
-          x: 0.25 * a.x + 0.5 * cx + 0.25 * b.x,
-          y: 0.25 * a.y + 0.5 * cy + 0.25 * b.y,
-          level: pairLevel?.(picked[i], picked[j]),
-        })
-      }
+  // --- Dragging bubbles (mouse and touch) ----------------------------------
+  // A press that moves a few pixels becomes a drag; the bubble follows the
+  // pointer with its lines, then springs back to its place on release.
+  const offsetOf = (label: string) => (pull && pull.label === label ? pull : { x: 0, y: 0 })
+
+  const springBack = (from: Pull) => {
+    cancelAnimationFrame(springFrame.current)
+    if (reduceMotion) { setPull(null); return }
+    let x = from.x
+    let y = from.y
+    let vx = 0
+    let vy = 0
+    const step = () => {
+      // A soft spring (stiffness 0.12, damping 0.72 per frame).
+      vx = (vx - x * 0.12) * 0.72
+      vy = (vy - y * 0.12) * 0.72
+      x += vx
+      y += vy
+      if (Math.hypot(x, y) < 0.4 && Math.hypot(vx, vy) < 0.4) { setPull(null); return }
+      setPull({ label: from.label, x, y })
+      springFrame.current = requestAnimationFrame(step)
     }
+    springFrame.current = requestAnimationFrame(step)
+  }
+
+  const onBubbleDown = (e: React.PointerEvent, label: string) => {
+    if (e.button > 0 || zoom) return
+    // Elaborate* is a button of its own: pressing it never drags.
+    if ((e.target as Element).closest('[data-elaborate]')) return
+    cancelAnimationFrame(springFrame.current)
+    press.current = { label, x: e.clientX, y: e.clientY, moved: false, id: e.pointerId }
+  }
+  const onBubbleMove = (e: React.PointerEvent) => {
+    const p = press.current
+    if (!p || p.id !== e.pointerId) return
+    const dx = e.clientX - p.x
+    const dy = e.clientY - p.y
+    if (!p.moved) {
+      if (Math.hypot(dx, dy) < DRAG_START) return
+      p.moved = true
+      ;(e.currentTarget as Element).setPointerCapture?.(e.pointerId)
+    }
+    setPull({ label: p.label, x: dx, y: dy })
+  }
+  const onBubbleUp = (e: React.PointerEvent) => {
+    const p = press.current
+    if (!p || p.id !== e.pointerId) return
+    press.current = null
+    if (p.moved) {
+      // The click that follows a drag must not open the bubble.
+      justDragged.current = true
+      setTimeout(() => { justDragged.current = false }, 0)
+      springBack({ label: p.label, x: e.clientX - p.x, y: e.clientY - p.y })
+    }
+  }
+  const onBubbleCancel = () => {
+    const p = press.current
+    press.current = null
+    if (p?.moved && pull) springBack(pull)
   }
 
   return (
@@ -363,16 +417,14 @@ export default function BubbleChart({
       <div ref={wrapRef} className="relative w-full select-none" style={{ height: W ? H : pair ? 280 : 500 }}>
         {W > 0 && (
           <motion.div className="absolute inset-0" animate={{ opacity: zoom ? 0.12 : 1 }} transition={{ duration: 0.35 }}>
-            {/* Lines from bubbles to the people who have them, and between picked people. */}
+            {/* Lines from every bubble to every person who has it. */}
             {!pair && (
               <svg className="absolute inset-0 pointer-events-none overflow-visible" width={W} height={H} aria-hidden="true">
-                {pairLines.map(l => (
-                  <path key={l.id} d={l.d} fill="none" stroke="#5C3B28" strokeOpacity={0.18} strokeWidth={1.2} strokeDasharray="2 5" strokeLinecap="round" />
-                ))}
                 {bubbles.map(b => {
                   const on = lit(b)
-                  // Shared by everyone: strings only while highlighted.
-                  if (b.kind === 'all' && !(on && focusing)) return null
+                  const off = offsetOf(b.interest.label)
+                  const bx = b.x + off.x
+                  const by = b.y + off.y
                   return (
                     <g key={b.interest.label} className={reduceMotion ? undefined : 'animate-bob'} style={drift(b.interest.label)}>
                       {b.interest.people.map(k => {
@@ -382,19 +434,19 @@ export default function BubbleChart({
                         const highlighted = on && (chosen ? true : picked.length ? picked.includes(k) : false)
                         const faint = focusing && !highlighted
                         // A soft curve, bent a little towards the middle.
-                        const mx = (b.x + n.x) / 2
-                        const my = (b.y + n.y) / 2
+                        const mx = (bx + n.x) / 2
+                        const my = (by + n.y) / 2
                         const qx = mx + (W / 2 - mx) * 0.18
                         const qy = my + (H / 2 - my) * 0.18
                         return (
                           <path
                             key={k}
-                            d={`M ${b.x} ${b.y} Q ${qx} ${qy} ${n.x} ${n.y}`}
+                            d={`M ${bx} ${by} Q ${qx} ${qy} ${n.x} ${n.y}`}
                             fill="none"
                             strokeLinecap="round"
                             stroke="#5C3B28"
                             strokeWidth={highlighted ? 1.6 : 1}
-                            strokeOpacity={highlighted ? 0.6 : faint ? 0.04 : b.kind === 'one' ? 0.12 : 0.22}
+                            strokeOpacity={highlighted ? 0.6 : faint ? 0.04 : b.kind === 'one' ? 0.14 : b.kind === 'all' ? 0.12 : 0.22}
                             strokeDasharray={b.kind === 'one' ? '3 4' : undefined}
                             className="transition-[stroke-opacity] duration-300"
                           />
@@ -405,18 +457,6 @@ export default function BubbleChart({
                 })}
               </svg>
             )}
-
-            {/* Stars between picked people */}
-            {pairLines.map(l => l.level ? (
-              <span
-                key={l.id}
-                className="absolute z-[6] -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/90 px-2 py-0.5 text-[13px] leading-none tracking-[0.12em] text-accent shadow-soft pointer-events-none"
-                style={{ left: l.x, top: l.y }}
-                aria-label={`${l.level} of 5`}
-              >
-                {STARS(l.level)}
-              </span>
-            ) : null)}
 
             {/* Names (two people) */}
             {pair && (
@@ -443,11 +483,19 @@ export default function BubbleChart({
                 </>
               )
               const faceClass = `absolute inset-0 rounded-full border flex flex-col items-center justify-center text-center leading-tight px-1 transition-shadow duration-300 ${tone} ${isActive ? 'ring-4 ring-accent/20' : ''}`
+              const off = offsetOf(b.interest.label)
+              const dragging = !!pull && pull.label === b.interest.label
               return (
                 <motion.div
                   key={b.interest.label}
-                  className="absolute group"
-                  style={{ left: b.x - b.r, top: b.y - b.r, width: d, height: d, zIndex: isActive ? 8 : 2 }}
+                  data-bubble
+                  className={`absolute group ${pair ? '' : dragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  style={{ left: b.x - b.r + off.x, top: b.y - b.r + off.y, width: d, height: d, zIndex: dragging ? 12 : isActive ? 8 : 2, touchAction: pair ? undefined : 'none' }}
+                  // Groups only: bubbles can be dragged (the profile card keeps scrolling normally).
+                  onPointerDown={pair ? undefined : e => onBubbleDown(e, b.interest.label)}
+                  onPointerMove={pair ? undefined : onBubbleMove}
+                  onPointerUp={pair ? undefined : onBubbleUp}
+                  onPointerCancel={pair ? undefined : onBubbleCancel}
                   initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
                   animate={{ opacity: on ? 1 : 0.25, scale: 1 }}
                   whileHover={{ zIndex: 9 }}
@@ -459,7 +507,7 @@ export default function BubbleChart({
                       {tappable ? (
                         <button
                           type="button"
-                          onClick={() => setActive(isActive ? null : b.interest.label)}
+                          onClick={() => { if (!justDragged.current) setActive(isActive ? null : b.interest.label) }}
                           aria-pressed={isActive}
                           aria-label={label}
                           className={faceClass}
@@ -475,9 +523,10 @@ export default function BubbleChart({
                       {onLearnMore && (
                         <button
                           type="button"
+                          data-elaborate
                           onClick={() => void learnMore(b)}
-                          className={`absolute left-1/2 top-[64%] -translate-x-1/2 whitespace-nowrap rounded-full px-1.5 py-px text-[9px] font-semibold leading-tight transition-opacity duration-200 ${
-                            b.kind === 'one' ? 'bg-accent text-white' : 'bg-white/90 text-accent'
+                          className={`absolute left-1/2 top-[64%] -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold leading-tight underline underline-offset-2 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80 transition-opacity duration-200 ${
+                            b.kind === 'one' ? 'text-accent decoration-accent/60' : 'text-white decoration-white/70'
                           } ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto focus:opacity-100 focus:pointer-events-auto'}`}
                         >
                           Elaborate*
@@ -520,6 +569,7 @@ export default function BubbleChart({
           {zoom && zoomed && (
             <motion.div
               key={zoom.label}
+              ref={zoomRef}
               className={`absolute z-20 overflow-hidden border ${zoomed.kind === 'one' && people.find(p => p.key === zoomed.owner)?.you ? STYLE.mine : STYLE[zoomed.kind]}`}
               initial={{ left: zoomed.x - zoomed.r, top: zoomed.y - zoomed.r, width: zoomed.r * 2, height: zoomed.r * 2, borderRadius: 9999 }}
               animate={{ left: 0, top: 0, width: W, height: H, borderRadius: 32 }}
