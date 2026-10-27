@@ -6,6 +6,7 @@ import { useState } from 'react'
 import Avatar from '@/components/ui/Avatar'
 import TierMark from '@/components/ui/TierMark'
 import CirclePicker from '@/components/connections/CirclePicker'
+import { openContextMenu } from '@/components/ui/ContextMenu'
 
 // Connection requests to you: Accept (choosing the circle on tiers with
 // circles; connections go both ways) or Ignore. `collapsible` shows them as a
@@ -81,7 +82,17 @@ export default function ConnectionRequests({
         const fromUser = Array.isArray(request.from_user) ? request.from_user[0] : request.from_user
         const busy = busyId === request.id
         return (
-          <li key={request.id} className="bg-card border border-border rounded-2xl px-4 py-3 shadow-soft space-y-3">
+          <li
+            key={request.id}
+            className="bg-card border border-border rounded-2xl px-4 py-3 shadow-soft space-y-3"
+            onContextMenu={e => openContextMenu(e, [
+              { heading: fromUser?.display_name ?? 'Request' },
+              { label: 'Accept', onSelect: () => setChoosingId(request.id), disabled: busy },
+              { label: 'Ignore', onSelect: () => void respond(request, false), disabled: busy },
+              'separator',
+              { label: 'Open LiAIson', onSelect: () => router.push(`/${fromUser?.username ?? ''}`), disabled: !fromUser },
+            ])}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <Avatar url={fromUser?.avatar_url} name={fromUser?.display_name} size="sm" />

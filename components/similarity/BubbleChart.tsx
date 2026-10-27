@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import Avatar from '@/components/ui/Avatar'
+import { openContextMenu } from '@/components/ui/ContextMenu'
 import type { SimilarityInterest } from '@/lib/similarity/types'
 
 // Similarities as floating bubbles (owner design 2026-10-12/20, same feel as
@@ -21,7 +22,7 @@ import type { SimilarityInterest } from '@/lib/similarity/types'
 //   short comparison. Bubbles can be dragged (mouse or touch); their lines
 //   follow, and they spring back on release. A tap outside closes a bubble.
 
-export type ChartPerson = { key: string; name: string; avatarUrl?: string | null; you?: boolean }
+export type ChartPerson = { key: string; name: string; avatarUrl?: string | null; you?: boolean; href?: string }
 
 type Kind = 'all' | 'some' | 'one'
 type Bubble = {
@@ -534,6 +535,11 @@ export default function BubbleChart({
                   onPointerMove={pair ? undefined : onBubbleMove}
                   onPointerUp={pair ? undefined : onBubbleUp}
                   onPointerCancel={pair ? undefined : onBubbleCancel}
+                  onContextMenu={e => openContextMenu(e, [
+                    { heading: b.interest.label },
+                    ...(tappable ? [{ label: isActive ? 'Close' : 'Show Who Has It', onSelect: () => setActive(isActive ? null : b.interest.label) }] : []),
+                    ...(onLearnMore ? [{ label: 'Elaborate*', onSelect: () => void learnMore(b) }] : []),
+                  ])}
                   initial={reduceMotion ? false : { opacity: 0, scale: 0.6 }}
                   animate={{ opacity: on ? 1 : 0.25, scale: 1 }}
                   whileHover={{ zIndex: 9 }}
@@ -585,6 +591,11 @@ export default function BubbleChart({
                   key={n.key}
                   type="button"
                   onClick={() => togglePerson(n.key)}
+                  onContextMenu={e => openContextMenu(e, [
+                    { heading: p.you ? 'You' : p.name },
+                    { label: on ? 'Deselect' : 'Select', onSelect: () => togglePerson(n.key) },
+                    ...(p.href ? [{ label: 'Open LiAIson', onSelect: () => { window.location.href = p.href! } }] : []),
+                  ])}
                   aria-pressed={on}
                   aria-label={`${on ? 'Deselect' : 'Select'} ${p.you ? 'yourself' : p.name}`}
                   className="absolute z-10 flex flex-col items-center gap-1 w-24 -ml-12"

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import type { VaultSection } from '@/types'
 import { useUnsavedChanges } from '@/lib/unsaved'
+import { openContextMenu } from '@/components/ui/ContextMenu'
 import { circleChain, circleWhere, placementLabel, placementOf, placementFields, type CustomCircle, type Placement } from '@/lib/circles'
 
 interface VaultSectionCardProps {
@@ -182,8 +183,34 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
             : false
     if (inside) alsoSees.add(`c:${c.id}`)
   }
+  const placementChoices = [
+    'outer',
+    ...(innerAllowed || placement === 'inner' ? ['inner'] : []),
+    ...customCircles.map(c => `c:${c.id}`),
+    'draft',
+  ] as Placement[]
+
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft">
+    <div
+      className="bg-card border border-border rounded-2xl p-6 space-y-4 shadow-soft"
+      // Right-click: the ⋯ menu's tools plus who can see it (saved at once).
+      onContextMenu={e => openContextMenu(e, [
+        { heading: section.label },
+        { label: 'Import File', onSelect: () => fileRef.current?.click(), disabled: importing },
+        { label: 'Optimize Text*', onSelect: () => { setConfirmingDelete(false); setOptimizeNote(null); setConfirmingOptimize(true) }, disabled: content.trim().length < 20 },
+        ...(placementChoices.length > 1 ? [
+          'separator' as const,
+          { heading: 'Who Can See This' },
+          ...placementChoices.map(p => ({
+            label: p === 'draft' ? 'Draft' : noCircles && p === 'outer' ? 'Visible' : placementLabel(p, customCircles),
+            disabled: p === placement,
+            onSelect: () => { setPlacement(p); void onUpdate(section.id, placementFields(p)).catch(() => {}) },
+          })),
+        ] : []),
+        'separator',
+        { label: 'Delete Section', danger: true, onSelect: () => { setConfirmingOptimize(false); setConfirmingDelete(true) } },
+      ])}
+    >
       <div className="flex items-center justify-between gap-3">
         <h3 className="font-semibold text-text-primary text-lg">{section.label}</h3>
         <div ref={menuRef} className="relative">
@@ -321,12 +348,7 @@ export default function VaultSectionCard({ section, onUpdate, onDelete, roomLeft
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-text-primary mb-1">Who can see this</legend>
         <div className="flex flex-wrap gap-2">
-          {([
-            'outer',
-            ...(innerAllowed || placement === 'inner' ? ['inner'] : []),
-            ...customCircles.map(c => `c:${c.id}`),
-            'draft',
-          ] as Placement[]).map(p => (
+          {placementChoices.map(p => (
               <button
                 key={p}
                 type="button"

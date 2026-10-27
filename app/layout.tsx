@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import SiteHeader from "@/components/nav/SiteHeader";
 import UnsavedChangesGuard from "@/components/ui/UnsavedChangesGuard";
+import ContextMenuHost from "@/components/ui/ContextMenu";
 
 // Fonts are bundled at build time and served from our own domain (no request
 // to Google from visitors' browsers).
@@ -37,6 +38,7 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <UnsavedChangesGuard />
+        <ContextMenuHost />
       </body>
     </html>
   );

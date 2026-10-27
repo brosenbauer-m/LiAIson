@@ -50,6 +50,7 @@ export default function CircleBoard({
   onMoveCircle,
   dropTarget,
   maxWidth = 760,
+  onCircleMenu,
 }: {
   ref?: Ref<BoardHandle>
   circles: StudioCircle[]
@@ -61,6 +62,8 @@ export default function CircleBoard({
   onMoveCircle: (id: string, target: string) => void
   dropTarget: string | null
   maxWidth?: number
+  // Right-click on a circle (desktop).
+  onCircleMenu?: (id: string, e: React.MouseEvent) => void
 }) {
   const reduceMotion = useReducedMotion()
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -248,6 +251,7 @@ export default function CircleBoard({
               aria-label={`${n.name}: ${st.people} ${st.people === 1 ? 'person' : 'people'}, ${st.sections} Vault ${st.sections === 1 ? 'section' : 'sections'}`}
               aria-pressed={isSelected}
               onPointerDown={e => onPointerDown(e, n)}
+              onContextMenu={onCircleMenu ? e => onCircleMenu(n.id, e) : undefined}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerCancel}

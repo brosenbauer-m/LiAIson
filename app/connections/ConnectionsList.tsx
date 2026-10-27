@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { openContextMenu } from '@/components/ui/ContextMenu'
 import Avatar from '@/components/ui/Avatar'
 import TierMark from '@/components/ui/TierMark'
 
@@ -25,6 +27,7 @@ interface ConnectionRow {
 type SortOrder = 'newest' | 'oldest' | 'name'
 
 export default function ConnectionsList({ initialConnections }: { initialConnections: ConnectionRow[] }) {
+  const router = useRouter()
   const [connections, setConnections] = useState(initialConnections)
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null)
@@ -88,7 +91,16 @@ export default function ConnectionsList({ initialConnections }: { initialConnect
         {shown.map(connection => {
           const user = userOf(connection)
           return (
-            <div key={connection.id} className="bg-card border border-border rounded-2xl p-5 shadow-soft space-y-3">
+            <div
+              key={connection.id}
+              className="bg-card border border-border rounded-2xl p-5 shadow-soft space-y-3"
+              onContextMenu={e => openContextMenu(e, [
+                { heading: user?.display_name ?? 'Connection' },
+                { label: 'Open LiAIson', onSelect: () => router.push(`/${user?.username ?? ''}`), disabled: !user },
+                'separator',
+                { label: 'Remove Connection', danger: true, onSelect: () => setConfirmRemove(connection.id) },
+              ])}
+            >
               <div className="flex items-center gap-3">
                 <Avatar url={user?.avatar_url} name={user?.display_name} size="md" />
                 <div className="flex-1 min-w-0">

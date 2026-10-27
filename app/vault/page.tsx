@@ -18,7 +18,8 @@ function limitMessage(limit: number): string {
 }
 
 
-type Tab = Placement
+// 'all' = every section at once (owner 2026-10-27).
+type Tab = Placement | 'all'
 
 // Keeps the Discover search index up to date (only Outer Circle content of
 // Public profiles is ever indexed). Fire and forget.
@@ -137,7 +138,8 @@ export default function VaultPage() {
         domain: 'custom',
         is_professional: false,
         is_personal: false,
-        ...placementFields(activeTab),
+        // From the All tab a new section starts as a draft (visible to no one until placed).
+        ...placementFields(activeTab === 'all' ? 'draft' : activeTab),
         section_type: 'custom',
         label,
         content: '',
@@ -166,14 +168,14 @@ export default function VaultPage() {
   const noCircles = !innerAllowed && customCircles.length === 0 && !sections.some(s => s.circle === 'inner')
   // The Profile Bio is edited in Settings → Profile, not here.
   const filtered = sections.filter(section =>
-    section.section_type !== 'profile_bio' && (noCircles || placementOf(section) === activeTab))
+    section.section_type !== 'profile_bio' && (noCircles || activeTab === 'all' || placementOf(section) === activeTab))
 
   // Circles whose sections the people of the selected circle also see (the
   // circles around it): their tabs are highlighted in a lighter brown.
   const nodes = new Map(customCircles.map(c => [c.id, { id: c.id, parent_id: c.parent_id ?? null, in_inner: !!c.in_inner, isolated: !!c.isolated }]))
   const included = new Set<Tab>()
   if (activeTab === 'inner') included.add('outer')
-  if (activeTab.startsWith('c:')) {
+  if (activeTab !== 'all' && activeTab.startsWith('c:')) {
     const chain = circleChain(activeTab.slice(2), nodes)
     chain.slice(1).forEach(c => included.add(`c:${c.id}`))
     const root = chain[chain.length - 1]
@@ -181,6 +183,7 @@ export default function VaultPage() {
     if (root && !root.isolated) included.add('outer')
   }
   const tabs: Tab[] = [
+    'all',
     'outer',
     ...(innerAllowed || sections.some(s => s.circle === 'inner') ? ['inner' as const] : []),
     ...customCircles.map(c => `c:${c.id}` as const),
@@ -270,7 +273,7 @@ export default function VaultPage() {
                     : 'text-text-secondary hover:text-text-primary'
               }`}
             >
-              {placementLabel(tab, customCircles)}
+              {tab === 'all' ? 'All' : placementLabel(tab, customCircles)}
             </button>
           ))}
         </div>}

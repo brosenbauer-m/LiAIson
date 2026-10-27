@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { openContextMenu, type MenuItem } from '@/components/ui/ContextMenu'
 import { createClient } from '@/lib/supabase/client'
 import CircleBoard, { type BoardHandle, type CircleStats } from '@/components/circles/CircleBoard'
 import type { StudioCircle } from '@/components/circles/layout'
@@ -50,6 +52,7 @@ export default function CirclesWorkspace({
   initialCircles: StudioCircle[]
   allowed: number
 }) {
+  const router = useRouter()
   const [supabase] = useState(() => createClient())
   const [people, setPeople] = useState(initialPeople)
   const [sections, setSections] = useState(initialSections)
@@ -118,7 +121,9 @@ export default function CirclesWorkspace({
   }, [nodes])
 
   // Starts on the circle with the most people (usually the Outer Circle).
-  const [selected, setSelected] = useState(() => ids.reduce((best, id) => (stats[id].people > stats[best].people ? id : best), 'outer'))
+  // null = no circle selected: everything shows (owner 2026-10-27: a click on
+  // empty space deselects).
+  const [selected, setSelected] = useState<string | null>(() => ids.reduce((best, id) => (stats[id].people > stats[best].people ? id : best), 'outer'))
   const [sectionView, setSectionView] = useState<'circle' | 'draft'>('circle')
   const [mobileTab, setMobileTab] = useState<Kind>('people')
   const [pickedPeople, setPickedPeople] = useState<Set<string>>(new Set())
@@ -136,7 +141,7 @@ export default function CirclesWorkspace({
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const press = useRef<{ kind: Kind; id: string; x: number; y: number; started: boolean } | null>(null)
 
-  const select = (id: string) => {
+  const select = (id: string | null) => {
     setSelected(id)
     setSectionView('circle')
     setPickedPeople(new Set())
@@ -349,15 +354,64 @@ export default function CirclesWorkspace({
     setConfirmRemove(false)
   }
 
+  // --- Right-click menus ----------------------------------------------------
+
+  // Circles something can be moved into (not itself or a circle inside it).
+  const moveTargets = (except?: string): string[] =>
+    ids.filter(id => id !== except && !(except && isOwn(id) && circleChain(id, nodes).some(c => c.id === except)))
+
+  const circleMenu = (id: string, e: React.MouseEvent) => {
+    const own = isOwn(id)
+    const c = nodes.get(id)
+    const items: MenuItem[] = [{ heading: nameOf(id) }, { label: 'Show Its People and Sections', onSelect: () => select(id) }]
+    if (own && canCustom && c) {
+      items.push(
+        { label: 'Rename', onSelect: () => { select(id); setRenaming(true) } },
+        'separator',
+        { heading: 'Move Into' },
+        ...moveTargets(id).map(t => ({ label: nameOf(t), onSelect: () => void moveCircle(id, t), disabled: (t === 'outer' && !c.parent_id && !c.in_inner && !c.isolated) || c.parent_id === t || (t === 'inner' && c.in_inner && !c.parent_id) })),
+        { label: 'On Its Own (Outside the Outer Circle)', onSelect: () => void moveCircle(id, 'alone'), disabled: c.isolated },
+        'separator',
+        { label: 'Delete', danger: true, onSelect: () => { select(id); setDeleting({ target: c.parent_id ?? (c.in_inner ? 'inner' : 'outer') }) } },
+      )
+    }
+    openContextMenu(e, items)
+  }
+
+  const personMenu = (p: WorkspacePerson, e: React.MouseEvent) => {
+    openContextMenu(e, [
+      { heading: p.name },
+      { label: 'Open LiAIson', onSelect: () => router.push(`/${p.username}`) },
+      { label: pickedPeople.has(p.userId) ? 'Unselect' : 'Select', onSelect: () => togglePick('people', p.userId) },
+      'separator',
+      { heading: 'Move To' },
+      ...moveTargets().map(t => ({ label: nameOf(t), onSelect: () => void movePeople([p.userId], t) })),
+      'separator',
+      { label: 'Remove Connection', danger: true, onSelect: () => { setPickedPeople(new Set([p.userId])); setConfirmRemove(true) } },
+    ])
+  }
+
+  const sectionMenu = (s: WorkspaceSection, e: React.MouseEvent) => {
+    openContextMenu(e, [
+      { heading: s.label },
+      { label: 'Open in Vault', onSelect: () => router.push('/vault') },
+      { label: pickedSections.has(s.id) ? 'Unselect' : 'Select', onSelect: () => togglePick('sections', s.id) },
+      'separator',
+      { heading: 'Move To' },
+      ...[...moveTargets(), 'draft'].map(t => ({ label: nameOf(t), onSelect: () => void moveSections([s.id], t) })),
+    ])
+  }
+
   // --- What the panels show --------------------------------------------------
 
-  const shownPeople = people.filter(p => seen.get(p.userId)?.has(selected))
+  const shownPeople = selected === null ? people : people.filter(p => seen.get(p.userId)?.has(selected))
   const homeOf = (p: WorkspacePerson) => (p.circles.length > 0 ? p.circles.map(nameOf).join(', ') : p.inInner ? 'Inner Circle' : 'Outer Circle')
   const sectionCircle = sectionView === 'draft' ? 'draft' : selected
-  const shownSections = sectionsIn(sectionCircle)
-  const inherited = sectionView === 'draft' ? [] : around(selected).flatMap(id => sectionsIn(id).map(s => ({ ...s, from: nameOf(id) })))
+  const shownSections = sectionCircle === null ? sections : sectionsIn(sectionCircle)
+  const inherited = sectionView === 'draft' || selected === null ? [] : around(selected).flatMap(id => sectionsIn(id).map(s => ({ ...s, from: nameOf(id) })))
   const draftCount = sectionsIn('draft').length
-  const sel = nodes.get(selected)
+  const sel = selected === null ? undefined : nodes.get(selected)
+  const chipName = (id: string | null) => (id === null ? 'All' : nameOf(id))
 
   const pickedPerson = pickedPeople.size === 1 ? people.find(p => pickedPeople.has(p.userId)) : undefined
 
@@ -404,7 +458,7 @@ export default function CirclesWorkspace({
     <section className={panelClass} aria-label="Connections">
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Connections <span className="text-text-muted font-normal tabular-nums">{shownPeople.length}</span></h2>
-        {circleChip(nameOf(selected))}
+        {circleChip(chipName(selected))}
       </header>
       <ul className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {shownPeople.length === 0 && <li className="px-3 py-8 text-center text-sm text-text-muted">No one sees this circle yet.</li>}
@@ -415,6 +469,7 @@ export default function CirclesWorkspace({
               key={p.userId}
               onPointerDown={e => onRowPointerDown(e, 'people', p.userId)}
               onClick={e => onRowClick(e, 'people', p.userId)}
+              onContextMenu={e => personMenu(p, e)}
               onPointerMove={onRowPointerMove}
               onPointerUp={onRowPointerUp}
               onPointerCancel={onRowPointerCancel}
@@ -445,7 +500,7 @@ export default function CirclesWorkspace({
     <section className={panelClass} aria-label="Vault sections">
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Sections <span className="text-text-muted font-normal tabular-nums">{shownSections.length}</span></h2>
-        {circleChip(nameOf(sectionCircle))}
+        {circleChip(chipName(sectionCircle))}
       </header>
       <ul className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
         {shownSections.length === 0 && (
@@ -461,6 +516,7 @@ export default function CirclesWorkspace({
               key={s.id}
               onPointerDown={e => onRowPointerDown(e, 'sections', s.id)}
               onClick={e => onRowClick(e, 'sections', s.id)}
+              onContextMenu={e => sectionMenu(s, e)}
               onPointerMove={onRowPointerMove}
               onPointerUp={onRowPointerUp}
               onPointerCancel={onRowPointerCancel}
@@ -498,10 +554,10 @@ export default function CirclesWorkspace({
       </ul>
       {sectionView === 'draft' && pickedSections.size === 0 && (
         <button type="button" onClick={() => setSectionView('circle')} className="mx-4 mb-3 text-left text-xs text-text-muted hover:text-accent">
-          ← Back to {nameOf(selected)}
+          ← Back to {chipName(selected)}
         </button>
       )}
-      {sectionView === 'circle' && draftCount > 0 && pickedSections.size === 0 && (
+      {sectionView === 'circle' && selected !== null && draftCount > 0 && pickedSections.size === 0 && (
         <button type="button" onClick={() => { setSectionView('draft'); setPickedSections(new Set()) }} className="mx-4 mb-3 text-left text-xs text-text-muted hover:text-accent">
           {draftCount} {draftCount === 1 ? 'draft' : 'drafts'} not in any circle →
         </button>
@@ -516,14 +572,25 @@ export default function CirclesWorkspace({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)] lg:items-start">
         {/* The circles */}
-        <div className="order-1 lg:order-2 flex flex-col items-center gap-6">
+        <div
+          className="order-1 lg:order-2 flex flex-col items-center gap-6"
+          // A click on empty space (not a circle, button or field) deselects.
+          onClick={e => {
+            const t = e.target as Element
+            if (t.closest('button, a, input, select, textarea, form, [role="dialog"]')) return
+            // On the board, the circles' real (round) shapes decide.
+            if (t.closest('[role="button"]') && boardRef.current?.hitTest(e.clientX, e.clientY)) return
+            select(null)
+          }}
+        >
           <CircleBoard
             ref={boardRef}
             circles={circles}
             innerAllowed
             stats={stats}
             selected={selected}
-            onSelect={select}
+            onSelect={id => select(id)}
+            onCircleMenu={circleMenu}
             canArrange={canCustom}
             onMoveCircle={moveCircle}
             dropTarget={dropTarget}
@@ -545,16 +612,16 @@ export default function CirclesWorkspace({
                 <button type="button" onClick={() => setRenaming(false)} className="px-2 text-sm text-text-secondary">Cancel</button>
               </form>
             ) : (
-              around(selected).length > 0 && (
+              selected !== null && around(selected).length > 0 && (
                 <p className="text-sm text-text-secondary">
                   Individuals in this Circle also see {around(selected).map(nameOf).join(', ').replace(/, ([^,]*)$/, ' and $1')}.
                 </p>
               )
             )}
             {sel && canCustom && !renaming && !deleting && (
-              <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-                <button type="button" onClick={() => setRenaming(true)} className="px-3 py-1.5 rounded-full border border-border text-text-secondary hover:border-accent hover:text-accent">Rename</button>
-                <button type="button" onClick={() => setDeleting({ target: sel.parent_id ?? (sel.in_inner ? 'inner' : 'outer') })} className="px-3 py-1.5 rounded-full border border-border text-text-secondary hover:border-error hover:text-error">Delete</button>
+              <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-semibold">
+                <button type="button" onClick={() => setRenaming(true)} className="px-5 py-2 rounded-full border-2 border-accent/50 text-accent hover:bg-accent hover:text-white hover:border-accent transition-colors">Rename</button>
+                <button type="button" onClick={() => setDeleting({ target: sel.parent_id ?? (sel.in_inner ? 'inner' : 'outer') })} className="px-5 py-2 rounded-full border-2 border-error text-error hover:bg-error hover:text-white transition-colors">Delete</button>
               </div>
             )}
             {sel && deleting && (

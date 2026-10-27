@@ -295,7 +295,7 @@ export default function SimilaritiesPage() {
         {people && result && (() => {
           const chartPeople: ChartPerson[] = [
             ...(result.includesViewer ? [{ key: 'A', name: data.me.name, avatarUrl: data.me.avatarUrl, you: true }] : []),
-            ...people.map(p => ({ key: p.key, name: p.name, avatarUrl: p.avatarUrl })),
+            ...people.map(p => ({ key: p.key, name: p.name, avatarUrl: p.avatarUrl, href: `/${p.username}` })),
           ]
           const usernames = people.map(p => p.username)
           const includesViewer = !!result.includesViewer
