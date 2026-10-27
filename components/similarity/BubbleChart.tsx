@@ -77,6 +77,20 @@ function personNodes(people: ChartPerson[], W: number, H: number, pair: boolean)
   })
 }
 
+// How much a topic weighs on the chart: the sum of each person's 1–5 score of
+// how much it matters to them (owner 2026-10-27). Older results have one
+// size value for everyone who has it.
+export function topicWeight(i: SimilarityInterest): number {
+  const scores = i.scores ? Object.values(i.scores) : []
+  if (scores.length) return scores.reduce((s, n) => s + n, 0)
+  return Math.max(1, i.strength || 1) * Math.max(1, i.people.length)
+}
+
+// How much it pulls towards each person: their score (1 if unknown).
+function pullOf(i: SimilarityInterest, key: string): number {
+  return i.scores?.[key] ?? 1
+}
+
 // Deterministic layout (owner 2026-10-21): every bubble sits where its people
 // are — shared by everyone in the middle, shared by some between exactly those
 // people (two people: on the line between them), only one person next to
@@ -95,6 +109,8 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
   const rx = Math.max(1, W / 2 - NODE_R - 30)
   const ry = Math.max(1, H / 2 - NODE_R - 34)
 
+  // Sizes are relative to the heaviest topic on this chart, so it always fits.
+  const maxWeight = Math.max(1, ...interests.map(topicWeight))
   const make = (scale: number): Bubble[] => interests.map((interest, i) => {
     const members = interest.people.filter(k => at.has(k))
     const kind: Kind = members.length >= people.length && people.length > 1 ? 'all' : members.length > 1 ? 'some' : 'one'
@@ -108,16 +124,26 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
       const n = people.length
       let angle = 0
       let rho = 0
+      // Each person pulls the bubble towards themselves by their score.
+      const total = members.reduce((s, k) => s + pullOf(interest, k), 0) || 1
+      const u = members.reduce((s, k) => s + ((at.get(k)!.x - cx) / rx) * pullOf(interest, k), 0) / total
+      const v = members.reduce((s, k) => s + ((at.get(k)!.y - cy) / ry) * pullOf(interest, k), 0) / total
       if (kind === 'all') {
         band = [0, 0.3]
+        // Still in the middle cluster, leaning towards whom it matters most.
+        angle = Math.atan2(v, u)
+        rho = Math.min(0.24, Math.hypot(u, v) * 0.8)
       } else if (kind === 'some') {
-        const u = members.reduce((s, k) => s + (at.get(k)!.x - cx) / rx, 0) / members.length
-        const v = members.reduce((s, k) => s + (at.get(k)!.y - cy) / ry, 0) / members.length
-        if (Math.hypot(u, v) < 0.15 && members.length === 2) {
+        const evenU = members.reduce((s, k) => s + (at.get(k)!.x - cx) / rx, 0) / members.length
+        const evenV = members.reduce((s, k) => s + (at.get(k)!.y - cy) / ry, 0) / members.length
+        if (Math.hypot(evenU, evenV) < 0.15 && members.length === 2) {
           // Opposite each other: beside the middle, still between them.
           const a = at.get(members[0])!
           const b = at.get(members[1])!
           angle = Math.atan2((b.x - a.x) / rx, -(b.y - a.y) / ry) + (i % 2 ? Math.PI : 0)
+          // …and towards the one it matters more to.
+          const lean = (pullOf(interest, members[1]) - pullOf(interest, members[0])) / Math.max(1, total)
+          angle += lean * (i % 2 ? -0.9 : 0.9)
         } else {
           angle = Math.atan2(v, u)
         }
@@ -132,8 +158,9 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
       tx = cx + Math.cos(angle) * rho * rx
       ty = cy + Math.sin(angle) * rho * ry
     } else if (members.length && kind !== 'all') {
-      const mx = members.reduce((s, k) => s + at.get(k)!.x, 0) / members.length
-      const my = members.reduce((s, k) => s + at.get(k)!.y, 0) / members.length
+      const total = members.reduce((s, k) => s + pullOf(interest, k), 0) || 1
+      const mx = members.reduce((s, k) => s + at.get(k)!.x * pullOf(interest, k), 0) / total
+      const my = members.reduce((s, k) => s + at.get(k)!.y * pullOf(interest, k), 0) / total
       // One person: between them and the middle, closer to them.
       const t = kind === 'one' ? (pair ? 0.82 : 0.72) : 1
       tx = cx + (mx - cx) * t
@@ -151,9 +178,12 @@ function layout(people: ChartPerson[], interests: SimilarityInterest[], W: numbe
     }
     const lines = splitLabel(interest.label)
     const longest = Math.max(...lines.map(l => l.length))
-    // Size: how much the texts say about it (1 to 5).
-    const base = 24 + Math.min(5, Math.max(1, interest.strength || 1)) * 6.5
-    const r = Math.min(minR ? 80 : 66, Math.max(base * scale, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0, minR * scale))
+    // Size: how much it matters to its people together, against the heaviest
+    // topic here (by area, so twice the weight looks twice as big).
+    const share = Math.sqrt(topicWeight(interest) / maxWeight)
+    const lo = (pair ? 22 : 26) * scale
+    const hi = (pair ? 54 : 78) * scale
+    const r = Math.min(minR ? 84 : 66, Math.max(lo + (hi - lo) * share, (longest * CHAR_W * (small ? 0.92 : 1)) / 2 + 9, lines.length > 1 ? 30 * scale : 0, minR * scale))
     const angle = i * 2.399963
     return { interest, lines, r, x: tx + Math.cos(angle) * 6, y: ty + Math.sin(angle) * 6, tx, ty, kind, owner: kind === 'one' ? members[0] : undefined, band }
   })
@@ -321,15 +351,26 @@ export default function BubbleChart({
     return () => document.removeEventListener('keydown', onKey)
   }, [zoom])
 
+  // Fewer bubbles than topics by default (owner 2026-10-27): passing mentions
+  // stay out, and a slider shows more or fewer, always dropping the smallest.
+  const ranked = useMemo(() => [...interests].sort((a, b) => topicWeight(b) - topicWeight(a)), [interests])
+  const defaultCount = useMemo(() => {
+    const meaningful = ranked.filter(i => topicWeight(i) / Math.max(1, i.people.length) >= 2).length
+    return Math.min(ranked.length, Math.max(Math.min(5, ranked.length), Math.min(meaningful, pair ? 8 : 12)))
+  }, [ranked, pair])
+  const [countChoice, setCountChoice] = useState<{ for: SimilarityInterest[]; count: number } | null>(null)
+  const shownCount = countChoice && countChoice.for === interests ? countChoice.count : defaultCount
+  const visible = useMemo(() => ranked.slice(0, shownCount), [ranked, shownCount])
+
   const W = width
   const H = height ?? (pair ? Math.max(260, Math.min(340, W * 0.75)) : W < 640 ? Math.round(W * 1.85) : Math.round(Math.min(860, Math.max(580, W * 0.68))))
   const { bubbles, nodes } = useMemo(
     // With Learn More, bubbles are big enough for the button inside.
-    () => (W > 0 ? layout(people, interests, W, H, pair, onLearnMore ? 56 : 0) : { bubbles: [], nodes: [] }),
-    [people, interests, W, H, pair, onLearnMore]
+    () => (W > 0 ? layout(people, visible, W, H, pair, onLearnMore ? 46 : 0) : { bubbles: [], nodes: [] }),
+    [people, visible, W, H, pair, onLearnMore]
   )
   const nodeAt = new Map(nodes.map(n => [n.key, n]))
-  const chosen = interests.find(i => i.label === active)
+  const chosen = visible.find(i => i.label === active)
   const zoomed = bubbles.find(b => b.interest.label === zoom?.label)
   const other = people.find(p => !p.you) ?? people[1]
 
@@ -608,6 +649,26 @@ export default function BubbleChart({
         </AnimatePresence>
       </div>
 
+      {/* How many topics are shown: from only the biggest to all of them. */}
+      {ranked.length > 3 && (
+        <div className="mt-4 mx-auto flex max-w-sm items-center gap-3 text-xs text-text-secondary">
+          <span>Fewer</span>
+          <input
+            type="range"
+            min={Math.min(3, ranked.length)}
+            max={ranked.length}
+            step={1}
+            value={shownCount}
+            onChange={e => { setActive(null); setCountChoice({ for: interests, count: Number(e.target.value) }) }}
+            aria-label="Topics shown"
+            aria-valuetext={`${shownCount} of ${ranked.length} topics`}
+            className="flex-1 accent-accent"
+          />
+          <span>More</span>
+          <span className="tabular-nums text-text-muted w-12 text-right">{shownCount}/{ranked.length}</span>
+        </div>
+      )}
+
       {/* Legend */}
       <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-1.5 text-xs text-text-secondary">
         {pair ? (
@@ -643,7 +704,7 @@ export default function BubbleChart({
       </p>
 
       <ul className="sr-only">
-        {interests.map(i => (
+        {visible.map(i => (
           <li key={i.label}>
             {i.label}: {i.people.length > 1 ? `shared by ${namesOf(i.people, people)}${i.reason ? `. ${i.reason}` : ''}` : `only ${namesOf(i.people, people)}`}
           </li>
