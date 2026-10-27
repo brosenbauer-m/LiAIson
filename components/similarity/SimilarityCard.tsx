@@ -12,7 +12,7 @@ import { LEVEL_LABEL, type SimilarityResult } from '@/lib/similarity/types'
 
 type State = { quota: number; used: number; result: SimilarityResult | null }
 
-export default function SimilarityCard({ username, displayName, groupCompare }: { username: string; displayName: string; groupCompare: boolean }) {
+export default function SimilarityCard({ username, displayName, groupCompare, bare = false }: { username: string; displayName: string; groupCompare: boolean; bare?: boolean }) {
   const [state, setState] = useState<State | null>(null)
   const [busy, setBusy] = useState(false)
   const [shown, setShown] = useState(false)
@@ -57,7 +57,7 @@ export default function SimilarityCard({ username, displayName, groupCompare }: 
   const first = displayName.split(' ')[0] || displayName
 
   return (
-    <div id="similarity" className="bg-card border border-border rounded-2xl p-6 shadow-soft scroll-mt-6">
+    <div id="similarity" className={bare ? 'scroll-mt-24' : 'bg-card border border-border rounded-2xl p-6 shadow-soft scroll-mt-6'}>
       <p className="text-xs text-text-secondary font-semibold uppercase tracking-wide mb-3">What You Have in Common</p>
 
       {result ? (

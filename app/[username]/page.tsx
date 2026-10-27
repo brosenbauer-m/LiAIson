@@ -75,8 +75,9 @@ export default async function ProfilePage(props: Props) {
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
-        {/* Owner layout 2026-10-20: profile beside the chat, the same height;
-            What You Have in Common under the chat. */}
+        {/* Owner layout 2026-10-27: profile beside the chat, the same height,
+            with What You Have in Common inside the profile card; What
+            Matters to … floats underneath both. */}
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6 lg:gap-8">
           <ProfileHeader
             avatarUrl={user.avatar_url}
@@ -84,13 +85,7 @@ export default async function ProfilePage(props: Props) {
             shortBio={user.short_bio}
             plan={user.plan}
             className="lg:h-full"
-            footer={
-              // Signed out: a greyed box only (no topics in the page). Signed
-              // in: built on the server from what this viewer may see.
-              !visitor || scope
-                ? <InterestMap username={user.username} firstName={user.display_name.split(' ')[0] || user.display_name} signedIn={!!visitor} />
-                : null
-            }
+            footer={canCompare ? <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} bare /> : null}
           >
             {scope && user.contact_links && user.contact_links.length > 0 && <ContactLinks links={user.contact_links} />}
           </ProfileHeader>
@@ -113,9 +108,11 @@ export default async function ProfilePage(props: Props) {
             )}
           </div>
 
-          {canCompare && (
-            <div className="lg:col-span-2 min-w-0">
-              <SimilarityCard username={user.username} displayName={user.display_name} groupCompare={canGroup} />
+          {/* Signed out: a greyed box only (no topics in the page). Signed in:
+              built on the server from what this viewer may see. */}
+          {(!visitor || scope) && (
+            <div className="lg:col-span-2 min-w-0 pt-2">
+              <InterestMap username={user.username} firstName={user.display_name.split(' ')[0] || user.display_name} signedIn={!!visitor} />
             </div>
           )}
         </div>
