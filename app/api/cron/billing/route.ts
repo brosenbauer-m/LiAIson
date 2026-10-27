@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { METERED_FEATURE_LIST } from '@/lib/usage/spend'
 import { createServiceClient } from '@/lib/supabase/service'
 import { previousPeriod, viennaDateParts } from '@/lib/insights/periods'
 import { billMonth, type BillResult } from '@/lib/billing/monthly'
@@ -51,7 +52,8 @@ export async function GET(request: NextRequest) {
   const { data: senders } = await supabase
     .from('ai_usage')
     .select('user_id')
-    .in('feature', ['chat', 'topic'])
+    // Everyone with paid AI use (all features paid per use, not only chat).
+    .in('feature', [...METERED_FEATURE_LIST])
     .gte('created_at', period.start.toISOString())
     .lt('created_at', period.end.toISOString())
     .limit(100000)
