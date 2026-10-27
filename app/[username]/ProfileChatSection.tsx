@@ -77,6 +77,22 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   // Index of the reply the Similarity note is shown under.
   const [noteAt, setNoteAt] = useState<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // A topic tapped in "What Matters to …" puts a question in the box (not sent).
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail
+      if (typeof text !== 'string') return
+      setInput(text)
+      const box = inputRef.current
+      if (box) {
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        box.focus({ preventScroll: true })
+      }
+    }
+    window.addEventListener('liaison:prefill-chat', onPrefill)
+    return () => window.removeEventListener('liaison:prefill-chat', onPrefill)
+  }, [])
   // Chat needs an account: the person who sends a message pays for it.
   const signedOut = authChecked && !isLoggedIn
 

@@ -8,6 +8,7 @@ import PrivateProfileCard from './PrivateProfileCard'
 import ContactLinks from '@/components/profile/ContactLinks'
 import type { User } from '@/types'
 import ProfileHeader from '@/components/profile/ProfileHeader'
+import InterestMap from '@/components/profile/InterestMap'
 import { isOwnAvatarUrl } from '@/components/ui/Avatar'
 import SimilarityCard from '@/components/similarity/SimilarityCard'
 import { getPlanLimits } from '@/lib/billing/plan'
@@ -83,6 +84,13 @@ export default async function ProfilePage(props: Props) {
             shortBio={user.short_bio}
             plan={user.plan}
             className="lg:h-full"
+            footer={
+              // Signed out: a greyed box only (no topics in the page). Signed
+              // in: built on the server from what this viewer may see.
+              !visitor || scope
+                ? <InterestMap username={user.username} firstName={user.display_name.split(' ')[0] || user.display_name} signedIn={!!visitor} />
+                : null
+            }
           >
             {scope && user.contact_links && user.contact_links.length > 0 && <ContactLinks links={user.contact_links} />}
           </ProfileHeader>
