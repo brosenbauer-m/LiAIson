@@ -15,9 +15,13 @@ export type SimilarityInterest = {
   label: string
   // Person keys: 'A' = the viewer, 'B' (and 'C', 'D', ... in a group) = the others.
   people: string[]
-  // How much the texts say about it: 1 = a passing mention … 5 = a lot
-  // (older results use 1 to 3). Drives the bubble size.
+  // Older results only: one size value (1 to 5, or 1 to 3). Newer results
+  // keep it as the highest of `scores` so they still draw anywhere.
   strength: number
+  // How much the topic matters to each person who has it (owner decision
+  // 2026-10-27), 1 = a passing mention … 5 = central to who they are. Keyed by
+  // person ('A' = the viewer). Drives bubble size and position; never shown.
+  scores?: Record<string, number>
   // Only for interests shared by more than one person.
   reason?: string
 }
