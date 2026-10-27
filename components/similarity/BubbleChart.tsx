@@ -400,18 +400,15 @@ export default function BubbleChart({
   const springBack = (from: Pull) => {
     cancelAnimationFrame(springFrame.current)
     if (reduceMotion) { setPull(null); return }
-    let x = from.x
-    let y = from.y
-    let vx = 0
-    let vy = 0
-    const step = () => {
-      // A soft spring (stiffness 0.12, damping 0.72 per frame).
-      vx = (vx - x * 0.12) * 0.72
-      vy = (vy - y * 0.12) * 0.72
-      x += vx
-      y += vy
-      if (Math.hypot(x, y) < 0.4 && Math.hypot(vx, vy) < 0.4) { setPull(null); return }
-      setPull({ label: from.label, x, y })
+    // A slow glide back (owner 2026-10-27): about 1.4 s, easing out.
+    let start = -1
+    const DURATION = 1400
+    const step = (now: number) => {
+      if (start < 0) start = now
+      const t = Math.min(1, (now - start) / DURATION)
+      const left = Math.pow(1 - t, 3)
+      if (t >= 1) { setPull(null); return }
+      setPull({ label: from.label, x: from.x * left, y: from.y * left })
       springFrame.current = requestAnimationFrame(step)
     }
     springFrame.current = requestAnimationFrame(step)

@@ -88,19 +88,20 @@ export default function SimilaritiesPage() {
       const t = setTimeout(() => setFound([]), 0)
       return () => clearTimeout(t)
     }
-    const local = (data?.candidates ?? []).filter(c => c.username.toLowerCase() !== (data?.me.username ?? '').toLowerCase() && (c.username.toLowerCase().startsWith(q) || c.display_name.toLowerCase().includes(q)))
+    // Never yourself (Include Me does that) and never someone already added.
+    const taken = new Set([(data?.me.username ?? '').toLowerCase(), ...selected.map(u => u.toLowerCase())])
+    const local = (data?.candidates ?? []).filter(c => !taken.has(c.username.toLowerCase()) && (c.username.toLowerCase().startsWith(q) || c.display_name.toLowerCase().includes(q)))
     const controller = new AbortController()
     const t = setTimeout(async () => {
       setFound(local.slice(0, 6))
       const res = await fetch(`/api/discover?q=${encodeURIComponent(q)}`, { signal: controller.signal }).catch(() => null)
       if (!res?.ok) return
       const { results } = (await res.json()) as { results: Candidate[] }
-      // You are added only with the Include Me switch, never from the search.
-      const seen = new Set([...local.map(c => c.username.toLowerCase()), (data?.me.username ?? '').toLowerCase()])
+      const seen = new Set([...local.map(c => c.username.toLowerCase()), ...taken])
       setFound([...local, ...results.filter(r => !seen.has(r.username.toLowerCase()))].slice(0, 6))
     }, 200)
     return () => { clearTimeout(t); controller.abort() }
-  }, [query, data])
+  }, [query, data, selected])
 
   const pick = (c: Candidate) => {
     setNames(prev => ({ ...prev, [c.username.toLowerCase()]: c.display_name }))
@@ -158,7 +159,22 @@ export default function SimilaritiesPage() {
       <div className="max-w-7xl mx-auto px-4 py-12 space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-display font-medium tracking-tight text-text-primary">Similarities</h1>
-          <p className="text-text-secondary text-lg mt-2">See what several people have in common.</p>
+          <p className="text-text-secondary text-lg mt-2">Visualize what people have in common</p>
+          <details className="group mt-3 max-w-2xl mx-auto text-left">
+            <summary className="mx-auto w-fit cursor-pointer list-none rounded-full border border-border px-4 py-1.5 text-sm text-text-secondary hover:text-text-primary hover:border-accent/50">
+              <span className="group-open:hidden">How to Read the Chart +</span>
+              <span className="hidden group-open:inline">How to Read the Chart −</span>
+            </summary>
+            <ul className="mt-4 space-y-2 rounded-2xl border border-border bg-card p-5 text-sm text-text-secondary leading-relaxed shadow-soft">
+              <li><b className="text-text-primary">Size:</b> how much a topic matters to the people who have it, added together. The bigger, the more it matters.</li>
+              <li><b className="text-text-primary">Place:</b> topics shared by everyone sit in the middle, topics shared by some sit between those people, and topics of one person sit next to them. A bubble leans towards the person it matters most to.</li>
+              <li><b className="text-text-primary">Colour:</b> dark = shared by everyone, brown = shared by some, light = only one person. Lines show who has each topic.</li>
+              <li><b className="text-text-primary">Slider:</b> shows fewer or more topics, the smallest go first.</li>
+              <li><b className="text-text-primary">Tap a person</b> to see what they share, <b className="text-text-primary">tap a bubble</b> and choose Elaborate* for a short comparison of that topic. Bubbles can be dragged around.</li>
+              <li><b className="text-text-primary">The LiAIson below</b> answers questions about everyone in the chart.</li>
+              <li>Only what each person lets you see is used, and nobody is notified.</li>
+            </ul>
+          </details>
         </div>
 
         {locked ? (

@@ -37,6 +37,15 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* No blinking text cursor on text that can't be edited (owner 2026-10-27:
+   browsers with caret browsing showed it next to texts and icons). */
+body {
+  caret-color: transparent;
+}
+input, textarea, select, [contenteditable="true"] {
+  caret-color: auto;
+}
+
 /* iPhone/iPad: text fields under 16px make Safari zoom in when tapped. */
 @supports (-webkit-touch-callout: none) {
   input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select {
