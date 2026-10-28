@@ -5,6 +5,7 @@ import { isPlanId } from '@/lib/plans'
 import { getSearchQuota } from '@/lib/search/search'
 import { getSimilarityQuota } from '@/lib/similarity/compare'
 import { getTrialMessagesUsedToday, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
+import { isAdminUser } from '@/lib/admin/access'
 
 // GET → the signed-in user's plan state. POST { plan, options? } → change plan
 // (options = Social Butterfly slider choices)
@@ -17,14 +18,15 @@ export async function GET() {
   try {
     // Plus this month's AI searches and Similarity checks (and, in the free
     // month, today's free messages), for the limit bars.
-    const [state, searches, similarities, trialUsed] = await Promise.all([
+    const [state, searches, similarities, trialUsed, admin] = await Promise.all([
       getPlanState(user.id),
       getSearchQuota(user.id).catch(() => null),
       getSimilarityQuota(user.id).catch(() => null),
       getTrialMessagesUsedToday(user.id).catch(() => null),
+      isAdminUser(user.id).catch(() => false),
     ])
     const trialMessages = state.inTrial && !state.exempt && trialUsed !== null ? { used: trialUsed, quota: TRIAL_TOTAL_DAILY } : null
-    return NextResponse.json({ ...state, searches, similarities, trialMessages }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({ ...state, searches, similarities, trialMessages, admin }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('PLAN_GET_ERROR', err)
     return NextResponse.json({ error: 'Could not load your plan' }, { status: 500 })

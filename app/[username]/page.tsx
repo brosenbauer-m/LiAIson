@@ -52,11 +52,12 @@ export default async function ProfilePage(props: Props) {
 
   const { data: user } = await supabase
     .from('users')
-    .select('id, username, display_name, avatar_url, short_bio, contact_links, plan')
+    .select('id, username, display_name, avatar_url, short_bio, contact_links, plan, is_admin')
     .eq('username', params.username)
-    .single<Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio' | 'contact_links'> & { plan: string | null }>()
+    .single<Pick<User, 'id' | 'username' | 'display_name' | 'avatar_url' | 'short_bio' | 'contact_links'> & { plan: string | null; is_admin: boolean }>()
 
-  if (!user) notFound()
+  // The admin account has no LiAIson.
+  if (!user || user.is_admin) notFound()
 
   // Who is looking? Access = owner's public level combined with any accepted connection.
   const visitorSupabase = await createClient()

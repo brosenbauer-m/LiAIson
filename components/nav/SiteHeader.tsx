@@ -32,7 +32,9 @@ export default function SiteHeader() {
   const [auth, setAuth] = useState<AuthState>('loading')
   // Tiers with more than one circle have the Circles page instead of Connections.
   const [hasCircles, setHasCircles] = useState(false)
-  const links = SIGNED_IN_LINKS.map(l => (l.href === '/connections' && hasCircles ? { href: '/circles', label: 'Circles' } : l))
+  // The admin account only has the admin console (no LiAIson pages).
+  const [isAdmin, setIsAdmin] = useState(false)
+  const links = isAdmin ? [{ href: '/admin', label: 'Admin' }] : SIGNED_IN_LINKS.map(l => (l.href === '/connections' && hasCircles ? { href: '/circles', label: 'Circles' } : l))
 
   useEffect(() => {
     const supabase = createClient()
@@ -43,7 +45,7 @@ export default function SiteHeader() {
       loadedFor = userId
       fetch('/api/plan', { cache: 'no-store' })
         .then(r => (r.ok ? r.json() : null))
-        .then((p: { circles?: number } | null) => setHasCircles(p?.circles === 2))
+        .then((p: { circles?: number; admin?: boolean } | null) => { setHasCircles(p?.circles === 2); setIsAdmin(p?.admin === true) })
         .catch(() => {})
     }
     supabase.auth.getSession().then(({ data }) => {
@@ -53,14 +55,14 @@ export default function SiteHeader() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuth(session ? 'signed-in' : 'signed-out')
       if (session) setTimeout(() => loadPlan(session.user.id), 0)
-      else { loadedFor = null; setHasCircles(false) }
+      else { loadedFor = null; setHasCircles(false); setIsAdmin(false) }
     })
     return () => listener.subscription.unsubscribe()
   }, [])
 
   // Phones: signed in, the pages are in a tab bar at the bottom (not on the
   // home page, which fills the screen). The body gets room for it.
-  const showTabs = auth === 'signed-in' && pathname !== '/'
+  const showTabs = auth === 'signed-in' && pathname !== '/' && !isAdmin
   useEffect(() => {
     document.body.classList.toggle('has-tabbar', showTabs)
   }, [showTabs])
@@ -96,11 +98,11 @@ export default function SiteHeader() {
               ))}
             </nav>
             <div className="ml-auto md:ml-2 flex items-center gap-2">
-              {pathname !== '/' && <UsageIndicator />}
-              <NotificationBell />
+              {pathname !== '/' && !isAdmin && <UsageIndicator />}
+              {!isAdmin && <NotificationBell />}
               {pathname === '/' && (
-                <Link href="/dashboard" className="md:hidden whitespace-nowrap px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-full shadow-soft">
-                  Dashboard
+                <Link href={isAdmin ? '/admin' : '/dashboard'} className="md:hidden whitespace-nowrap px-4 py-2 bg-accent hover:bg-accent-light text-white text-sm font-medium rounded-full shadow-soft">
+                  {isAdmin ? 'Admin' : 'Dashboard'}
                 </Link>
               )}
             </div>
