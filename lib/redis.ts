@@ -2,7 +2,8 @@ import { Redis } from '@upstash/redis'
 
 // One Upstash Redis client for the whole app. Key prefixes in use:
 // chat:* (chat rate limit, lib/ratelimit), trialchat:* (free-month limit), searchidx:* / searchq:* / searchcache:*
-// (Discover), simq:* (Similarity), connreq:* (connection requests).
+// (Discover), simq:* (Similarity), connreq:* (connection requests), voice:* (voice limits; only the
+// chosen preset voice id is kept, never audio).
 let redis: Redis | null = null
 
 export function getRedis(): Redis {

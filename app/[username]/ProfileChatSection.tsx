@@ -8,6 +8,8 @@ import { motion } from 'framer-motion'
 import { staggerContainer, fadeInUp } from '@/lib/animations'
 import CirclePicker from '@/components/connections/CirclePicker'
 import ChatBubble from '@/components/chat/ChatBubble'
+import MicButton from '@/components/chat/MicButton'
+import ReadAloudButton from '@/components/chat/ReadAloudButton'
 import SuggestedPromptChip from '@/components/ui/SuggestedPromptChip'
 import { readChatSignals } from '@/lib/chat/signals'
 import type { ChatMessage } from '@/types'
@@ -77,6 +79,15 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   // Index of the reply the Similarity note is shown under.
   const [noteAt, setNoteAt] = useState<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  // Voice (Mistral Voxtral): what went wrong with the mic or Read Aloud.
+  const [voiceError, setVoiceError] = useState<string | null>(null)
+
+  // Spoken words go into the box after what is already there (not sent).
+  const addSpoken = useCallback((text: string) => {
+    setInput(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text).slice(0, 2000))
+    const box = inputRef.current
+    if (box) setTimeout(() => { box.focus({ preventScroll: true }); box.setSelectionRange(box.value.length, box.value.length) }, 0)
+  }, [])
 
   // A topic tapped in "What Matters to …" puts a question in the box (not sent).
   useEffect(() => {
@@ -344,7 +355,11 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
       <div ref={messagesBoxRef} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-3 max-h-[420px] lg:max-h-[600px]">
         {messages.map((msg, i) => (
           <div key={i}>
-            <ChatBubble role={msg.role} content={msg.content} />
+            <ChatBubble
+              role={msg.role}
+              content={msg.content}
+              actions={msg.role === 'assistant' && isLoggedIn ? <ReadAloudButton id={`answer-${i}`} text={msg.content} onError={setVoiceError} /> : undefined}
+            />
             {i === noteAt && similarityNote && (
               <p className="-mt-1 mb-3 pl-9 text-xs text-text-secondary">
                 {similarityNote === 'map' ? (
@@ -421,7 +436,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
             <p className="text-sm text-text-secondary">{limitMessage}</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex gap-3">
+          <form onSubmit={handleSubmit} className="flex gap-2 sm:gap-3">
             <textarea
               ref={inputRef}
               value={input}
@@ -436,16 +451,20 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
               rows={1}
               maxLength={2000}
               disabled={loading}
-              className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none disabled:opacity-60 transition-all"
+              className="flex-1 min-w-0 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none disabled:opacity-60 transition-all"
             />
+            <MicButton onText={addSpoken} onError={setVoiceError} disabled={loading} />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="px-6 py-3 bg-accent hover:bg-accent-light text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-all shadow-soft hover:shadow-card"
+              className="px-4 sm:px-6 py-3 bg-accent hover:bg-accent-light text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-all shadow-soft hover:shadow-card"
             >
               Send<span aria-hidden="true">*</span>
             </button>
           </form>
+        )}
+        {voiceError && !paused && !signedOut && (
+          <p className="mt-2 text-center text-xs text-error" role="alert">{voiceError}</p>
         )}
         {isLoggedIn && trial?.plan === 'trial' && (
           <p className="mt-3 text-center text-xs text-text-secondary">

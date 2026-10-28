@@ -21,10 +21,24 @@ const PRICES_EUR_PER_MILLION: Record<string, { input: number; output: number }> 
 }
 const FALLBACK_PRICE = PRICES_EUR_PER_MILLION[CHAT_MODEL]
 
+// Voice (Mistral Voxtral, 2026-10-27) is priced per second of audio heard and
+// per character read aloud, whichever Voxtral model is set (lib/voice/server.ts).
+// Prices from Mistral's announcements, taking the higher published figure
+// (safe side), USD × 0.935 like the token prices above:
+// transcription $0.004/min, read-aloud $16 per 1M characters.
+// To confirm on docs.mistral.ai/inference/pricing.
+const VOICE_PRICES_EUR_PER_MILLION_UNITS: Record<string, number> = {
+  voice_transcribe: (0.004 * 0.935 / 60) * 1_000_000, // per million seconds
+  voice_speech: 16 * 0.935, // per million characters
+}
+
 export const MARKUP = 0.3
 
-// Raw AI cost in EUR of one call (or a sum of calls) for a model.
-export function rawCostEur(model: string, promptTokens: number, completionTokens: number): number {
+// Raw AI cost in EUR of one call (or a sum of calls) for a model. For voice
+// features promptTokens is seconds or characters (lib/usage/log.ts).
+export function rawCostEur(model: string, promptTokens: number, completionTokens: number, feature?: string): number {
+  const voice = feature ? VOICE_PRICES_EUR_PER_MILLION_UNITS[feature] : undefined
+  if (voice !== undefined) return ((promptTokens || 0) / 1_000_000) * voice
   const price = PRICES_EUR_PER_MILLION[model] ?? FALLBACK_PRICE
   return ((promptTokens || 0) / 1_000_000) * price.input + ((completionTokens || 0) / 1_000_000) * price.output
 }
@@ -36,7 +50,8 @@ export function isMeteredFeature(feature: string): boolean {
 // Features billed pay-as-you-go (to the sender / the person using them):
 // chat messages (incl. the Similarities LiAIson), Vault Optimize Text (logged as 'proofread') and Learn More on the Similarities Chart ('similarity_topic'). 'topic' = the interest map on a LiAIson page (2026-10-27; earlier a legacy feature). Insight capture and Echoes ('insight', 'echo') are logged to the
 // LiAIson owner but belong to the Echoes feature subscription, so not metered.
-export const METERED_FEATURE_LIST = ['chat', 'topic', 'proofread', 'similarity_topic'] as const
+// Voice in the chat ('voice_transcribe', 'voice_speech') is paid by the person speaking / listening.
+export const METERED_FEATURE_LIST = ['chat', 'topic', 'proofread', 'similarity_topic', 'voice_transcribe', 'voice_speech'] as const
 const METERED_FEATURES = new Set<string>(METERED_FEATURE_LIST)
 
 export const DEFAULT_SPEND_LIMIT_CENTS = 1500
@@ -71,7 +86,7 @@ export async function getMonthUsage(userId: string): Promise<MonthUsage> {
   for (const row of (data ?? []) as UsageRow[]) {
     if (row.feature === 'chat') messages += Number(row.calls) || 0
     if (!METERED_FEATURES.has(row.feature)) continue
-    costEur += rawCostEur(row.model, Number(row.prompt_tokens) || 0, Number(row.completion_tokens) || 0)
+    costEur += rawCostEur(row.model, Number(row.prompt_tokens) || 0, Number(row.completion_tokens) || 0, row.feature)
   }
   costEur *= 1 + MARKUP
 

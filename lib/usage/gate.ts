@@ -1,13 +1,15 @@
 import { isOverSpendLimit } from '@/lib/usage/spend'
 import { getUnpaidBill } from '@/lib/billing/monthly'
-import { getSenderPlan, checkTrialMessageLimit, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
+import { getSenderPlan, checkTrialMessageLimit, getTrialMessagesUsedToday, TRIAL_TOTAL_DAILY } from '@/lib/ratelimit/trial'
 import { needsCard } from '@/lib/billing/access'
 
 // The same pauses as sending a chat message, for other features paid per use
 // (owner decision 2026-10-08: the person who uses AI pays for it). Returns
 // why it is paused, or null. `message: true` also counts one free-month
-// message (5 a day in total during the free month).
-export async function paidUsePause(userId: string, opts: { message?: boolean } = {}): Promise<{ error: string; status: number; needsCard?: boolean } | null> {
+// message (5 a day in total during the free month). `voice: true` (speaking a
+// message, hearing an answer read aloud) counts none but pauses with chat once
+// today's free messages are used up.
+export async function paidUsePause(userId: string, opts: { message?: boolean; voice?: boolean } = {}): Promise<{ error: string; status: number; needsCard?: boolean } | null> {
   const [card, overLimit, unpaid, plan] = await Promise.all([
     needsCard(userId).catch(() => false),
     isOverSpendLimit(userId),
@@ -21,6 +23,10 @@ export async function paidUsePause(userId: string, opts: { message?: boolean } =
   if (opts.message && plan.kind === 'trial') {
     const trial = await checkTrialMessageLimit(userId)
     if (!trial.allowed) return { error: `You've used today's ${TRIAL_TOTAL_DAILY} free messages. You can chat again tomorrow.`, status: 429 }
+  }
+  if (opts.voice && plan.kind === 'trial') {
+    const used = await getTrialMessagesUsedToday(userId).catch(() => 0)
+    if (used >= TRIAL_TOTAL_DAILY) return { error: `You've used today's ${TRIAL_TOTAL_DAILY} free messages. You can use voice again tomorrow.`, status: 429 }
   }
   return null
 }

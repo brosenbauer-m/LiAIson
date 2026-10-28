@@ -5,8 +5,10 @@ import { createServiceClient } from '@/lib/supabase/service'
 // model and the token counts reported by Mistral. Never stores message content
 // or prompts, and never which LiAIson a sender chatted with.
 // This is the "measure first" step for usage-based pricing. Never throws.
+// Voice is not billed in tokens: for 'voice_transcribe' promptTokens holds the
+// seconds of audio, for 'voice_speech' the characters read aloud (migration 39).
 
-export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo' | 'search' | 'index' | 'similarity' | 'proofread' | 'similarity_topic'
+export type AiFeature = 'chat' | 'topic' | 'insight' | 'echo' | 'search' | 'index' | 'similarity' | 'proofread' | 'similarity_topic' | 'voice_transcribe' | 'voice_speech'
 
 // Who caused the call: the owner chatting with their own LiAIson, a signed-in
 // member, a signed-out visitor (legacy rows only), or the system (scheduled Echoes).

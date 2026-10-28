@@ -42,7 +42,7 @@ export async function billableUsageEur(userId: string, start: Date, end: Date): 
     if (error) throw new Error(error.message)
     const rows = (data as { feature: string; model: string; prompt_tokens: number; completion_tokens: number }[] | null) ?? []
     for (const r of rows) {
-      if (isMeteredFeature(r.feature)) raw += rawCostEur(r.model, r.prompt_tokens, r.completion_tokens)
+      if (isMeteredFeature(r.feature)) raw += rawCostEur(r.model, r.prompt_tokens, r.completion_tokens, r.feature)
     }
     if (rows.length < pageSize) break
     from += pageSize

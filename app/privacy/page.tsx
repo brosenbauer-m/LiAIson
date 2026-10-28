@@ -47,6 +47,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-text-primary mb-3">Visitor Interactions</h2>
             <p>When someone chats with your LiAIson, their messages are sent to Mistral AI, a French AI provider, and processed only in its data centres in the EU and EFTA countries (Mistral&apos;s EU regional service), to generate responses. We do not store visitor messages. For each question we keep only a short anonymous statement of what was asked about (e.g. &quot;People want to know more about your climbing&quot;) with a category, so owners can see what visitors are interested in. These statements never contain the visitor&apos;s words, identity or contact details and are deleted after about 35 days. Visitor IPs are used solely for rate limiting (15 messages per profile per day) and are not stored long-term.</p>
             <p>If you are signed in and chat with someone else&apos;s LiAIson, the non-draft content of your own Vault is also sent to Mistral AI with your message, so answers can relate to you (for example &quot;what do we have in common?&quot;). It is used only to answer you, is never shown to the other person and is not stored.</p>
+            <p>Voice is optional. When you press the microphone in a chat, your browser asks for microphone access once and records only until you press stop (at most about two minutes). The recording is sent to Mistral AI (EU/EFTA data centres) to be written down as text, which appears in your chat box for you to check before sending. When you press Listen on an answer, its text is sent to Mistral AI to be read aloud in a fixed standard voice. We never store recordings or audio, and voices are never copied.</p>
           </section>
 
           <section>
@@ -72,7 +73,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>Supabase – database and authentication (EU, Ireland)</li>
               <li>Vercel – application hosting (servers in Frankfurt, Germany)</li>
-              <li>Mistral AI – AI responses (EU/EFTA data centres, regional EU service)</li>
+              <li>Mistral AI – AI responses and voice (EU/EFTA data centres, regional EU service)</li>
               <li>Mollie – payments and saved cards (Netherlands, EU)</li>
               <li>Upstash – rate limiting (Frankfurt, Germany)</li>
               <li>Scaleway – email notifications (EU-based, hosted in Paris, France)</li>
