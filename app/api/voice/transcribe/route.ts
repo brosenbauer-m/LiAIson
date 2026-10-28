@@ -10,7 +10,8 @@ import { transcribe, STT_MODEL } from '@/lib/voice/server'
 import { wavSeconds, MAX_RECORDING_SECONDS, VOICE_SAMPLE_RATE } from '@/lib/voice/wav'
 
 // Mic button in the LiAIson chat (owner decision 2026-10-27): a recording
-// (16 kHz mono WAV, at most about two minutes) → its text, which the browser
+// (16 kHz mono WAV, at most about two minutes; usually a piece of a few
+// seconds up to the next pause, so the words appear while talking) → its text, which the browser
 // puts into the chat box to check before sending. Signed-in only; paid by the
 // speaker per second like messages (spending limit, free-month limits).
 // The audio is only passed to Mistral Voxtral and never stored.
@@ -26,7 +27,8 @@ export async function POST(request: NextRequest) {
   const declared = Number(request.headers.get('content-length') || 0)
   if (declared > MAX_BYTES) return NextResponse.json({ error: 'Recordings can be up to two minutes long.' }, { status: 413 })
 
-  if (!(await underLimit(`voice:stt:${user.id}`, 30, 3600))) {
+  // Pieces of a few seconds each: ~25 per two-minute recording.
+  if (!(await underLimit(`voice:stt:${user.id}`, 400, 3600))) {
     return NextResponse.json({ error: 'Please wait a little before recording again.' }, { status: 429 })
   }
   const pause = await paidUsePause(user.id, { voice: true })

@@ -7,15 +7,19 @@ import { MAX_RECORDING_SECONDS } from '@/lib/voice/wav'
 // Mic button in the chat box (owner decision 2026-10-27): press to talk, press
 // again to stop; the words are written into the chat box (not sent) so they can
 // be checked first. Mistral Voxtral, paid by the speaker (/api/voice/transcribe).
-// Hidden in browsers that can't record.
+// The words appear while talking, a phrase at a time: the recording is sent in
+// pieces at each short pause, written down one after the other, in order
+// (owner request 2026-10-28). Hidden in browsers that can't record.
 
 type Phase = 'idle' | 'starting' | 'recording' | 'working'
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-export default function MicButton({ onText, onError, disabled }: {
+export default function MicButton({ onText, onError, onDone, disabled }: {
   onText: (text: string) => void
   onError: (message: string | null) => void
+  // After the last piece is written down.
+  onDone?: () => void
   disabled?: boolean
 }) {
   const [supported, setSupported] = useState(false)
@@ -31,40 +35,65 @@ export default function MicButton({ onText, onError, disabled }: {
   // Leaving the page ends a recording (and turns the microphone off).
   useEffect(() => () => rec.current?.cancel(), [])
 
-  const send = async (wav: Blob | null) => {
+  // Pieces are written down one after the other, so the words stay in order.
+  const queue = useRef<Promise<void>>(Promise.resolve())
+  const wroteAny = useRef(false)
+  const failed = useRef(false)
+
+  const writeDown = (wav: Blob) => {
+    queue.current = queue.current.then(async () => {
+      if (failed.current) return
+      try {
+        const res = await fetch('/api/voice/transcribe', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav })
+        const d = await res.json().catch(() => ({})) as { text?: string; error?: string }
+        if (!res.ok) {
+          failed.current = true
+          onError(d.error ?? 'Voice is not available right now.')
+          // Paused (limit, card, signed out): stop listening too.
+          const r = rec.current
+          rec.current = null
+          if (r) { r.cancel(); setLevel(0); setPhase('idle') }
+          return
+        }
+        if (d.text) { wroteAny.current = true; onText(d.text) }
+        window.dispatchEvent(new Event('liaison:usage-changed'))
+      } catch {
+        failed.current = true
+        onError('Voice is not available right now.')
+      }
+    })
+    return queue.current
+  }
+
+  const finish = async (last: Blob | null) => {
     rec.current = null
     setLevel(0)
-    if (!wav) { setPhase('idle'); return }
     setPhase('working')
-    try {
-      const res = await fetch('/api/voice/transcribe', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav })
-      const d = await res.json().catch(() => ({})) as { text?: string; error?: string }
-      if (!res.ok) { onError(d.error ?? 'Voice is not available right now.'); return }
-      if (d.text) onText(d.text)
-      else onError("Nothing was heard. Please try again a little closer to the microphone.")
-      window.dispatchEvent(new Event('liaison:usage-changed'))
-    } catch {
-      onError('Voice is not available right now.')
-    } finally {
-      setPhase('idle')
-    }
+    if (last) void writeDown(last)
+    await queue.current
+    if (!wroteAny.current && !failed.current) onError('Nothing was heard. Please try again a little closer to the microphone.')
+    setPhase('idle')
+    onDone?.()
   }
 
   const press = async () => {
     if (phase === 'recording') {
       const r = rec.current
-      if (r) void send(await r.stop())
+      if (r) void finish(await r.stop())
       return
     }
     if (phase !== 'idle') return
     onError(null)
+    wroteAny.current = false
+    failed.current = false
     setPhase('starting')
     setSeconds(0)
     try {
       rec.current = await startRecording({
         onTick: setSeconds,
         onLevel: setLevel,
-        onAutoStop: wav => void send(wav),
+        onSegment: wav => void writeDown(wav),
+        onAutoStop: wav => void finish(wav),
       })
       setPhase('recording')
     } catch (err) {

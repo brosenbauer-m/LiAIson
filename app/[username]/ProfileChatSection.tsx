@@ -82,9 +82,13 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
   // Voice (Mistral Voxtral): what went wrong with the mic or Read Aloud.
   const [voiceError, setVoiceError] = useState<string | null>(null)
 
-  // Spoken words go into the box after what is already there (not sent).
+  // Spoken words go into the box after what is already there (not sent),
+  // a phrase at a time while talking; the box gets focus once talking ends
+  // (not before, so phones don't open the keyboard mid-sentence).
   const addSpoken = useCallback((text: string) => {
     setInput(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text).slice(0, 2000))
+  }, [])
+  const spokenDone = useCallback(() => {
     const box = inputRef.current
     if (box) setTimeout(() => { box.focus({ preventScroll: true }); box.setSelectionRange(box.value.length, box.value.length) }, 0)
   }, [])
@@ -453,7 +457,7 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
               disabled={loading}
               className="flex-1 min-w-0 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 resize-none disabled:opacity-60 transition-all"
             />
-            <MicButton onText={addSpoken} onError={setVoiceError} disabled={loading} />
+            <MicButton onText={addSpoken} onDone={spokenDone} onError={setVoiceError} disabled={loading} />
             <button
               type="submit"
               disabled={loading || !input.trim()}
