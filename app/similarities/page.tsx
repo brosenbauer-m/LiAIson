@@ -165,15 +165,13 @@ export default function SimilaritiesPage() {
               <span className="group-open:hidden">How to Read the Chart +</span>
               <span className="hidden group-open:inline">How to Read the Chart −</span>
             </summary>
-            <ul className="mt-4 space-y-2 rounded-2xl border border-border bg-card p-5 text-sm text-text-secondary leading-relaxed shadow-soft">
-              <li><b className="text-text-primary">Size:</b> how much a topic matters to the people who have it, added together. The bigger, the more it matters.</li>
-              <li><b className="text-text-primary">Place:</b> topics shared by everyone sit in the middle, topics shared by some sit between those people, and topics of one person sit next to them. A bubble leans towards the person it matters most to.</li>
-              <li><b className="text-text-primary">Colour:</b> dark = shared by everyone, brown = shared by some, light = only one person. Lines show who has each topic.</li>
-              <li><b className="text-text-primary">Slider:</b> shows fewer or more topics, the smallest go first.</li>
-              <li><b className="text-text-primary">Tap a person</b> to see what they share, <b className="text-text-primary">tap a bubble</b> and choose Elaborate* for a short comparison of that topic. Bubbles can be dragged around.</li>
-              <li><b className="text-text-primary">The LiAIson below</b> answers questions about everyone in the chart.</li>
-              <li>Only what each person lets you see is used, and nobody is notified.</li>
-            </ul>
+            <div className="mt-4 space-y-3 rounded-2xl border border-border bg-card p-5 text-sm text-text-secondary leading-relaxed shadow-soft">
+              <p>Each bubble is a topic, and the lines connect it to the people who have it. The bigger a bubble is, the more that topic matters to them, taken together.</p>
+              <p>Topics everyone shares gather in the middle and are the darkest. Topics only some of you share sit between those people, and topics that belong to just one person sit next to them in a lighter colour. A bubble also leans a little towards the person it matters to most.</p>
+              <p>Use the slider to show more or fewer topics; the smallest ones disappear first. Tap a person to see what they share, or tap a bubble and choose Elaborate* for a short summary of how each of you relates to that topic. You can also drag the bubbles around to get a better look.</p>
+              <p>Below the chart, a LiAIson can answer your questions about everyone in it.</p>
+              <p>The chart only uses what each person has chosen to let you see, and nobody is told that you looked.</p>
+            </div>
           </details>
         </div>
 

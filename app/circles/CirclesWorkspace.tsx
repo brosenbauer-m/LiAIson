@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { openContextMenu, type MenuItem } from '@/components/ui/ContextMenu'
@@ -141,7 +141,7 @@ export default function CirclesWorkspace({
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const press = useRef<{ kind: Kind; id: string; x: number; y: number; started: boolean } | null>(null)
 
-  const select = (id: string | null) => {
+  const select = useCallback((id: string | null) => {
     setSelected(id)
     setSectionView('circle')
     setPickedPeople(new Set())
@@ -149,7 +149,25 @@ export default function CirclesWorkspace({
     setRenaming(false)
     setDeleting(null)
     setConfirmRemove(false)
-  }
+  }, [])
+
+  // A click anywhere on the page that isn't on a circle, a button, a field or
+  // the Connections / Sections lists deselects the circle (owner request
+  // 2026-10-28: the whole page, not only the space around the circles).
+  useEffect(() => {
+    if (selected === null) return
+    const onClick = (e: MouseEvent) => {
+      if (e.button !== 0) return
+      const t = e.target as Element | null
+      if (!t?.closest || !document.contains(t)) return
+      if (t.closest('button, a, input, select, textarea, label, form, summary, [role="dialog"], [role="menu"], [data-keep-selection]')) return
+      // On the board, the circles' real (round) shapes decide.
+      if (t.closest('[role="button"]') && boardRef.current?.hitTest(e.clientX, e.clientY)) return
+      select(null)
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [selected, select])
 
   // --- Changes (optimistic; undone if the server says no) -------------------
 
@@ -455,7 +473,7 @@ export default function CirclesWorkspace({
   )
 
   const peoplePanel = (
-    <section className={panelClass} aria-label="Connections">
+    <section className={panelClass} aria-label="Connections" data-keep-selection>
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Connections <span className="text-text-muted font-normal tabular-nums">{shownPeople.length}</span></h2>
         {circleChip(chipName(selected))}
@@ -497,7 +515,7 @@ export default function CirclesWorkspace({
   )
 
   const sectionsPanel = (
-    <section className={panelClass} aria-label="Vault sections">
+    <section className={panelClass} aria-label="Vault sections" data-keep-selection>
       <header className="flex items-center justify-between gap-3 p-4 pb-3">
         <h2 className="font-semibold text-text-primary">Sections <span className="text-text-muted font-normal tabular-nums">{shownSections.length}</span></h2>
         {circleChip(chipName(sectionCircle))}
@@ -572,17 +590,7 @@ export default function CirclesWorkspace({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)_minmax(0,18rem)] lg:items-start">
         {/* The circles */}
-        <div
-          className="order-1 lg:order-2 flex flex-col items-center gap-6"
-          // A click on empty space (not a circle, button or field) deselects.
-          onClick={e => {
-            const t = e.target as Element
-            if (t.closest('button, a, input, select, textarea, form, [role="dialog"]')) return
-            // On the board, the circles' real (round) shapes decide.
-            if (t.closest('[role="button"]') && boardRef.current?.hitTest(e.clientX, e.clientY)) return
-            select(null)
-          }}
-        >
+        <div className="order-1 lg:order-2 flex flex-col items-center gap-6">
           <CircleBoard
             ref={boardRef}
             circles={circles}

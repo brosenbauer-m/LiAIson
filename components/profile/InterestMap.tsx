@@ -33,26 +33,31 @@ function drift(id: string): React.CSSProperties {
   return { animationDuration: `${6.5 + (h % 30) / 10}s`, animationDelay: `-${(h % 70) / 10}s` }
 }
 
-// Biggest in the middle, the rest spiralling out and pushed apart. If they
-// can't all fit, every bubble shrinks a little (same proportions) and it tries
-// again, so none overlap.
+// Spread across the whole width, under both the profile and the chat (owner
+// request 2026-10-28: not clustered in the middle). Each topic gets its own
+// spot along the row (big and small ones mixed, alternating a little up and
+// down), then bubbles are pushed apart. If they can't all fit, every bubble
+// shrinks a little (same proportions) and it tries again, so none overlap.
+const radius = (score: number, max: number) => 18 + 38 * Math.sqrt(score / max)
+
 function place(topics: Topic[], W: number, H: number): Placed[] {
   const max = Math.max(1, ...topics.map(t => t.score))
-  const sorted = [...topics].sort((a, b) => b.score - a.score)
+  // Mix sizes along the row: biggest, smallest, second biggest, ...
+  const bySize = [...topics].sort((a, b) => b.score - a.score)
+  const mixed: Topic[] = []
+  for (let lo = 0, hi = bySize.length - 1; lo <= hi; lo++, hi--) {
+    mixed.push(bySize[lo])
+    if (lo !== hi) mixed.push(bySize[hi])
+  }
+  const n = mixed.length
   const attempt = (scale: number): { out: Placed[]; worst: number } => {
-    const out: Placed[] = sorted.map((t, i) => {
-      // Size follows the score only (equal scores = equal bubbles); long
-      // names get smaller text instead.
-      const r = (18 + 38 * Math.sqrt(t.score / max)) * scale
-      const a = i * 2.399963
-      const d = 10 + 22 * Math.sqrt(i)
-      return { ...t, r, x: W / 2 + Math.cos(a) * d * 1.8, y: H / 2 + Math.sin(a) * d }
-    })
+    const slots = mixed.map((_, i) => ({ x: W * (i + 0.5) / n, y: H / 2 + (i % 2 ? 1 : -1) * H * 0.18 }))
+    const out: Placed[] = mixed.map((t, i) => ({ ...t, r: radius(t.score, max) * scale, ...slots[i] }))
     for (let step = 0; step < 320; step++) {
-      for (const b of out) {
-        b.x += (W / 2 - b.x) * 0.015
-        b.y += (H / 2 - b.y) * 0.03
-      }
+      out.forEach((b, i) => {
+        b.x += (slots[i].x - b.x) * 0.04
+        b.y += (H / 2 - b.y) * 0.02
+      })
       for (let i = 0; i < out.length; i++) {
         for (let j = i + 1; j < out.length; j++) {
           const a = out[i]
@@ -60,7 +65,7 @@ function place(topics: Topic[], W: number, H: number): Placed[] {
           const dx = b.x - a.x
           const dy = b.y - a.y
           const dist = Math.hypot(dx, dy) || 0.01
-          const overlap = a.r + b.r + 6 - dist
+          const overlap = a.r + b.r + 8 - dist
           if (overlap > 0) {
             a.x -= (dx / dist) * overlap / 2
             a.y -= (dy / dist) * overlap / 2
@@ -84,11 +89,19 @@ function place(topics: Topic[], W: number, H: number): Placed[] {
   }
   let scale = 1
   let best = attempt(scale)
-  for (let tries = 0; tries < 8 && best.worst > 0; tries++) {
-    scale *= 0.88
+  for (let tries = 0; tries < 10 && best.worst > 0; tries++) {
+    scale *= 0.9
     best = attempt(scale)
   }
   return best.out
+}
+
+// Tall enough for the bubbles at this width: a low band on wide screens,
+// taller on phones where they have to stack.
+function mapHeight(topics: Topic[], W: number): number {
+  const max = Math.max(1, ...topics.map(t => t.score))
+  const area = topics.reduce((sum, t) => sum + Math.PI * radius(t.score, max) ** 2, 0)
+  return Math.round(Math.min(480, Math.max(200, (area * 2) / Math.max(1, W))))
 }
 
 export default function InterestMap({ username, firstName, signedIn }: { username: string; firstName: string; signedIn: boolean }) {
@@ -154,8 +167,16 @@ export default function InterestMap({ username, firstName, signedIn }: { usernam
     return () => { cancelled = true }
   }, [signedIn, open, loaded, username])
 
-  const H = Math.round(Math.min(320, Math.max(220, width * 0.26)))
-  const placed = useMemo(() => (state.kind === 'map' && width > 0 ? place(state.topics, width, H) : []), [state, width, H])
+  // Laid out in a roomy area, then trimmed to the bubbles (no empty band
+  // above or below them).
+  const { placed, H } = useMemo(() => {
+    if (state.kind !== 'map' || width <= 0) return { placed: [] as Placed[], H: 0 }
+    const out = place(state.topics, width, mapHeight(state.topics, width))
+    if (!out.length) return { placed: out, H: 0 }
+    const top = Math.min(...out.map(b => b.y - b.r)) - 8
+    const bottom = Math.max(...out.map(b => b.y + b.r)) + 10
+    return { placed: out.map(b => ({ ...b, y: b.y - top })), H: Math.round(bottom - top) }
+  }, [state, width])
 
   const ask = (topic: string) => {
     window.dispatchEvent(new CustomEvent('liaison:prefill-chat', { detail: `Tell me more about ${firstName}'s interest in ${topic}.` }))
