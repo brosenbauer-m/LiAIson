@@ -1005,7 +1005,27 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "ai_usage_since":
+            "admin_balance_summary":
+{ Args: { "p_since": string }; Returns: {
+              "amount_eur": number,"entries": number,"kind": string,"month": string
+            }[]
+                           },
+"admin_billing_summary":
+{ Args: { "p_since": string }; Returns: {
+              "documents": number,"kind": string,"month": string,"plan_fee_eur": number,"prepaid_applied_eur": number,"status": string,"total_eur": number,"usage_eur": number
+            }[]
+                           },
+"admin_usage_by_user":
+{ Args: { "p_since": string }; Returns: {
+              "calls": number,"completion_tokens": number,"feature": string,"model": string,"prompt_tokens": number,"user_id": string
+            }[]
+                           },
+"admin_usage_summary":
+{ Args: { "p_campaign"?: string,"p_since": string,"p_until": string }; Returns: {
+              "calls": number,"completion_tokens": number,"feature": string,"model": string,"month": string,"prompt_tokens": number,"users": number
+            }[]
+                           },
+"ai_usage_since":
 { Args: { "p_since": string,"p_user_id": string }; Returns: {
               "calls": number,"completion_tokens": number,"feature": string,"model": string,"prompt_tokens": number
             }[]
