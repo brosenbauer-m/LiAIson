@@ -16,7 +16,8 @@ State, next steps and how to ship: `claude/roadmap.md`, `claude/handover.md`, `c
 - Vault privacy: visitors see only what `resolveCircles` allows (`lib/access/resolveScope.ts`; read sections with `.or(visibleSectionsFilter(scope))`) — on every route (profile, chat, prompts, Similarity, Discover, search).
 - Rate-limit key `chat:${ip}:${userId}` (`lib/ratelimit/index.ts`) never changes without a plan.
 - Cron routes require `CRON_SECRET`; never remove the check.
-- Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks, similarity_results, similarity_group_results, custom_circles, custom_circle_members.
+- Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks, similarity_results, similarity_group_results, custom_circles, custom_circle_members, coupon_campaigns, coupon_codes, coupon_redemptions.
+- Admin: one account only (`users.is_admin`, set once at sign-up for contact@my-liaison.app, migration 40); never a second.
 - New third-party data processor → add to `app/privacy/page.tsx`; prefer EU. Keep `.env.example` in sync. Never commit secrets.
 
 ## Stack

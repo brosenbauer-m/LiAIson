@@ -38,6 +38,8 @@ export async function processUnverifiedAccounts(siteUrl: string, now = new Date(
             .eq('id', user.id)
             .maybeSingle<{ billing_exempt: boolean }>()
           if (row?.billing_exempt) continue
+          // An event code seat they took goes back to the campaign.
+          await supabase.rpc('release_coupon_seats', { p_user_id: user.id })
           const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
           if (deleteError) throw new Error(deleteError.message)
           summary.deleted++
