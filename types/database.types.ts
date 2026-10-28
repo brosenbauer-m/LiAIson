@@ -634,6 +634,75 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"coupon_campaigns": {
+                  Row: {
+                    "active": boolean,"archived_at": string | null,"audience": string,"created_at": string,"created_by": string | null,"credit_eur": number,"expires_at": string | null,"free_days": number,"id": string,"mode": string,"name": string,"notes": string | null,"organisation": string | null,"plan_options": Json | null,"seats": number,"tier": string
+                  }
+                  Insert: {
+                    "active"?: boolean,"archived_at"?: string | null,"audience"?: string,"created_at"?: string,"created_by"?: string | null,"credit_eur"?: number,"expires_at"?: string | null,"free_days": number,"id"?: string,"mode": string,"name": string,"notes"?: string | null,"organisation"?: string | null,"plan_options"?: Json | null,"seats": number,"tier": string
+                  }
+                  Update: {
+                    "active"?: boolean,"archived_at"?: string | null,"audience"?: string,"created_at"?: string,"created_by"?: string | null,"credit_eur"?: number,"expires_at"?: string | null,"free_days"?: number,"id"?: string,"mode"?: string,"name"?: string,"notes"?: string | null,"organisation"?: string | null,"plan_options"?: Json | null,"seats"?: number,"tier"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "coupon_campaigns_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"coupon_codes": {
+                  Row: {
+                    "campaign_id": string,"code": string,"created_at": string,"id": string,"max_uses": number,"uses": number
+                  }
+                  Insert: {
+                    "campaign_id": string,"code": string,"created_at"?: string,"id"?: string,"max_uses": number,"uses"?: number
+                  }
+                  Update: {
+                    "campaign_id"?: string,"code"?: string,"created_at"?: string,"id"?: string,"max_uses"?: number,"uses"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "coupon_codes_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "coupon_campaigns"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"coupon_redemptions": {
+                  Row: {
+                    "campaign_id": string,"code_id": string,"credit_eur": number,"credit_expired_at": string | null,"id": number,"new_account": boolean,"period_ends_at": string,"redeemed_at": string,"user_id": string
+                  }
+                  Insert: {
+                    "campaign_id": string,"code_id": string,"credit_eur": number,"credit_expired_at"?: string | null,"id"?: never,"new_account": boolean,"period_ends_at": string,"redeemed_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "campaign_id"?: string,"code_id"?: string,"credit_eur"?: number,"credit_expired_at"?: string | null,"id"?: never,"new_account"?: boolean,"period_ends_at"?: string,"redeemed_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "coupon_redemptions_campaign_id_fkey"
+      columns: ["campaign_id"]
+isOneToOne: false
+      referencedRelation: "coupon_campaigns"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "coupon_redemptions_code_id_fkey"
+      columns: ["code_id"]
+isOneToOne: false
+      referencedRelation: "coupon_codes"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "coupon_redemptions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "users"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"custom_circle_members": {
                   Row: {
                     "circle_id": string,"created_at": string,"member_id": string
@@ -812,13 +881,13 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_currency": string,"display_name": string,"id": string,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"pending_plan": string | null,"plan": string,"plan_options": Json | null,"public_scope": string,"report_emails": boolean,"report_emails_monthly": boolean,"report_emails_weekly": boolean,"short_bio": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
+                    "avatar_url": string | null,"billing_exempt": boolean,"contact_links": Json | null,"created_at": string | null,"discover_mode": string | null,"display_currency": string,"display_name": string,"id": string,"is_admin": boolean,"is_discoverable": boolean | null,"monthly_spend_limit_cents": number,"pending_plan": string | null,"plan": string,"plan_options": Json | null,"public_scope": string,"report_emails": boolean,"report_emails_monthly": boolean,"report_emails_weekly": boolean,"short_bio": string | null,"sponsored_until": string | null,"trial_ends_at": string,"use_own_vault_in_chats": boolean,"username": string
                   }
                   Insert: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_currency"?: string,"display_name": string,"id": string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"report_emails_monthly"?: boolean,"report_emails_weekly"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_currency"?: string,"display_name": string,"id": string,"is_admin"?: boolean,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"report_emails_monthly"?: boolean,"report_emails_weekly"?: boolean,"short_bio"?: string | null,"sponsored_until"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_currency"?: string,"display_name"?: string,"id"?: string,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"report_emails_monthly"?: boolean,"report_emails_weekly"?: boolean,"short_bio"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
+                    "avatar_url"?: string | null,"billing_exempt"?: boolean,"contact_links"?: Json | null,"created_at"?: string | null,"discover_mode"?: string | null,"display_currency"?: string,"display_name"?: string,"id"?: string,"is_admin"?: boolean,"is_discoverable"?: boolean | null,"monthly_spend_limit_cents"?: number,"pending_plan"?: string | null,"plan"?: string,"plan_options"?: Json | null,"public_scope"?: string,"report_emails"?: boolean,"report_emails_monthly"?: boolean,"report_emails_weekly"?: boolean,"short_bio"?: string | null,"sponsored_until"?: string | null,"trial_ends_at"?: string,"use_own_vault_in_chats"?: boolean,"username"?: string
                   }
                   Relationships: [
                     
@@ -949,6 +1018,14 @@ isOneToOne: false
                            },
 "plan_vault_limit":
 { Args: { "opts": Json,"p": string }; Returns: number
+                           },
+"redeem_coupon":
+{ Args: { "p_code": string,"p_new_account": boolean,"p_user_id": string }; Returns: {
+              "campaign_id": string,"campaign_name": string,"credit_eur": number,"free_days": number,"period_ends_at": string,"plan_options": Json,"tier": string
+            }[]
+                           },
+"release_coupon_seats":
+{ Args: { "p_user_id": string }; Returns: number
                            },
 "search_match_chunks":
 { Args: { "exclude_user": string,"keywords": (string)[],"match_count": number,"query_embedding": string }; Returns: {
