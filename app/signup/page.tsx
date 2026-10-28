@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { RESERVED_USERNAMES, USERNAME_REGEX } from '@/lib/constants/username'
-import { PLANS, DEFAULT_PLAN_OPTIONS, isPlanId, type PlanId, type PlanOptions } from '@/lib/plans'
+import { PLANS, DEFAULT_PLAN_OPTIONS, isPlanId, planRank, type PlanId, type PlanOptions } from '@/lib/plans'
 import TierPicker from '@/components/plans/TierPicker'
 
 export default function SignupPage() {
@@ -30,15 +30,37 @@ export default function SignupPage() {
   // The account just created and waiting for email confirmation, so "Use a
   // different email" can undo it and keep everything else that was filled in.
   const [pending, setPending] = useState<{ userId: string; nonce: string } | null>(null)
+  // Event code (optional): checked while typing; a working one is sent with
+  // the sign-up and redeemed while the account is made.
+  const [coupon, setCoupon] = useState('')
+  const [couponInfo, setCouponInfo] = useState<{ ok: boolean; reason?: string; summary?: string; tier?: PlanId } | null>(null)
 
-  // Tier chosen elsewhere (/signup?plan=…).
+  // Tier chosen elsewhere (/signup?plan=…), or an event code (/signup?code=…).
   useEffect(() => {
-    const fromUrl = new URLSearchParams(window.location.search).get('plan')
+    const params = new URLSearchParams(window.location.search)
+    const fromUrl = params.get('plan')
+    const code = params.get('code')
     const timer = setTimeout(() => {
       if (isPlanId(fromUrl) && PLANS[fromUrl].available) setPlan(fromUrl)
+      if (code) setCoupon(code.toUpperCase())
     }, 0)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    const code = coupon.trim()
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      if (code.length < 4) { setCouponInfo(null); return }
+      const res = await fetch(`/api/coupons/preview?for=signup&code=${encodeURIComponent(code)}`, { cache: 'no-store' }).catch(() => null)
+      const d = res ? await res.json().catch(() => null) : null
+      if (cancelled) return
+      setCouponInfo(d)
+      // The code's tier is picked for them when it is higher than their choice.
+      if (d?.ok && isPlanId(d.tier)) setPlan(p => (planRank(d.tier) > planRank(p) ? d.tier : p))
+    }, 400)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [coupon])
 
   useEffect(() => {
     const supabase = createClient()
@@ -160,7 +182,14 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { display_name: displayName, username, plan, ...(plan === 'butterfly' ? { plan_options: planOptions } : {}), signup_nonce: nonce },
+        data: {
+          display_name: displayName,
+          username,
+          plan,
+          ...(plan === 'butterfly' ? { plan_options: planOptions } : {}),
+          ...(couponInfo?.ok ? { coupon: coupon.trim().toUpperCase() } : {}),
+          signup_nonce: nonce,
+        },
         emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
@@ -362,6 +391,24 @@ export default function SignupPage() {
                 className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
                 placeholder="Min. 8 characters"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-1.5">Event code <span className="font-normal text-text-secondary">(optional)</span></label>
+              <input
+                type="text"
+                value={coupon}
+                onChange={e => setCoupon(e.target.value.toUpperCase())}
+                maxLength={40}
+                autoCapitalize="characters"
+                className="w-full bg-surface border border-border rounded-lg px-3 py-2.5 font-mono uppercase text-text-primary placeholder:font-sans placeholder:normal-case placeholder:text-text-secondary focus:outline-none focus:border-accent/60"
+                placeholder="From a conference or organisation"
+              />
+              {couponInfo && (
+                <p className={`text-xs mt-1 ${couponInfo.ok ? 'text-success' : 'text-error'}`}>
+                  {couponInfo.ok ? `✓ ${couponInfo.summary}` : couponInfo.reason}
+                </p>
+              )}
             </div>
 
             </div>

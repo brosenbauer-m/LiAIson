@@ -17,7 +17,7 @@ State, next steps and how to ship: `claude/roadmap.md`, `claude/handover.md`, `c
 - Rate-limit key `chat:${ip}:${userId}` (`lib/ratelimit/index.ts`) never changes without a plan.
 - Cron routes require `CRON_SECRET`; never remove the check.
 - Server-only tables (RLS on, no policies; service role via API routes): connection_interests, plan_changes, billing_*, ai_usage, visitor_insights, visitor_reports, search_chunks, similarity_results, similarity_group_results, custom_circles, custom_circle_members, coupon_campaigns, coupon_codes, coupon_redemptions.
-- Admin: one account only (`users.is_admin`, set once at sign-up for contact@my-liaison.app, username forced to `admin`, migrations 40–41); never a second. Console `app/admin/*` (+ `app/api/admin/*`, `lib/admin/*`: `requireAdmin()` first in every route); `proxy.ts` keeps the admin on /admin and everyone else out; the admin has no LiAIson page (404), no tabs, no usage/bell. Event codes: `lib/admin/coupons.ts` (campaigns, codes, CSV), redeem via DB `redeem_coupon`.
+- Admin: one account only (`users.is_admin`, set once at sign-up for contact@my-liaison.app, username forced to `admin`, migrations 40–41); never a second. Console `app/admin/*` (+ `app/api/admin/*`, `lib/admin/*`: `requireAdmin()` first in every route); `proxy.ts` keeps the admin on /admin and everyone else out; the admin has no LiAIson page (404), no tabs, no usage/bell. Event codes: `lib/admin/coupons.ts` (campaigns, codes, CSV); people redeem via `lib/coupons` (`/api/coupons/preview|redeem`, sign-up metadata `coupon` → `handle_new_user`), DB `redeem_coupon`.
 - New third-party data processor → add to `app/privacy/page.tsx`; prefer EU. Keep `.env.example` in sync. Never commit secrets.
 
 ## Stack

@@ -9,6 +9,7 @@ import TierSection from '@/components/settings/TierSection'
 import SpendingLimitCard from '@/components/settings/SpendingLimitCard'
 import PaymentMethodCard from '@/components/settings/PaymentMethodCard'
 import CreditBalanceCard from '@/components/settings/CreditBalanceCard'
+import RedeemCodeCard from '@/components/settings/RedeemCodeCard'
 import MonthlyBillCard from '@/components/settings/MonthlyBillCard'
 import PasswordForm from '@/components/settings/PasswordForm'
 
@@ -102,6 +103,7 @@ export default function SettingsPage() {
             <div className="border-t border-border pt-8"><SpendingLimitCard bare /></div>
             <div className="border-t border-border pt-8"><MonthlyBillCard bare /></div>
             <div className="border-t border-border pt-8"><CreditBalanceCard bare /></div>
+            <div className="border-t border-border pt-8"><RedeemCodeCard /></div>
           </div>
           <div id="payment" className={`${card} scroll-mt-24`}><PaymentMethodCard bare /></div>
         </section>
