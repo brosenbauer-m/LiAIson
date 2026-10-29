@@ -12,6 +12,7 @@ type Usage = {
   creditCents: number
   paused: boolean
   inTrial: boolean
+  sponsoredUntil?: string | null
   periodEnd: string
   currency: Currency
   rate: number
@@ -180,7 +181,7 @@ export default function SpendingLimitCard({ bare = false }: { bare?: boolean } =
               You only pay for the messages you send to any LiAIson, including your own. Others chatting with your LiAIson never cost
               you anything. When this month&apos;s usage reaches your limit, you can&apos;t send more messages until the 1st of next
               month, until you raise the limit, or until credit is added.
-              {usage.inTrial ? ' Payments aren’t switched on yet, so nothing is charged for now.' : ''}
+              {usage.sponsoredUntil ? ' During your event period, your usage is paid from your event credit.' : usage.inTrial ? ' Payments aren’t switched on yet, so nothing is charged for now.' : ''}
             </p>
             <p>
               <span className="font-semibold text-text-primary">*</span> Buttons and features marked with an asterisk use AI and count

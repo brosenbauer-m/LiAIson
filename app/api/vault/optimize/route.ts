@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { mistral, FAST_MODEL, messageText } from '@/lib/mistral/client'
 import { logAiUsage } from '@/lib/usage/log'
-import { isOverSpendLimit } from '@/lib/usage/spend'
+import { spendPause } from '@/lib/usage/spend'
 import { getSenderPlan } from '@/lib/ratelimit/trial'
 import { getUnpaidBill } from '@/lib/billing/monthly'
 import { underLimit } from '@/lib/redis'
@@ -42,12 +42,12 @@ export async function POST(request: NextRequest) {
   if (!(await underLimit(`proofread:${user.id}`, 60, 3600))) {
     return NextResponse.json({ error: 'Please wait a little before optimizing again.' }, { status: 429 })
   }
-  const [overLimit, unpaid, plan] = await Promise.all([
-    isOverSpendLimit(user.id),
+  const [spend, unpaid, plan] = await Promise.all([
+    spendPause(user.id),
     getUnpaidBill(user.id).catch(() => null),
     getSenderPlan(user.id),
   ])
-  if (overLimit) return NextResponse.json({ error: "You've reached your monthly spending limit.", paused: true }, { status: 429 })
+  if (spend.paused) return NextResponse.json({ error: spend.message, paused: true }, { status: 429 })
   if (unpaid) return NextResponse.json({ error: 'You have an unpaid bill. Please pay it in Settings.', paused: true }, { status: 429 })
   if (plan.kind === 'trial_ended') return NextResponse.json({ error: 'Your free month has ended. Add a payment method in Settings.', paused: true }, { status: 429 })
 

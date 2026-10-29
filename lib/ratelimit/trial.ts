@@ -23,6 +23,9 @@ function viennaDay(now = new Date()): string {
 export type SenderPlan =
   | { kind: 'exempt' }
   | { kind: 'trial'; trialEndsAt: string }
+  // Event code period (owner decision 2026-10-28): no daily cap, no card
+  // needed; usage is paid from the event credit (lib/usage/spend.ts).
+  | { kind: 'sponsored'; sponsoredUntil: string; trialEndsAt: string }
   | { kind: 'paying' }
   | { kind: 'trial_ended'; trialEndsAt: string }
 
@@ -35,11 +38,14 @@ export async function getSenderPlan(senderId: string): Promise<SenderPlan> {
     const supabase = createServiceClient()
     const { data, error } = await supabase
       .from('users')
-      .select('billing_exempt, trial_ends_at')
+      .select('billing_exempt, trial_ends_at, sponsored_until')
       .eq('id', senderId)
-      .single<{ billing_exempt: boolean; trial_ends_at: string }>()
+      .single<{ billing_exempt: boolean; trial_ends_at: string; sponsored_until: string | null }>()
     if (error || !data) return { kind: 'trial', trialEndsAt: '' }
     if (data.billing_exempt === true) return { kind: 'exempt' }
+    if (data.sponsored_until && new Date(data.sponsored_until).getTime() > Date.now()) {
+      return { kind: 'sponsored', sponsoredUntil: data.sponsored_until, trialEndsAt: data.trial_ends_at }
+    }
     const ends = new Date(data.trial_ends_at)
     if (!Number.isNaN(ends.getTime()) && ends.getTime() <= Date.now()) {
       return (await hasValidSavedCard(senderId)) ? { kind: 'paying' } : { kind: 'trial_ended', trialEndsAt: data.trial_ends_at }
@@ -50,7 +56,7 @@ export async function getSenderPlan(senderId: string): Promise<SenderPlan> {
   }
 }
 
-async function hasValidSavedCard(userId: string): Promise<boolean> {
+export async function hasValidSavedCard(userId: string): Promise<boolean> {
   try {
     const supabase = createServiceClient()
     const { data, error } = await supabase

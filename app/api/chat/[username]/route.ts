@@ -11,7 +11,7 @@ import { getSenderPlan, checkTrialMessageLimit, TRIAL_TOTAL_DAILY } from '@/lib/
 import { mistral, CHAT_MODEL, messageText } from '@/lib/mistral/client'
 import { captureVisitorInsight } from '@/lib/insights/capture'
 import { logAiUsage, type AiActor } from '@/lib/usage/log'
-import { isOverSpendLimit } from '@/lib/usage/spend'
+import { spendPause } from '@/lib/usage/spend'
 import { getUnpaidBill } from '@/lib/billing/monthly'
 import { getPlanAt } from '@/lib/billing/plan'
 import { echoAllowed } from '@/lib/plans'
@@ -155,9 +155,9 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
 
   // The checks below are independent reads, so they run at the same time; the
   // answers are still applied in this order.
-  const [circles, overSpendLimit, unpaidBill, plan] = await Promise.all([
+  const [circles, spend, unpaidBill, plan] = await Promise.all([
     resolveCircles(user.id, { visitorUserId: visitor.id }),
-    isOverSpendLimit(visitor.id),
+    spendPause(visitor.id),
     getUnpaidBill(visitor.id).catch(() => null),
     getSenderPlan(visitor.id),
   ])
@@ -169,12 +169,10 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
   // Pay-as-you-go: the person who SENDS a message pays for it (owner decision
   // 2026-10-08), never the LiAIson's owner. A signed-in sender who has reached
   // their own monthly spending limit can't send more until the 1st of next month
-  // or until they raise it in Settings. Fails open if usage can't be read.
-  if (overSpendLimit) {
-    return NextResponse.json(
-      { error: "You've reached your monthly spending limit. You can raise it in Settings.", paused: true },
-      { status: 429 }
-    )
+  // or until they raise it in Settings; during an event code period without a
+  // card, until the event credit is used up. Fails open if usage can't be read.
+  if (spend.paused) {
+    return NextResponse.json({ error: spend.message, paused: true }, { status: 429 })
   }
 
   // An unpaid monthly bill pauses sending until it is paid (Settings → Pay now).
@@ -187,7 +185,8 @@ export async function POST(request: NextRequest, props: { params: Promise<{ user
 
   // Free trial limits for the sender (exempt accounts have none):
   // 5 messages per day in total (to any LiAIson) during the free month; after
-  // it, only with a saved card ('paying', billed at month end).
+  // it, only with a saved card ('paying', billed at month end). An event code
+  // period ('sponsored') has no daily cap.
   if (plan.kind === 'trial_ended') {
     return NextResponse.json(
       { error: 'Your free month has ended. Add a payment method in Settings to keep chatting.', trialLimit: true, paused: true },

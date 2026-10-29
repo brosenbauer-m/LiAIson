@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/service'
 import { CHAT_MODEL, FAST_MODEL } from '@/lib/mistral/client'
 import { currentPeriod } from '@/lib/insights/periods'
 import { getBalanceEur } from '@/lib/billing/topup'
+import { hasValidSavedCard } from '@/lib/ratelimit/trial'
 
 // Pay-as-you-go foundation: what a user's own messages cost this month, and
 // whether they have reached their monthly spending limit. The sender of a
@@ -111,21 +112,40 @@ export async function getSpendLimitCents(userId: string): Promise<number> {
   return data.monthly_spend_limit_cents
 }
 
-// True when this month's metered usage has reached the user's own limit and
-// their credit balance doesn't cover more (owner decision 2026-10-10: adding
-// credit lets people keep sending beyond the limit, up to the credit).
-// Fails open (returns false) if usage cannot be read, so a database problem
+export type SpendPause = { paused: false } | { paused: true; reason: 'limit' | 'credit'; message: string }
+
+export const SPEND_LIMIT_MESSAGE = "You've reached your monthly spending limit. You can raise it in Settings."
+export const CREDIT_USED_MESSAGE = 'Your event credit is used up. Add a payment method in Settings to keep going.'
+
+// Whether this month's metered usage pauses the person, and why:
+// - normally: usage has reached their own limit plus any credit balance
+//   (owner decision 2026-10-10: credit lets people keep going beyond the limit);
+// - during an event code period without a saved card (owner decision
+//   2026-10-28): usage has used up the credit — the limit doesn't count then,
+//   the event paid for the credit, not for more.
+// Fails open (not paused) if usage cannot be read, so a database problem
 // never takes every LiAIson offline.
-export async function isOverSpendLimit(userId: string): Promise<boolean> {
+export async function spendPause(userId: string): Promise<SpendPause> {
   try {
-    const [usage, limitCents, creditEur] = await Promise.all([
+    const supabase = createServiceClient()
+    const [usage, limitCents, creditEur, { data: user }] = await Promise.all([
       getMonthUsage(userId),
       getSpendLimitCents(userId),
       getBalanceEur(userId).catch(() => 0),
+      supabase.from('users').select('sponsored_until').eq('id', userId).maybeSingle<{ sponsored_until: string | null }>(),
     ])
-    return usage.costCents >= limitCents + Math.max(0, creditEur) * 100
+    const creditCents = Math.max(0, creditEur) * 100
+    const sponsored = !!user?.sponsored_until && new Date(user.sponsored_until).getTime() > Date.now()
+    if (sponsored && !(await hasValidSavedCard(userId))) {
+      return usage.costCents >= creditCents ? { paused: true, reason: 'credit', message: CREDIT_USED_MESSAGE } : { paused: false }
+    }
+    return usage.costCents >= limitCents + creditCents ? { paused: true, reason: 'limit', message: SPEND_LIMIT_MESSAGE } : { paused: false }
   } catch (err) {
     console.error('SPEND_LIMIT_CHECK_ERROR', err)
-    return false
+    return { paused: false }
   }
+}
+
+export async function isOverSpendLimit(userId: string): Promise<boolean> {
+  return (await spendPause(userId)).paused
 }

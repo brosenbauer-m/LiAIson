@@ -40,7 +40,7 @@ Next.js 16 (`proxy.ts` = middleware), React 19, Tailwind · Supabase EU (Postgre
 - `app/settings/`, `components/settings/` Profile (bio = Vault `profile_bio` section), Profile Privacy, Subscription (TierSection, usage, credits, card, invoices), delete; `/profile` + `/plans` redirect
 - `components/plans/TierPicker.tsx` (sign-up + Settings), `lib/plans.ts` (all plan limits + texts; Butterfly sliders, `planLimits(plan, options)`), `lib/billing/plan.ts` (plan state/changes; `plan_changes` incl. `options` is the source of truth)
 - `lib/billing/*` Mollie, month-end bills (`monthly.ts`), plan fee (`planFee.ts`), card lock (`access.ts`, used by `proxy.ts`), receipts, VAT
-- `lib/ratelimit/trial.ts` free-month limits · `lib/usage/` AI usage log + spend/markup
+- `lib/ratelimit/trial.ts` free-month limits (+ 'sponsored' = event code period: no daily cap) · `lib/usage/` AI usage log + spend/markup (`spendPause`: limit, or event credit without a card) · event credit expiry `lib/coupons/expiry.ts` (daily)
 - `lib/insights/` visitor insights + Echoes (weekly/monthly) · `app/api/cron/insights` daily
 - `app/api/cron/billing` daily: unconfirmed accounts (`lib/auth/unverified.ts`), search index sweep, month-end billing on the 1st
 - `app/auth/confirm` email confirm button (also password reset) · `/forgot-password` + `app/api/auth/forgot` · `/reset-password` · `app/api/account/password` · `app/api/account/export` · `app/api/auth/discard-signup` · `app/api/account/delete`

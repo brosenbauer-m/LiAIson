@@ -23,6 +23,46 @@ export const MIN_CHARGE_EUR = 5
 const round4 = (n: number) => Math.round(n * 10000) / 10000
 const round2 = (n: number) => Math.round(n * 100) / 100
 
+// Event code periods (owner decision 2026-10-28): usage during a sponsored
+// period is billable even inside the free month — it is paid from the event
+// credit. Returns the usage (incl. markup) inside the user's sponsored
+// windows that fall between start and end (windows merged, never counted twice).
+export async function sponsoredUsageEur(userId: string, start: Date, end: Date): Promise<number> {
+  if (end <= start) return 0
+  const supabase = createServiceClient()
+  const { data, error } = await supabase
+    .from('coupon_redemptions')
+    .select('redeemed_at, period_ends_at')
+    .eq('user_id', userId)
+    .lt('redeemed_at', end.toISOString())
+    .gt('period_ends_at', start.toISOString())
+    .order('redeemed_at', { ascending: true })
+  if (error) throw new Error(error.message)
+  const windows: { from: number; to: number }[] = []
+  for (const r of (data as { redeemed_at: string; period_ends_at: string }[] | null) ?? []) {
+    const from = Math.max(start.getTime(), new Date(r.redeemed_at).getTime())
+    const to = Math.min(end.getTime(), new Date(r.period_ends_at).getTime())
+    if (to <= from) continue
+    const last = windows[windows.length - 1]
+    if (last && from <= last.to) last.to = Math.max(last.to, to)
+    else windows.push({ from, to })
+  }
+  let total = 0
+  for (const w of windows) total += await billableUsageEur(userId, new Date(w.from), new Date(w.to))
+  return round4(total)
+}
+
+// Everything billable between start and end for a user whose free month ends
+// at trialEnd: usage after the free month, plus sponsored usage inside it.
+export async function billableInPeriodEur(userId: string, start: Date, end: Date, trialEnd: Date): Promise<number> {
+  const paidFrom = new Date(Math.min(end.getTime(), Math.max(start.getTime(), trialEnd.getTime())))
+  const [after, sponsored] = await Promise.all([
+    billableUsageEur(userId, paidFrom, end),
+    sponsoredUsageEur(userId, start, paidFrom),
+  ])
+  return round4(after + sponsored)
+}
+
 // Usage (incl. markup) the user sent between start and end.
 export async function billableUsageEur(userId: string, start: Date, end: Date): Promise<number> {
   if (end <= start) return 0
@@ -84,10 +124,14 @@ export async function billMonth(
     .maybeSingle()
   if (existing) return 'exists'
 
-  // Usage after the free trial ended.
+  // Usage after the free trial ended, plus usage in an event code period
+  // inside it (paid from the event credit).
   const trialEnd = new Date(user.trial_ends_at)
-  const usageStart = opts.ignoreExemptAndTrial ? period.start : new Date(Math.max(period.start.getTime(), trialEnd.getTime()))
-  const usage = round4((await billableUsageEur(userId, usageStart, period.end)) + (opts.extraUsageEur ?? 0))
+  const usage = round4(
+    (opts.ignoreExemptAndTrial
+      ? await billableUsageEur(userId, period.start, period.end)
+      : await billableInPeriodEur(userId, period.start, period.end, trialEnd)) + (opts.extraUsageEur ?? 0)
+  )
 
   // Amount carried over from the previous month's bill (if it was below €5).
   const { data: previous } = await supabase

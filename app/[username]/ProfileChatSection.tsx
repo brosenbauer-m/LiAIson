@@ -24,8 +24,10 @@ interface Props {
 }
 
 type TrialStatus = {
-  plan: 'exempt' | 'trial' | 'paying' | 'trial_ended'
+  plan: 'exempt' | 'trial' | 'sponsored' | 'paying' | 'trial_ended'
   trialEndsAt: string | null
+  sponsoredUntil: string | null
+  creditLeftCents: number | null
   dailyLimit: number
   messagesLeftToday: number | null
 }
@@ -469,6 +471,12 @@ export default function ProfileChatSection({ ownerId, username, displayName, sim
         )}
         {voiceError && !paused && !signedOut && (
           <p className="mt-2 text-center text-xs text-error" role="alert">{voiceError}</p>
+        )}
+        {isLoggedIn && trial?.plan === 'sponsored' && trial.sponsoredUntil && (
+          <p className="mt-3 text-center text-xs text-text-secondary">
+            Event access until {formatDay(trial.sponsoredUntil)}{trial.creditLeftCents !== null ? ` · €${(trial.creditLeftCents / 100).toFixed(2)} of credit left` : ''}. After that, you&apos;ll need a{' '}
+            <Link href="/settings" className="text-accent hover:underline">saved payment method</Link> to keep chatting.
+          </p>
         )}
         {isLoggedIn && trial?.plan === 'trial' && (
           <p className="mt-3 text-center text-xs text-text-secondary">

@@ -10,6 +10,7 @@ type Summary = {
   minChargeEur: number
   exempt: boolean
   inTrial: boolean
+  sponsoredUntil?: string | null
   trialEndsAt: string | null
   unpaid: { id: number; totalEur: number } | null
 }
@@ -111,7 +112,8 @@ export default function MonthlyBillCard({ bare = false }: { bare?: boolean } = {
               )}
               <p className="text-xs text-text-secondary leading-relaxed">
                 Charged once on {chargeDay} if it&apos;s {euros(summary.minChargeEur)} or more (after your credit balance); smaller amounts carry over.
-                {summary.inTrial ? ' During your free month, you can send up to 5 free messages a day.' : ''}
+                {summary.inTrial && !summary.sponsoredUntil ? ' During your free month, you can send up to 5 free messages a day.' : ''}
+                {summary.sponsoredUntil ? ` Until ${new Date(summary.sponsoredUntil).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' })} your messages are paid from your event credit; whatever is left of it then expires.` : ''}
               </p>
               {summary.inTrial && summary.trialEndsAt && (
                 <p className="text-xs text-text-secondary leading-relaxed">
